@@ -1,0 +1,25 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "../esp-idf/components/freertos/include",
+                "../esp-idf/components/esp32/include/",
+                "."
+            ],
+            "defines": [],
+            "intelliSenseMode": "clang-x64",
+            "browse": {
+                "path": [
+                    "../esp-idf/components/freertos/include",
+                    "../esp-idf/components/esp32/include/",
+                    "."
+                ],
+                "limitSymbolsToIncludedHeaders": true,
+                "databaseFilename": ""
+            }
+        }
+    ],
+    "version": 2
+    
+}
