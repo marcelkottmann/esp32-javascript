@@ -14,6 +14,60 @@
 #include "duktape.h"
 #include "esp_event.h"
 #include "esp_system.h"
+#include <stddef.h>
+#include "esp_intr_alloc.h"
+#include "esp_attr.h"
+#include "driver/timer.h"
+
+// global task handle
+TaskHandle_t task;
+xQueueHandle timer_queue;
+int count = 0;
+
+typedef struct
+{
+    int type;
+} timer_event_t;
+
+#define TIMER_DIVIDER 4 /*!< Hardware timer clock divider */
+
+#define TRK_TIMER_GROUP TIMER_GROUP_0
+#define TRK_TIMER_IDX TIMER_1
+
+void IRAM_ATTR timerIsr(void *para)
+{
+    TIMERG0.int_clr_timers.t1 = 1;
+    count++;
+
+    timer_event_t evt;
+    evt.type = 1;
+    xQueueSendFromISR(timer_queue, &evt, NULL);
+
+    TIMERG0.hw_timer[1].config.alarm_en = 0;
+}
+
+void init_timer(int timer_period_us)
+{
+    printf("set timer to %d\n", timer_period_us);
+    uint16_t interval = timer_period_us / 250; // seconds
+    timer_config_t config;
+    config.alarm_en = 1;
+    config.auto_reload = 1;
+    config.counter_dir = TIMER_COUNT_UP;
+    config.divider = TIMER_DIVIDER;
+    config.intr_type = TIMER_INTR_LEVEL;
+    config.counter_en = TIMER_PAUSE;
+
+    timer_init(TRK_TIMER_GROUP, TRK_TIMER_IDX, &config);
+    timer_set_counter_value(TRK_TIMER_GROUP, TRK_TIMER_IDX, 0x00000000ULL);
+    timer_enable_intr(TRK_TIMER_GROUP, TRK_TIMER_IDX);
+    timer_isr_register(TRK_TIMER_GROUP, TRK_TIMER_IDX, timerIsr, NULL, ESP_INTR_FLAG_IRAM, NULL);
+
+    timer_pause(TRK_TIMER_GROUP, TRK_TIMER_IDX);
+    timer_set_counter_value(TRK_TIMER_GROUP, TRK_TIMER_IDX, 0x00000000ULL);
+    timer_set_alarm_value(TRK_TIMER_GROUP, TRK_TIMER_IDX, interval * (TIMER_BASE_CLK / TIMER_DIVIDER));
+    timer_start(TRK_TIMER_GROUP, TRK_TIMER_IDX);
+}
 
 duk_double_t esp32_duktape_get_now()
 {
@@ -38,6 +92,22 @@ static duk_ret_t native_delay(duk_context *ctx)
         delay = 0;
     }
     vTaskDelay(delay / portTICK_PERIOD_MS);
+    return 0;
+}
+
+static duk_ret_t el_suspend(duk_context *ctx)
+{
+    int delay = duk_to_int32(ctx, 0);
+    printf("Suspending for %ds...\n", delay);
+    if (delay < 0)
+    {
+        delay = 0;
+    }
+    init_timer(delay);
+
+    timer_event_t evt;
+    xQueueReceive(timer_queue, &evt, portMAX_DELAY);
+
     return 0;
 }
 
@@ -95,6 +165,9 @@ void duktape_task(void *ignore)
     duk_push_c_function(ctx, native_delay, 1 /*nargs*/);
     duk_put_global_string(ctx, "delay");
 
+    duk_push_c_function(ctx, el_suspend, 1 /*nargs*/);
+    duk_put_global_string(ctx, "el_suspend");
+
     char main_js[] = {
 #include "main.hex"
     };
@@ -111,6 +184,7 @@ void duktape_task(void *ignore)
     printf("Reaching end of event loop. Going into endless loop.\n");
     while (true)
     {
+        printf("%d\n", count);
         vTaskDelay(100 / portTICK_PERIOD_MS);
     }
 
@@ -120,5 +194,6 @@ void duktape_task(void *ignore)
 
 void app_main()
 {
-    xTaskCreatePinnedToCore(&duktape_task, "duktape_task", 16 * 1024, NULL, 5, NULL, tskNO_AFFINITY);
+    timer_queue = xQueueCreate(10, sizeof(timer_event_t));
+    xTaskCreatePinnedToCore(&duktape_task, "duktape_task", 16 * 1024, NULL, 5, &task, tskNO_AFFINITY);
 }

@@ -13,20 +13,27 @@ try {
     }
 
     function el_select_next(timers) {
+        var nextTimer;
         if (timers.length > 0) {
             timers.sort(function (a, b) {
                 return a.timeout - b.timeout;
             });
-            var selected = timers.shift();
-            delay(selected.timeout - Date.now());
-            selected.fn();
+            nextTimer = timers.shift();
+        } else {
+            nextTimer = undefined;
+        }
+
+        if (nextTimer) {
+            el_suspend(nextTimer.timeout - Date.now());
+            return nextTimer.fn;
         }
     }
 
-    setTimeout(main, 0);
+    nextfunc = main;
     do {
-        el_select_next(timers);
-    } while (timers.length > 0);
+        nextfunc();
+        nextfunc = el_select_next(timers);
+    } while (nextfunc);
 } catch (error) {
     print('JS ERROR: ' + error);
 }
