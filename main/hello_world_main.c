@@ -7,66 +7,119 @@
    CONDITIONS OF ANY KIND, either express or implied.
 */
 #include <stdio.h>
+#include <string.h>
+#include <stddef.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_system.h"
-#include "esp_spi_flash.h"
 #include "duktape.h"
 #include "esp_event.h"
 #include "esp_system.h"
-#include <stddef.h>
-#include "esp_intr_alloc.h"
-#include "esp_attr.h"
-#include "driver/timer.h"
+#include "freertos/event_groups.h"
+#include "esp_wifi.h"
+#include "esp_event_loop.h"
+#include "esp_log.h"
+#include "nvs_flash.h"
+#include "lwip/err.h"
+#include "lwip/arch.h"
+#include "lwip/api.h"
+#include "freertos/timers.h"
+
+static EventGroupHandle_t wifi_event_group;
+static const int CONNECTED_BIT = BIT0;
+
+static const char *TAG = "esp32-javascript";
 
 // global task handle
 TaskHandle_t task;
-xQueueHandle timer_queue;
-int count = 0;
+xQueueHandle el_event_queue;
+
+#define EL_TIMER_EVENT_TYPE 0;
+#define EL_WIFI_EVENT_TYPE 1;
+
+#define EL_WIFI_STATUS_CONNECTED 1;
+#define EL_WIFI_STATUS_DISCONNECTED 0;
 
 typedef struct
 {
     int type;
+    int status;
 } timer_event_t;
 
-#define TIMER_DIVIDER 4 /*!< Hardware timer clock divider */
-
-#define TRK_TIMER_GROUP TIMER_GROUP_0
-#define TRK_TIMER_IDX TIMER_1
-
-void IRAM_ATTR timerIsr(void *para)
+void vTimerCallback(TimerHandle_t xTimer)
 {
-    TIMERG0.int_clr_timers.t1 = 1;
-    count++;
-
     timer_event_t evt;
-    evt.type = 1;
-    xQueueSendFromISR(timer_queue, &evt, NULL);
+    evt.type = EL_TIMER_EVENT_TYPE;
+    evt.status = (int)pvTimerGetTimerID(xTimer);
 
-    TIMERG0.hw_timer[1].config.alarm_en = 0;
+    xQueueSendFromISR(el_event_queue, &evt, NULL);
 }
 
-void init_timer(int timer_period_us)
+static esp_err_t event_handler(void *ctx, system_event_t *event)
 {
-    printf("set timer to %d\n", timer_period_us);
-    uint16_t interval = timer_period_us / 250; // seconds
-    timer_config_t config;
-    config.alarm_en = 1;
-    config.auto_reload = 1;
-    config.counter_dir = TIMER_COUNT_UP;
-    config.divider = TIMER_DIVIDER;
-    config.intr_type = TIMER_INTR_LEVEL;
-    config.counter_en = TIMER_PAUSE;
+    switch (event->event_id)
+    {
+    case SYSTEM_EVENT_STA_START:
+        esp_wifi_connect();
+        break;
+    case SYSTEM_EVENT_STA_GOT_IP:
+        xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);
 
-    timer_init(TRK_TIMER_GROUP, TRK_TIMER_IDX, &config);
-    timer_set_counter_value(TRK_TIMER_GROUP, TRK_TIMER_IDX, 0x00000000ULL);
-    timer_enable_intr(TRK_TIMER_GROUP, TRK_TIMER_IDX);
-    timer_isr_register(TRK_TIMER_GROUP, TRK_TIMER_IDX, timerIsr, NULL, ESP_INTR_FLAG_IRAM, NULL);
+        timer_event_t evt;
+        evt.type = EL_WIFI_EVENT_TYPE;
+        evt.status = EL_WIFI_STATUS_CONNECTED;
+        xQueueSendFromISR(el_event_queue, &evt, NULL);
+        break;
+    case SYSTEM_EVENT_STA_DISCONNECTED:
+        /* This is a workaround as ESP32 WiFi libs don't currently
+       auto-reassociate. */
+        esp_wifi_connect();
+        xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);
+        break;
+    default:
+        break;
+    }
+    return ESP_OK;
+}
 
-    timer_pause(TRK_TIMER_GROUP, TRK_TIMER_IDX);
-    timer_set_counter_value(TRK_TIMER_GROUP, TRK_TIMER_IDX, 0x00000000ULL);
-    timer_set_alarm_value(TRK_TIMER_GROUP, TRK_TIMER_IDX, interval * (TIMER_BASE_CLK / TIMER_DIVIDER));
-    timer_start(TRK_TIMER_GROUP, TRK_TIMER_IDX);
+void init_timer(int timer_period_us, int handle)
+{
+    int interval = timer_period_us / portTICK_PERIOD_MS;
+
+    //interval must be at least 1
+    if (interval <= 0)
+    {
+        interval = 1;
+    }
+    TimerHandle_t tmr = xTimerCreate("MyTimer", interval, pdFALSE, (void *)handle, vTimerCallback);
+    if (xTimerStart(tmr, 10) != pdPASS)
+    {
+        printf("Timer start error");
+    }
+}
+
+static duk_ret_t connectWifi(duk_context *ctx)
+{
+    const char *ssid = duk_to_string(ctx, 0);
+    const char *pass = duk_to_string(ctx, 1);
+
+    tcpip_adapter_init();
+    wifi_event_group = xEventGroupCreate();
+    ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
+    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+    ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+    ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
+    wifi_config_t wifi_config = {
+        .sta = {},
+    };
+    strcpy((char *)wifi_config.sta.ssid, ssid);
+    strcpy((char *)wifi_config.sta.password, pass);
+
+    ESP_LOGI(TAG, "Setting WiFi configuration SSID %s and PASS %s ...", wifi_config.sta.ssid, wifi_config.sta.password);
+    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
+    ESP_ERROR_CHECK(esp_wifi_start());
+    return 0;
 }
 
 duk_double_t esp32_duktape_get_now()
@@ -95,20 +148,31 @@ static duk_ret_t native_delay(duk_context *ctx)
     return 0;
 }
 
-static duk_ret_t el_suspend(duk_context *ctx)
+static duk_ret_t el_install_timer(duk_context *ctx)
 {
     int delay = duk_to_int32(ctx, 0);
-    printf("Suspending for %ds...\n", delay);
+    int handle = duk_to_int32(ctx, 1);
     if (delay < 0)
     {
         delay = 0;
     }
-    init_timer(delay);
-
-    timer_event_t evt;
-    xQueueReceive(timer_queue, &evt, portMAX_DELAY);
-
+    printf("Install timer to notify in  %dms.\n", delay);
+    init_timer(delay, handle);
     return 0;
+}
+
+static duk_ret_t el_suspend(duk_context *ctx)
+{
+    timer_event_t evt;
+    xQueueReceive(el_event_queue, &evt, portMAX_DELAY);
+
+    duk_idx_t obj_idx = duk_push_object(ctx);
+    duk_push_int(ctx, evt.type);
+    duk_put_prop_string(ctx, obj_idx, "type");
+    duk_push_int(ctx, evt.status);
+    duk_put_prop_string(ctx, obj_idx, "status");
+
+    return 1;
 }
 
 static duk_ret_t pinMode(duk_context *ctx)
@@ -165,8 +229,14 @@ void duktape_task(void *ignore)
     duk_push_c_function(ctx, native_delay, 1 /*nargs*/);
     duk_put_global_string(ctx, "delay");
 
-    duk_push_c_function(ctx, el_suspend, 1 /*nargs*/);
+    duk_push_c_function(ctx, el_suspend, 0 /*nargs*/);
     duk_put_global_string(ctx, "el_suspend");
+
+    duk_push_c_function(ctx, el_install_timer, 2 /*nargs*/);
+    duk_put_global_string(ctx, "el_install_timer");
+
+    duk_push_c_function(ctx, connectWifi, 2 /*nargs*/);
+    duk_put_global_string(ctx, "connectWifiInternal");
 
     char main_js[] = {
 #include "main.hex"
@@ -184,16 +254,13 @@ void duktape_task(void *ignore)
     printf("Reaching end of event loop. Going into endless loop.\n");
     while (true)
     {
-        printf("%d\n", count);
         vTaskDelay(100 / portTICK_PERIOD_MS);
     }
-
-    // throws multiple errors on esp32 - todo
-    // duk_destroy_heap(ctx);
 }
 
 void app_main()
 {
-    timer_queue = xQueueCreate(10, sizeof(timer_event_t));
+    nvs_flash_init();
+    el_event_queue = xQueueCreate(10, sizeof(timer_event_t));
     xTaskCreatePinnedToCore(&duktape_task, "duktape_task", 16 * 1024, NULL, 5, &task, tskNO_AFFINITY);
 }

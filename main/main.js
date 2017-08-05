@@ -1,12 +1,18 @@
 function main() {
-    setTimeout(function () {
-        print('helo after 5000ms')
-    }, 5000);
-    data = 2;
-    setTimeout(function () {
-        print('helo after 2000s')
-    }, 2000);
-    setTimeout(function () {
-        print('helo after 500ms')
-    }, 500);
+    connectWifi('HAL9000-2.4', 'HalloDuArsch!!!', function () {
+        print("SUCCESSFULLY CONNECTED!!!!");
+        setTimeout(function(){}, 1);
+    });
+    pinMode(2, OUTPUT);
+    blinkON();
+}
+
+function blinkON() {
+    digitalWrite(2, HIGH);
+    setTimeout(blinkOFF, 1000);
+}
+
+function blinkOFF() {
+    digitalWrite(2, LOW);
+    setTimeout(blinkON, 1000);
 }

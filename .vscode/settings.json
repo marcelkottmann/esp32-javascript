@@ -1,6 +1,8 @@
 {
     "files.associations": {
         "duktape.h": "c",
-        "complex": "c"
+        "complex": "c",
+        "freertos.h": "c",
+        "api.h": "c"
     }
 }
