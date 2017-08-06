@@ -13,6 +13,7 @@
 #include "freertos/task.h"
 #include "esp_system.h"
 #include "duktape.h"
+#include "tcp.h"
 #include "esp_event.h"
 #include "esp_system.h"
 #include "freertos/event_groups.h"
@@ -103,6 +104,91 @@ void init_timer(int timer_period_us, int handle)
     {
         printf("Timer start error");
     }
+}
+
+static duk_ret_t el_createNonBlockingSocket(duk_context *ctx)
+{
+    int sockfd = createNonBlockingSocket();
+    duk_push_int(ctx, sockfd);
+    return 1;
+}
+
+static duk_ret_t el_connectNonBlocking(duk_context *ctx)
+{
+    int sockfd = duk_to_int(ctx, 0);
+    const char *hostname = duk_to_string(ctx, 1);
+    int port = duk_to_int(ctx, 2);
+
+    int ret = connectNonBlocking(sockfd, hostname, port);
+    duk_push_int(ctx, ret);
+    return 1;
+}
+
+static duk_ret_t el_closeSocket(duk_context *ctx)
+{
+    int socketfd = duk_to_int(ctx, 0);
+    closeSocket(socketfd);
+    return 0;
+}
+
+static duk_ret_t el_getSocketStatus(duk_context *ctx)
+{
+    fd_set readset;
+    fd_set writeset;
+    fd_set errset;
+
+    int socketfd = duk_to_int(ctx, 0);
+
+    int socketfds_len = 1;
+    int socketfds[socketfds_len];
+    socketfds[0] = socketfd;
+
+    int ret = checkSockets(socketfds, socketfds_len, &readset, &writeset, &errset);
+    if (ret >= 0)
+    {
+        int sockfd = socketfds[0];
+        duk_idx_t obj_idx = duk_push_object(ctx);
+        duk_push_boolean(ctx, FD_ISSET(sockfd, &readset));
+        duk_put_prop_string(ctx, obj_idx, "readable");
+        duk_push_boolean(ctx, FD_ISSET(sockfd, &writeset));
+        duk_put_prop_string(ctx, obj_idx, "writable");
+        duk_push_boolean(ctx, FD_ISSET(sockfd, &errset));
+        duk_put_prop_string(ctx, obj_idx, "error");
+    }
+    else
+    {
+        duk_idx_t obj_idx = duk_push_object(ctx);
+        duk_push_boolean(ctx, true);
+        duk_put_prop_string(ctx, obj_idx, "error");
+        duk_push_int(ctx, errno);
+        duk_put_prop_string(ctx, obj_idx, "errno");
+    }
+    return 1;
+}
+
+static duk_ret_t el_socketWrite(duk_context *ctx)
+{
+    int sockfd = duk_to_int(ctx, 0);
+    const char *msg = duk_to_string(ctx, 1);
+
+    int ret = writeSocket(sockfd, msg);
+
+    duk_push_int(ctx, ret);
+    return 1;
+}
+
+static duk_ret_t el_socketRead(duk_context *ctx)
+{
+    int sockfd = duk_to_int(ctx, 0);
+
+    int len = 256;
+    char msg[len];
+
+    int ret = readSocket(sockfd, msg, len - 1);
+    msg[ret] = '\0';
+
+    duk_push_string(ctx, msg);
+    return 1;
 }
 
 static duk_ret_t connectWifi(duk_context *ctx)
@@ -204,6 +290,8 @@ static duk_ret_t digitalWrite(duk_context *ctx)
     return 0;
 }
 
+/**
+    
 static duk_ret_t socketClient(duk_context *ctx)
 {
     ESP_LOGD(tag, "start");
@@ -224,8 +312,22 @@ static duk_ret_t socketClient(duk_context *ctx)
 
     rc = close(sock);
     ESP_LOGD(tag, "close: rc: %d", rc);
+
     return 0;
 }
+*/
+
+/*
+static duk_ret_t el_createSocket(duk_context *ctx)
+{
+    const char *hostname = duk_to_string(ctx, 0);
+    int portno = duk_to_int(ctx, 1);
+    const char *msg = duk_to_string(ctx, 2);
+
+    createSocket(hostname, portno, msg);
+    return 0;
+}
+*/
 
 static void my_fatal(void *udata, const char *msg)
 {
@@ -268,8 +370,34 @@ void duktape_task(void *ignore)
     duk_push_c_function(ctx, connectWifi, 2 /*nargs*/);
     duk_put_global_string(ctx, "connectWifiInternal");
 
-    duk_push_c_function(ctx, socketClient, 0 /*nargs*/);
-    duk_put_global_string(ctx, "socketClient");
+    //duk_push_c_function(ctx, socketClient, 0 /*nargs*/);
+    //duk_put_global_string(ctx, "socketClient");
+
+    //duk_push_c_function(ctx, el_createSocket, 3 /*nargs*/);
+    //duk_put_global_string(ctx, "createSocket");
+
+    // static duk_ret_t el_createNonBlockingSocket(duk_context *ctx)
+    // static duk_ret_t el_connectNonBlocking(duk_context *ctx)
+    // static duk_ret_t el_closeSocket(duk_context *ctx)
+    // static duk_ret_t el_isSocketReadable(duk_context *ctx)
+
+    duk_push_c_function(ctx, el_createNonBlockingSocket, 0 /*nargs*/);
+    duk_put_global_string(ctx, "createNonBlockingSocket");
+
+    duk_push_c_function(ctx, el_connectNonBlocking, 3 /*nargs*/);
+    duk_put_global_string(ctx, "connectNonBlocking");
+
+    duk_push_c_function(ctx, el_getSocketStatus, 1 /*nargs*/);
+    duk_put_global_string(ctx, "getSocketStatus");
+
+    duk_push_c_function(ctx, el_socketWrite, 2 /*nargs*/);
+    duk_put_global_string(ctx, "socketWrite");
+
+    duk_push_c_function(ctx, el_socketRead, 1 /*nargs*/);
+    duk_put_global_string(ctx, "socketRead");
+
+    duk_push_c_function(ctx, el_closeSocket, 1 /*nargs*/);
+    duk_put_global_string(ctx, "closeSocket");
 
     char main_js[] = {
 #include "main.hex"
@@ -290,7 +418,6 @@ void duktape_task(void *ignore)
         vTaskDelay(100 / portTICK_PERIOD_MS);
     }
 }
-
 
 void app_main()
 {

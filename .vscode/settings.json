@@ -3,6 +3,8 @@
         "duktape.h": "c",
         "complex": "c",
         "freertos.h": "c",
-        "api.h": "c"
+        "api.h": "c",
+        "err.h": "c",
+        "cerrno": "c"
     }
 }
