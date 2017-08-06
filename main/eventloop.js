@@ -14,22 +14,20 @@ try {
         return handle;
     }
 
-    function connectWifi(ssid, password, success) {
+    function connectWifi(ssid, password, status) {
         wifi = {
-            success: success,
+            status: status,
         };
         connectWifiInternal(ssid, password);
     }
 
     function el_select_next() {
-        if (timers.length > 0) {
-            timers.sort(function (a, b) {
-                return a.timeout - b.timeout;
-            });
-            var nextTimer = timers[0];
-            if (nextTimer && !nextTimer.installed) {
-                el_install_timer(nextTimer.timeout - Date.now(), nextTimer.handle);
-                nextTimer.installed = true;
+        //install all new timers
+        for (var t = 0; t < timers.length; t++) {
+            var timer = timers[t];
+            if (!timer.installed) {
+                el_install_timer(timer.timeout - Date.now(), timer.handle);
+                timer.installed = true;
             }
         }
 
@@ -47,8 +45,8 @@ try {
                 }
             }
             throw "UNKNOWN TIMER HANDLE!!!";
-        } else if (evt.type === 1) { //WIFI CONNECTED
-            return wifi.success;
+        } else if (evt.type === 1) { //WIFI EVENT
+                return wifi.status.bind(this, evt);
         } else {
             throw "UNKNOWN eventType " + eventType;
         }

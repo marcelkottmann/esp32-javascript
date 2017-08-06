@@ -24,21 +24,23 @@
 #include "lwip/arch.h"
 #include "lwip/api.h"
 #include "freertos/timers.h"
+#include <lwip/sockets.h>
 
 static EventGroupHandle_t wifi_event_group;
 static const int CONNECTED_BIT = BIT0;
 
-static const char *TAG = "esp32-javascript";
+static const char *tag = "esp32-javascript";
 
 // global task handle
 TaskHandle_t task;
 xQueueHandle el_event_queue;
 
-#define EL_TIMER_EVENT_TYPE 0;
-#define EL_WIFI_EVENT_TYPE 1;
+#define EL_TIMER_EVENT_TYPE 0
+#define EL_WIFI_EVENT_TYPE 1
 
-#define EL_WIFI_STATUS_CONNECTED 1;
-#define EL_WIFI_STATUS_DISCONNECTED 0;
+#define EL_WIFI_STATUS_DISCONNECTED 0
+#define EL_WIFI_STATUS_CONNECTED 1
+#define EL_WIFI_STATUS_CONNECTING 2
 
 typedef struct
 {
@@ -46,13 +48,17 @@ typedef struct
     int status;
 } timer_event_t;
 
-void vTimerCallback(TimerHandle_t xTimer)
+void el_add_event(int type, int status)
 {
     timer_event_t evt;
-    evt.type = EL_TIMER_EVENT_TYPE;
-    evt.status = (int)pvTimerGetTimerID(xTimer);
-
+    evt.type = type;
+    evt.status = status;
     xQueueSendFromISR(el_event_queue, &evt, NULL);
+}
+
+void vTimerCallback(TimerHandle_t xTimer)
+{
+    el_add_event(EL_TIMER_EVENT_TYPE, (int)pvTimerGetTimerID(xTimer));
 }
 
 static esp_err_t event_handler(void *ctx, system_event_t *event)
@@ -60,17 +66,18 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
     switch (event->event_id)
     {
     case SYSTEM_EVENT_STA_START:
+        el_add_event(EL_WIFI_EVENT_TYPE, EL_WIFI_STATUS_CONNECTING);
         esp_wifi_connect();
         break;
     case SYSTEM_EVENT_STA_GOT_IP:
         xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);
 
-        timer_event_t evt;
-        evt.type = EL_WIFI_EVENT_TYPE;
-        evt.status = EL_WIFI_STATUS_CONNECTED;
-        xQueueSendFromISR(el_event_queue, &evt, NULL);
+        el_add_event(EL_WIFI_EVENT_TYPE, EL_WIFI_STATUS_CONNECTED);
         break;
     case SYSTEM_EVENT_STA_DISCONNECTED:
+        el_add_event(EL_WIFI_EVENT_TYPE, EL_WIFI_STATUS_DISCONNECTED);
+        el_add_event(EL_WIFI_EVENT_TYPE, EL_WIFI_STATUS_CONNECTING);
+
         /* This is a workaround as ESP32 WiFi libs don't currently
        auto-reassociate. */
         esp_wifi_connect();
@@ -115,7 +122,7 @@ static duk_ret_t connectWifi(duk_context *ctx)
     strcpy((char *)wifi_config.sta.ssid, ssid);
     strcpy((char *)wifi_config.sta.password, pass);
 
-    ESP_LOGI(TAG, "Setting WiFi configuration SSID %s and PASS %s ...", wifi_config.sta.ssid, wifi_config.sta.password);
+    ESP_LOGI(tag, "Setting WiFi configuration SSID %s and PASS %s ...", wifi_config.sta.ssid, wifi_config.sta.password);
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
     ESP_ERROR_CHECK(esp_wifi_start());
@@ -197,6 +204,29 @@ static duk_ret_t digitalWrite(duk_context *ctx)
     return 0;
 }
 
+static duk_ret_t socketClient(duk_context *ctx)
+{
+    ESP_LOGD(tag, "start");
+    int sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+
+    ESP_LOGD(tag, "socket: rc: %d", sock);
+    struct sockaddr_in serverAddress;
+    serverAddress.sin_family = AF_INET;
+    inet_pton(AF_INET, "192.168.188.40", &serverAddress.sin_addr.s_addr);
+    serverAddress.sin_port = htons(9999);
+
+    int rc = connect(sock, (struct sockaddr *)&serverAddress, sizeof(struct sockaddr_in));
+    ESP_LOGD(tag, "connect rc: %d", rc);
+
+    char *data = "Hello world";
+    rc = send(sock, data, strlen(data), 0);
+    ESP_LOGD(tag, "send: rc: %d", rc);
+
+    rc = close(sock);
+    ESP_LOGD(tag, "close: rc: %d", rc);
+    return 0;
+}
+
 static void my_fatal(void *udata, const char *msg)
 {
     (void)udata; /* ignored in this case, silence warning */
@@ -238,6 +268,9 @@ void duktape_task(void *ignore)
     duk_push_c_function(ctx, connectWifi, 2 /*nargs*/);
     duk_put_global_string(ctx, "connectWifiInternal");
 
+    duk_push_c_function(ctx, socketClient, 0 /*nargs*/);
+    duk_put_global_string(ctx, "socketClient");
+
     char main_js[] = {
 #include "main.hex"
     };
@@ -257,6 +290,7 @@ void duktape_task(void *ignore)
         vTaskDelay(100 / portTICK_PERIOD_MS);
     }
 }
+
 
 void app_main()
 {
