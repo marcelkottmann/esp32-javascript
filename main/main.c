@@ -1,4 +1,4 @@
-#define LOG_LOCAL_LEVEL ESP_LOG_INFO
+#define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
 #include <stdio.h>
 #include <string.h>
 #include <stddef.h>
@@ -30,7 +30,6 @@ static const char *tag = "esp32-javascript";
 // global task handle
 TaskHandle_t task;
 xQueueHandle el_event_queue;
-xQueueHandle el_select_queue;
 
 TaskHandle_t stask;
 int notConnectedSockets_len = 0;
@@ -41,6 +40,10 @@ int *connectedSockets = NULL;
 int selectClientSocket = -1;
 int selectServerSocket = -1;
 struct sockaddr_in target;
+SemaphoreHandle_t xSemaphore;
+bool needsUnblock = false;
+
+bool flag = false;
 
 #define EL_TIMER_EVENT_TYPE 0
 #define EL_WIFI_EVENT_TYPE 1
@@ -63,7 +66,7 @@ typedef struct
 
 typedef struct
 {
-    timer_event_t events[16];
+    timer_event_t events[4];
     int events_len;
 } eventlist_t;
 
@@ -328,8 +331,8 @@ void select_task(void *ignore)
                 sockfd_max = selectServerSocket;
             }
             // self socket end
-
             int ret = select(sockfd_max + 1, &readset, &writeset, &errset, NULL);
+            needsUnblock = true;
             ESP_LOGD(tag, "Select return %d.\n", ret);
             if (ret >= 0)
             {
@@ -388,9 +391,10 @@ void select_task(void *ignore)
             }
         }
         //wait for next loop
+        needsUnblock = true;
         ESP_LOGD(tag, "Select loop finished and now waits for next iteration.\n");
-        int trigger;
-        xQueueReceive(el_select_queue, &trigger, portMAX_DELAY);
+        xSemaphoreTake(xSemaphore, portMAX_DELAY);
+        needsUnblock = false;
     }
 }
 
@@ -435,6 +439,7 @@ static duk_ret_t el_load(duk_context *ctx)
             duk_push_string(ctx, value);
             ret = 1;
         }
+        free(value);
     }
     err = nvs_commit(my_handle);
     if (err < 0)
@@ -526,7 +531,6 @@ static duk_ret_t el_registerSocketEvents(duk_context *ctx)
         return -1;
     }
 
-    /*
     //check if there are changes between this and the previous call
     bool changes = c_len != connectedSockets_len || nc_len != notConnectedSockets_len;
     //deep check
@@ -555,46 +559,45 @@ static duk_ret_t el_registerSocketEvents(duk_context *ctx)
 
     if (changes)
     {
-        */
-    //swap
-    free(notConnectedSockets);
-    notConnectedSockets_len = nc_len;
-    notConnectedSockets = nc_sockfds;
+        //swap
+        free(notConnectedSockets);
+        notConnectedSockets_len = nc_len;
+        notConnectedSockets = nc_sockfds;
 
-    free(connectedSockets);
-    connectedSockets_len = c_len;
-    connectedSockets = c_sockfds;
-
-    /*
+        free(connectedSockets);
+        connectedSockets_len = c_len;
+        connectedSockets = c_sockfds;
     }
     else
     {
         free(nc_sockfds);
         free(c_sockfds);
     }
-*/
 
-    ESP_LOGD(tag, "Trying to trigger the next select iteration... ");
-    //reset queue
-    xQueueReset(el_select_queue);
-
-    if (selectClientSocket >= 0)
+    if (changes)
     {
-        //interrupt select through self-socket
-        ESP_LOGD(tag, "Sending . to self-socket.");
-        if (sendto(selectClientSocket, ".", 1, 0, &target, sizeof(target)) < 0)
+        ESP_LOGD(tag, "Trying to trigger the next select iteration... ");
+        if (selectClientSocket >= 0)
         {
-            ESP_LOGE(tag, "Self-socket sending was NOT successful: %d\n", errno);
-        }
-        else
-        {
-            ESP_LOGD(tag, "Self-socket sending was successful.\n");
+            //interrupt select through self-socket
+            ESP_LOGD(tag, "Sending . to self-socket.");
+            needsUnblock = true;
+            if (sendto(selectClientSocket, ".", 1, 0, &target, sizeof(target)) < 0)
+            {
+                ESP_LOGE(tag, "Self-socket sending was NOT successful: %d\n", errno);
+            }
+            else
+            {
+                ESP_LOGD(tag, "Self-socket sending was successful.\n");
+            }
         }
     }
 
     //trigger next select loop
-    int trigger = 1;
-    xQueueSendFromISR(el_select_queue, &trigger, NULL);
+    if (needsUnblock)
+    {
+        xSemaphoreGive(xSemaphore);
+    }
 
     return 0;
 }
@@ -750,9 +753,6 @@ static duk_ret_t connectWifi(duk_context *ctx)
 
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-
-    //stop current wifi connection
-    ESP_ERROR_CHECK(esp_wifi_stop());
 
     ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
     wifi_config_t wifi_config = {
@@ -956,14 +956,51 @@ void duktape_task(void *ignore)
 
 void app_main()
 {
+
     nvs_flash_init();
     tcpip_adapter_init();
     wifi_event_group = xEventGroupCreate();
     ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
 
     el_event_queue = xQueueCreate(10, sizeof(eventlist_t));
-    el_select_queue = xQueueCreate(10, sizeof(int));
+    xSemaphore = xSemaphoreCreateBinary();
     startSelectTask();
 
     xTaskCreatePinnedToCore(&duktape_task, "duktape_task", 16 * 1024, NULL, 5, &task, 0);
 }
+
+void task1(void *ignore)
+{
+    printf("task1\n");
+    vTaskDelay(3000 / portTICK_PERIOD_MS);
+
+    xSemaphoreTake(xSemaphore, portMAX_DELAY);
+    printf("task1: after take\n");
+
+    printf("task1: trying to give\n");
+    xSemaphoreGive(xSemaphore);
+
+    vTaskDelete(NULL);
+}
+
+void task2(void *ignore)
+{
+    printf("task2\n");
+
+    printf("task2: trying to give\n");
+    xSemaphoreGive(xSemaphore);
+
+    xSemaphoreTake(xSemaphore, portMAX_DELAY);
+    printf("task2: after take\n");
+
+    vTaskDelete(NULL);
+}
+
+/*
+void app_main()
+{
+    xSemaphore = xSemaphoreCreateBinary();
+    xTaskCreatePinnedToCore(&task1, "task1", 6 * 1024, NULL, 5, &task, 0);
+    xTaskCreatePinnedToCore(&task2, "task2", 6 * 1024, NULL, 5, &stask, 0);
+}
+*/
