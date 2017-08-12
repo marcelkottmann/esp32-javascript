@@ -79,7 +79,7 @@ int acceptIncoming(int sockfd)
     int cfd = accept(sockfd, NULL, NULL);
     if (cfd < 0)
     {
-        printf("ERROR while accepting\n");
+        printf("ERROR while accepting: %d\n", errno);
         return cfd;
     }
     return cfd;

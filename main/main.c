@@ -1,4 +1,4 @@
-#define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
+#define LOG_LOCAL_LEVEL ESP_LOG_INFO
 #include <stdio.h>
 #include <string.h>
 #include <stddef.h>
@@ -95,9 +95,11 @@ void el_create_event(timer_event_t *event, int type, int status, int fd)
 void vTimerCallback(TimerHandle_t xTimer)
 {
     timer_event_t event;
-    el_create_event(&event, EL_TIMER_EVENT_TYPE, (int)pvTimerGetTimerID(xTimer), 0);
-
     eventlist_t events;
+
+    xTimerDelete(xTimer, portMAX_DELAY);
+
+    el_create_event(&event, EL_TIMER_EVENT_TYPE, (int)pvTimerGetTimerID(xTimer), 0);
     events.events_len = 0;
     el_add_event(&events, &event);
     el_fire_events(&events);
@@ -157,7 +159,7 @@ void init_timer(int timer_period_us, int handle)
         interval = 1;
     }
     TimerHandle_t tmr = xTimerCreate("MyTimer", interval, pdFALSE, (void *)handle, vTimerCallback);
-    if (xTimerStart(tmr, 10) != pdPASS)
+    if (xTimerStart(tmr, portMAX_DELAY) != pdPASS)
     {
         ESP_LOGE(tag, "Timer start error");
     }
