@@ -211,6 +211,36 @@ static duk_ret_t el_readSocket(duk_context *ctx)
     return 1;
 }
 
+static duk_ret_t el_socket_stats(duk_context *ctx)
+{
+    if (duk_is_array(ctx, 0))
+    {
+        int n = duk_get_length(ctx, 0);
+        int sockfds[n];
+        for (int i = 0; i < n; i++)
+        {
+            duk_get_prop_index(ctx, 0, i);
+            sockfds[i] = duk_to_int(ctx, -1);
+            duk_pop(ctx);
+        }
+
+        int *stats = socket_stats(sockfds, n);
+        if (stats != NULL)
+        {
+            int arr_idx = duk_push_array(ctx);
+            for (int i = 0; i < n; i++)
+            {
+                duk_push_int(ctx, stats[i]);
+                duk_put_prop_index(ctx, arr_idx, i);
+            }
+            return 1;
+        }
+    }
+
+    //error
+    return -1;
+}
+
 static duk_ret_t connectWifi(duk_context *ctx)
 {
     const char *ssid = duk_to_string(ctx, 0);
@@ -424,6 +454,9 @@ void duktape_task(void *ignore)
 
     duk_push_c_function(ctx, el_closeSocket, 1 /*nargs*/);
     duk_put_global_string(ctx, "closeSocket");
+
+    duk_push_c_function(ctx, el_socket_stats, 1 /*nargs*/);
+    duk_put_global_string(ctx, "el_socket_stats");
 
     char main_js[] = {
 #include "main.hex"

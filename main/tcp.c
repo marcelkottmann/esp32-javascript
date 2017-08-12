@@ -88,7 +88,7 @@ int acceptIncoming(int sockfd)
 
 int bindAndListen(int sockfd, int portno)
 {
-    int ret, n;
+    int ret;
     struct sockaddr_in serveraddr;
 
     /* build the server's Internet address */
@@ -137,6 +137,55 @@ int checkSockets(int *socketfds, int len_socketfds, fd_set *readset, fd_set *wri
     tv.tv_sec = 0;
     tv.tv_usec = 0;
     return select(sockfd_max + 1, readset, writeset, errset, &tv);
+}
+
+int *socket_stats(int *sockfds, int len_sockfds)
+{
+    fd_set readset;
+    fd_set writeset;
+    fd_set errset;
+    struct timeval tv;
+
+    int sockfd_max = -1;
+    FD_ZERO(&readset);
+    FD_ZERO(&writeset);
+    FD_ZERO(&errset);
+
+    for (int i = 0; i < len_sockfds; i++)
+    {
+        int sockfd = sockfds[i];
+        FD_SET(sockfd, &readset);
+        FD_SET(sockfd, &writeset);
+        FD_SET(sockfd, &errset);
+        if (sockfd > sockfd_max)
+        {
+            sockfd_max = sockfd;
+        }
+    }
+
+    tv.tv_sec = 0;
+    tv.tv_usec = 0;
+    int ret = select(sockfd_max + 1, &readset, &writeset, &errset, &tv);
+    if (ret >= 0)
+    {
+        int *result = (int *)calloc(len_sockfds, sizeof(int));
+        if (ret > 0)
+        {
+            for (int i = 0; i < len_sockfds; i++)
+            {
+                int sockfd = sockfds[i];
+                int val = FD_ISSET(sockfd, &readset) ? 1 << 0 : 0;
+                val |= FD_ISSET(sockfd, &writeset) ? 1 << 1 : 0;
+                val |= FD_ISSET(sockfd, &errset) ? 1 << 2 : 0;
+                result[i] = val;
+            }
+        }
+        return result;
+    }
+    else
+    {
+        return NULL;
+    }
 }
 
 int writeSocket(int sockfd, const char *msg)
