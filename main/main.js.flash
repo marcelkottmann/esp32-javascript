@@ -1,0 +1,5 @@
+function main() {
+    print(el_load('test'));
+    el_store('test', Date.now());
+    print(el_load('test'));
+}

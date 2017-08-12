@@ -1,11 +1,4 @@
-/* Hello World Example
-
-   This example code is in the Public Domain (or CC0 licensed, at your option.)
-
-   Unless required by applicable law or agreed to in writing, this
-   software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-   CONDITIONS OF ANY KIND, either express or implied.
-*/
+#define LOG_LOCAL_LEVEL ESP_LOG_INFO
 #include <stdio.h>
 #include <string.h>
 #include <stddef.h>
@@ -26,6 +19,7 @@
 #include "lwip/api.h"
 #include "freertos/timers.h"
 #include <lwip/sockets.h>
+#include "nvs.h"
 
 static EventGroupHandle_t wifi_event_group;
 static const int CONNECTED_BIT = BIT0;
@@ -35,13 +29,14 @@ static const char *tag = "esp32-javascript";
 // global task handle
 TaskHandle_t task;
 xQueueHandle el_event_queue;
+xQueueHandle el_select_queue;
 
 TaskHandle_t stask;
 int notConnectedSockets_len = 0;
 int *notConnectedSockets = NULL;
 int connectedSockets_len = 0;
 int *connectedSockets = NULL;
-bool select_task_can_be_killed = false;
+bool select_task_must_be_killed = false;
 
 #define EL_TIMER_EVENT_TYPE 0
 #define EL_WIFI_EVENT_TYPE 1
@@ -64,7 +59,7 @@ typedef struct
 
 typedef struct
 {
-    timer_event_t events[64];
+    timer_event_t events[16];
     int events_len;
 } eventlist_t;
 
@@ -78,7 +73,7 @@ void el_fire_events(eventlist_t *events)
 {
     if (events->events_len > 0)
     {
-        printf("Send %d events to queue...\n", events->events_len);
+        ESP_LOGD(tag, "Send %d events to queue...\n", events->events_len);
         xQueueSendFromISR(el_event_queue, events, NULL);
     }
 }
@@ -136,6 +131,7 @@ static esp_err_t event_handler(void *ctx, system_event_t *sysevent)
         xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);
         break;
     default:
+        ESP_LOGE(tag, "UNKNOWN WIFI EVENT %d\n", sysevent->event_id);
         break;
     }
 
@@ -156,104 +152,114 @@ void init_timer(int timer_period_us, int handle)
     TimerHandle_t tmr = xTimerCreate("MyTimer", interval, pdFALSE, (void *)handle, vTimerCallback);
     if (xTimerStart(tmr, 10) != pdPASS)
     {
-        printf("Timer start error");
+        ESP_LOGE(tag, "Timer start error");
     }
 }
 
 void select_task(void *ignore)
 {
-    select_task_can_be_killed = true;
-    printf("Starting select task...\n");
+    select_task_must_be_killed = true;
+    ESP_LOGD(tag, "Starting select task...\n");
 
-    fd_set readset;
-    fd_set writeset;
-    fd_set errset;
-
-    int sockfd_max = -1;
-    FD_ZERO(&readset);
-    FD_ZERO(&writeset);
-    FD_ZERO(&errset);
-
-    //register not connected sockets for write ready event
-    for (int i = 0; i < notConnectedSockets_len; i++)
+    while (true)
     {
-        int sockfd = notConnectedSockets[i];
-        FD_SET(sockfd, &writeset);
-        FD_SET(sockfd, &errset);
-        if (sockfd > sockfd_max)
-        {
-            sockfd_max = sockfd;
-        }
-    }
+        select_task_must_be_killed = true;
+        ESP_LOGD(tag, "Starting next select loop.\n");
 
-    //register connected sockets for read ready event
-    for (int i = 0; i < connectedSockets_len; i++)
-    {
-        int sockfd = connectedSockets[i];
-        FD_SET(sockfd, &readset);
-        FD_SET(sockfd, &errset);
-        if (sockfd > sockfd_max)
+        if (notConnectedSockets_len + connectedSockets_len > 0)
         {
-            sockfd_max = sockfd;
-        }
-    }
+            fd_set readset;
+            fd_set writeset;
+            fd_set errset;
 
-    if (sockfd_max >= 0)
-    {
-        int ret = select(sockfd_max + 1, &readset, &writeset, &errset, NULL);
-        select_task_can_be_killed = false;
-        if (ret >= 0)
-        {
-            if (ret > 0)
+            int sockfd_max = -1;
+            FD_ZERO(&readset);
+            FD_ZERO(&writeset);
+            FD_ZERO(&errset);
+
+            //register not connected sockets for write ready event
+            for (int i = 0; i < notConnectedSockets_len; i++)
             {
-                eventlist_t events;
-                events.events_len = 0;
-
-                for (int i = 0; i < notConnectedSockets_len; i++)
+                int sockfd = notConnectedSockets[i];
+                FD_SET(sockfd, &writeset);
+                FD_SET(sockfd, &errset);
+                if (sockfd > sockfd_max)
                 {
-                    int sockfd = notConnectedSockets[i];
-                    if (FD_ISSET(sockfd, &errset))
-                    {
-                        timer_event_t event;
-                        el_create_event(&event, EL_SOCKET_EVENT_TYPE, EL_SOCKET_STATUS_ERROR, sockfd);
-                        el_add_event(&events, &event);
-                    }
-                    else if (FD_ISSET(sockfd, &writeset))
-                    {
-                        timer_event_t event;
-                        el_create_event(&event, EL_SOCKET_EVENT_TYPE, EL_SOCKET_STATUS_WRITE, sockfd);
-                        el_add_event(&events, &event);
-                    }
+                    sockfd_max = sockfd;
                 }
-                for (int i = 0; i < connectedSockets_len; i++)
-                {
-                    int sockfd = connectedSockets[i];
-                    if (FD_ISSET(sockfd, &errset))
-                    {
-                        timer_event_t event;
-                        el_create_event(&event, EL_SOCKET_EVENT_TYPE, EL_SOCKET_STATUS_ERROR, sockfd);
-                        el_add_event(&events, &event);
-                    }
-                    else if (FD_ISSET(sockfd, &readset))
-                    {
-                        timer_event_t event;
-                        el_create_event(&event, EL_SOCKET_EVENT_TYPE, EL_SOCKET_STATUS_READ, sockfd);
-                        el_add_event(&events, &event);
-                    }
-                }
+            }
 
-                printf("Fire all %d socket events!\n", events.events_len);
-                el_fire_events(&events);
+            //register connected sockets for read ready event
+            for (int i = 0; i < connectedSockets_len; i++)
+            {
+                int sockfd = connectedSockets[i];
+                FD_SET(sockfd, &readset);
+                FD_SET(sockfd, &errset);
+                if (sockfd > sockfd_max)
+                {
+                    sockfd_max = sockfd;
+                }
+            }
+
+            int ret = select(sockfd_max + 1, &readset, &writeset, &errset, NULL);
+            select_task_must_be_killed = false;
+            if (ret >= 0)
+            {
+                if (ret > 0)
+                {
+                    eventlist_t events;
+                    events.events_len = 0;
+
+                    for (int i = 0; i < notConnectedSockets_len; i++)
+                    {
+                        int sockfd = notConnectedSockets[i];
+                        if (FD_ISSET(sockfd, &errset))
+                        {
+                            timer_event_t event;
+                            el_create_event(&event, EL_SOCKET_EVENT_TYPE, EL_SOCKET_STATUS_ERROR, sockfd);
+                            el_add_event(&events, &event);
+                        }
+                        else if (FD_ISSET(sockfd, &writeset))
+                        {
+                            timer_event_t event;
+                            el_create_event(&event, EL_SOCKET_EVENT_TYPE, EL_SOCKET_STATUS_WRITE, sockfd);
+                            el_add_event(&events, &event);
+                        }
+                    }
+                    for (int i = 0; i < connectedSockets_len; i++)
+                    {
+                        int sockfd = connectedSockets[i];
+                        if (FD_ISSET(sockfd, &errset))
+                        {
+                            timer_event_t event;
+                            el_create_event(&event, EL_SOCKET_EVENT_TYPE, EL_SOCKET_STATUS_ERROR, sockfd);
+                            el_add_event(&events, &event);
+                        }
+                        else if (FD_ISSET(sockfd, &readset))
+                        {
+                            timer_event_t event;
+                            el_create_event(&event, EL_SOCKET_EVENT_TYPE, EL_SOCKET_STATUS_READ, sockfd);
+                            el_add_event(&events, &event);
+                        }
+                    }
+
+                    ESP_LOGD(tag, "Fire all %d socket events!\n", events.events_len);
+                    el_fire_events(&events);
+                }
+            }
+            else
+            {
+                ESP_LOGE(tag, "select returns ERROR\n");
             }
         }
-        else
-        {
-            printf("select returns ERROR\n");
-        }
+        //wait for next loop
+        ESP_LOGD(tag, "Select loop finished and now waits for next iteration.\n");
+        int trigger;
+        xQueueReceive(el_select_queue, &trigger, portMAX_DELAY);
     }
-    select_task_can_be_killed = false;
-    printf("select task kills himself now.\n");
-    vTaskDelete(NULL);
+    // ESP_LOGD(tag, "select task kills himself now.\n");
+    // select_task_must_be_killed = false;
+    // vTaskDelete(NULL);
 }
 
 void startSelectTask()
@@ -261,25 +267,108 @@ void startSelectTask()
     xTaskCreatePinnedToCore(&select_task, "select_task", 16 * 1024, NULL, 5, &stask, 1);
 }
 
+static duk_ret_t el_load(duk_context *ctx)
+{
+    int ret;
+    esp_err_t err;
+
+    const char *key = duk_to_string(ctx, 0);
+
+    nvs_handle my_handle;
+    err = nvs_open("storage", NVS_READWRITE, &my_handle);
+    if (err != ESP_OK)
+    {
+        ESP_LOGE(tag, "Error (%d) opening NVS!\n", err);
+        return -1;
+    }
+
+    size_t string_size;
+    err = nvs_get_str(my_handle, key, NULL, &string_size);
+    if (err < 0)
+    {
+        ESP_LOGE(tag, "Cannot get key %s from storage.\n", key);
+        ret = -1;
+    }
+    else
+    {
+        char *value = malloc(string_size);
+        err = nvs_get_str(my_handle, key, value, &string_size);
+        if (err < 0)
+        {
+            ESP_LOGE(tag, "Cannot get key %s from storage.\n", key);
+            ret = -1;
+        }
+        else
+        {
+            duk_push_string(ctx, value);
+            ret = 1;
+        }
+    }
+    err = nvs_commit(my_handle);
+    if (err < 0)
+    {
+        ESP_LOGE(tag, "Cannot commit changes.\n");
+        ret = -1;
+    }
+    nvs_close(my_handle);
+    return ret;
+}
+
+static duk_ret_t el_store(duk_context *ctx)
+{
+    int ret;
+    esp_err_t err;
+
+    const char *key = duk_to_string(ctx, 0);
+    const char *value = duk_to_string(ctx, 1);
+
+    ESP_LOGD(tag, "Opening Non-Volatile Storage (NVS) ... ");
+    nvs_handle my_handle;
+    err = nvs_open("storage", NVS_READWRITE, &my_handle);
+    if (err != ESP_OK)
+    {
+        ESP_LOGE(tag, "Error (%d) opening NVS!\n", err);
+        return -1;
+    }
+
+    err = nvs_set_str(my_handle, key, value);
+    if (err < 0)
+    {
+        ESP_LOGE(tag, "Cannot set key %s and value %s from storage.\n", key, value);
+        ret = -1;
+    }
+    else
+    {
+        ret = 0;
+    }
+
+    err = nvs_commit(my_handle);
+    if (err < 0)
+    {
+        ESP_LOGE(tag, "Cannot commit changes.\n");
+        ret = -1;
+    }
+    nvs_close(my_handle);
+    return ret;
+}
+
 static duk_ret_t el_registerSocketEvents(duk_context *ctx)
 {
-    int n;
-    int *sockfds;
+    int c_len, nc_len;
+    int *c_sockfds;
+    int *nc_sockfds;
 
     //not connected sockets
     if (duk_is_array(ctx, 0))
     {
-        n = duk_get_length(ctx, 0);
-        sockfds = (int *)calloc(n, sizeof(int));
-        for (int i = 0; i < n; i++)
+        nc_len = duk_get_length(ctx, 0);
+        nc_sockfds = (int *)calloc(nc_len, sizeof(int));
+        for (int i = 0; i < nc_len; i++)
         {
             duk_get_prop_index(ctx, 0, i);
-            sockfds[i] = duk_to_int(ctx, -1);
+            nc_sockfds[i] = duk_to_int(ctx, -1);
             duk_pop(ctx);
         }
-        free(notConnectedSockets);
-        notConnectedSockets_len = n;
-        notConnectedSockets = sockfds;
     }
     else
     {
@@ -290,22 +379,74 @@ static duk_ret_t el_registerSocketEvents(duk_context *ctx)
     //connected sockets
     if (duk_is_array(ctx, 1))
     {
-        n = duk_get_length(ctx, 1);
-        sockfds = (int *)calloc(n, sizeof(int));
-        for (int i = 0; i < n; i++)
+        c_len = duk_get_length(ctx, 1);
+        c_sockfds = (int *)calloc(c_len, sizeof(int));
+        for (int i = 0; i < c_len; i++)
         {
             duk_get_prop_index(ctx, 1, i);
-            sockfds[i] = duk_to_int(ctx, -1);
+            c_sockfds[i] = duk_to_int(ctx, -1);
             duk_pop(ctx);
         }
-        free(connectedSockets);
-        connectedSockets_len = n;
-        connectedSockets = sockfds;
     }
     else
     {
         //error
         return -1;
+    }
+
+    //check if there are changes between this and the previous call
+    bool changes = c_len != connectedSockets_len || nc_len != notConnectedSockets_len;
+    //deep check
+    if (!changes)
+    {
+        for (int i = 0; i < nc_len; i++)
+        {
+            if (notConnectedSockets[i] != nc_sockfds[i])
+            {
+                changes = true;
+                break;
+            }
+        }
+        if (!changes)
+        {
+            for (int i = 0; i < c_len; i++)
+            {
+                if (connectedSockets[i] != c_sockfds[i])
+                {
+                    changes = true;
+                    break;
+                }
+            }
+        }
+    }
+
+    if (changes)
+    {
+        //swap
+        free(notConnectedSockets);
+        notConnectedSockets_len = nc_len;
+        notConnectedSockets = nc_sockfds;
+
+        free(connectedSockets);
+        connectedSockets_len = c_len;
+        connectedSockets = c_sockfds;
+    }
+    else
+    {
+        free(nc_sockfds);
+        free(c_sockfds);
+    }
+
+    //manage select task loop
+    if (changes && select_task_must_be_killed)
+    {
+        vTaskDelete(stask);
+        startSelectTask();
+    }
+    else if (!select_task_must_be_killed)
+    {
+        int trigger = 1;
+        xQueueSendFromISR(el_select_queue, &trigger, NULL);
     }
 
     return 0;
@@ -411,10 +552,17 @@ static duk_ret_t el_readSocket(duk_context *ctx)
     char msg[len];
 
     int ret = readSocket(sockfd, msg, len - 1);
-    msg[ret] = '\0';
-
-    duk_push_string(ctx, msg);
-    return 1;
+    if (ret >= 0)
+    {
+        msg[ret] = '\0';
+        duk_push_string(ctx, msg);
+        return 1;
+    }
+    else
+    {
+        //error
+        return -1;
+    }
 }
 
 static duk_ret_t el_socket_stats(duk_context *ctx)
@@ -449,14 +597,16 @@ static duk_ret_t el_socket_stats(duk_context *ctx)
 
 static duk_ret_t connectWifi(duk_context *ctx)
 {
+
     const char *ssid = duk_to_string(ctx, 0);
     const char *pass = duk_to_string(ctx, 1);
 
-    tcpip_adapter_init();
-    wifi_event_group = xEventGroupCreate();
-    ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+
+    //stop current wifi connection
+    ESP_ERROR_CHECK(esp_wifi_stop());
+
     ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
     wifi_config_t wifi_config = {
         .sta = {},
@@ -464,7 +614,7 @@ static duk_ret_t connectWifi(duk_context *ctx)
     strcpy((char *)wifi_config.sta.ssid, ssid);
     strcpy((char *)wifi_config.sta.password, pass);
 
-    ESP_LOGI(tag, "Setting WiFi configuration SSID %s and PASS %s ...", wifi_config.sta.ssid, wifi_config.sta.password);
+    ESP_LOGD(tag, "Setting WiFi configuration SSID %s and PASS %s ...", wifi_config.sta.ssid, wifi_config.sta.password);
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
     ESP_ERROR_CHECK(esp_wifi_start());
@@ -488,7 +638,7 @@ static duk_ret_t native_print(duk_context *ctx)
 static duk_ret_t native_delay(duk_context *ctx)
 {
     int delay = duk_to_int32(ctx, 0);
-    printf("Waiting %dms...\n", delay);
+    ESP_LOGD(tag, "Waiting %dms...\n", delay);
     if (delay < 0)
     {
         delay = 0;
@@ -505,7 +655,7 @@ static duk_ret_t el_install_timer(duk_context *ctx)
     {
         delay = 0;
     }
-    printf("Install timer to notify in  %dms.\n", delay);
+    ESP_LOGD(tag, "Install timer to notify in  %dms.\n", delay);
     init_timer(delay, handle);
     return 0;
 }
@@ -514,13 +664,11 @@ static duk_ret_t el_suspend(duk_context *ctx)
 {
     eventlist_t events;
 
-    startSelectTask();
+    ESP_LOGD(tag, "Waiting for events...\n");
+
     xQueueReceive(el_event_queue, &events, portMAX_DELAY);
-    //delete select task
-    if (select_task_can_be_killed)
-    {
-        vTaskDelete(stask);
-    }
+
+    ESP_LOGD(tag, "Receiving %d events.\n", events.events_len);
 
     int arr_idx = duk_push_array(ctx);
     for (int i = 0; i < events.events_len; i++)
@@ -545,7 +693,7 @@ static duk_ret_t pinMode(duk_context *ctx)
     int pin = duk_to_int(ctx, 0);
     int dir = duk_to_int(ctx, 1);
 
-    printf("pin=%d dir=%d\n", pin, dir);
+    ESP_LOGD(tag, "pin=%d dir=%d\n", pin, dir);
 
     gpio_set_direction(pin, dir);
     return 0;
@@ -556,7 +704,7 @@ static duk_ret_t digitalWrite(duk_context *ctx)
     int pin = duk_to_int(ctx, 0);
     int level = duk_to_int(ctx, 1);
 
-    printf("pin=%d level=%d\n", pin, level);
+    ESP_LOGD(tag, "pin=%d level=%d\n", pin, level);
 
     gpio_set_level(pin, level);
     return 0;
@@ -567,12 +715,13 @@ static void my_fatal(void *udata, const char *msg)
     (void)udata; /* ignored in this case, silence warning */
 
     /* Note that 'msg' may be NULL. */
-    printf("*** FATAL ERROR: %s\n", (msg ? msg : "no message"));
+    ESP_LOGE(tag, "*** FATAL ERROR: %s\n", (msg ? msg : "no message"));
     abort();
 }
 
 void duktape_task(void *ignore)
 {
+    esp_log_level_set(tag, ESP_LOG_DEBUG);
     duk_context *ctx = duk_create_heap(NULL, NULL, NULL, NULL, my_fatal);
 
     duk_push_c_function(ctx, native_print, 1 /*nargs*/);
@@ -610,10 +759,10 @@ void duktape_task(void *ignore)
     duk_put_global_string(ctx, "el_connectNonBlocking");
 
     duk_push_c_function(ctx, el_bindAndListen, 2 /*nargs*/);
-    duk_put_global_string(ctx, "bindAndListen");
+    duk_put_global_string(ctx, "el_bindAndListen");
 
     duk_push_c_function(ctx, el_acceptIncoming, 1 /*nargs*/);
-    duk_put_global_string(ctx, "acceptIncoming");
+    duk_put_global_string(ctx, "el_acceptIncoming");
 
     duk_push_c_function(ctx, el_getSocketStatus, 1 /*nargs*/);
     duk_put_global_string(ctx, "getSocketStatus");
@@ -633,6 +782,12 @@ void duktape_task(void *ignore)
     duk_push_c_function(ctx, el_registerSocketEvents, 2 /*nargs*/);
     duk_put_global_string(ctx, "el_registerSocketEvents");
 
+    duk_push_c_function(ctx, el_load, 1 /*nargs*/);
+    duk_put_global_string(ctx, "el_load");
+
+    duk_push_c_function(ctx, el_store, 2 /*nargs*/);
+    duk_put_global_string(ctx, "el_store");
+
     char main_js[] = {
 #include "main.hex"
     };
@@ -641,12 +796,12 @@ void duktape_task(void *ignore)
 #include "eventloop.hex"
     };
 
-    printf("Loading main function...\n");
+    ESP_LOGI(tag, "Loading main function...\n");
     duk_eval_string_noresult(ctx, main_js);
-    printf("Loading and starting event loop...\n");
+    ESP_LOGI(tag, "Loading and starting event loop...\n");
     duk_eval_string_noresult(ctx, eventloop_js);
 
-    printf("Reaching end of event loop.\n");
+    ESP_LOGI(tag, "Reaching end of event loop.\n");
 
     //Return from task is not allowed
     vTaskDelete(NULL);
@@ -655,6 +810,13 @@ void duktape_task(void *ignore)
 void app_main()
 {
     nvs_flash_init();
+    tcpip_adapter_init();
+    wifi_event_group = xEventGroupCreate();
+    ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
+
     el_event_queue = xQueueCreate(10, sizeof(eventlist_t));
+    el_select_queue = xQueueCreate(10, sizeof(int));
+    startSelectTask();
+
     xTaskCreatePinnedToCore(&duktape_task, "duktape_task", 16 * 1024, NULL, 5, &task, 0);
 }

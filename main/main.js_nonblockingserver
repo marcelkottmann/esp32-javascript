@@ -1,0 +1,33 @@
+function main(num) {
+    var num = num || 1;
+    connectWifi('HAL9000-2.4', 'HalloDuArsch!!!', function (evt) {
+        if (evt.status === 0) {
+            print("WIFI: DISCONNECTED");
+        } else if (evt.status === 1) {
+            sockListen(9999,
+                function (socket) {
+                    socket.onData = function (data) {
+                        print('NEW SOCK: Received data:' + data);
+                    };
+                    socket.onConnect = function () {
+                        print('NEW SOCK: ON CONNECT');
+                    };
+                    socket.onError = function () {
+                        print('NEW SOCK: ON ERROR');
+                    };
+                    socket.onClose = function () {
+                        print('NEW SOCK: ON CLOSE');
+                    };
+                },
+                function () {
+                    print('ON ERROR');
+                },
+                function () {
+                    print('SOCKET WAS CLOSED!');
+                });
+
+        } else if (evt.status === 2) {
+            print("WIFI: CONNECTING...");
+        }
+    });
+}

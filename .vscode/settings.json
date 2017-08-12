@@ -5,6 +5,7 @@
         "freertos.h": "c",
         "api.h": "c",
         "err.h": "c",
-        "cerrno": "c"
+        "cerrno": "c",
+        "sockets.h": "c"
     }
 }

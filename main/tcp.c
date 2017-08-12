@@ -24,7 +24,7 @@ int createNonBlockingSocket()
     sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (sockfd < 0)
     {
-        printf("ERROR opening socket");
+        printf("ERROR opening socket\n");
         return -1;
     }
 
@@ -34,7 +34,7 @@ int createNonBlockingSocket()
     ret = lwip_fcntl(sockfd, F_SETFL, opt);
     if (ret < 0)
     {
-        printf("Cannot set non-blocking opt.");
+        printf("Cannot set non-blocking opt.\n");
         return -1;
     }
     return sockfd;
@@ -63,13 +63,9 @@ int connectNonBlocking(int sockfd, const char *hostname, int portno)
 
     /* connect: create a connection with the server */
     ret = connect(sockfd, &serveraddr, sizeof(serveraddr));
-    if (ret == 0)
+    if (ret == -1 && errno != EINPROGRESS)
     {
-        printf("WARNING: NON BLOCKING SOCKET WAS CONNECTED IMMEDIATELY - BLOCKED?");
-    }
-    else if (ret == -1 && errno != EINPROGRESS)
-    {
-        printf("ERROR connecting");
+        printf("ERROR connecting\n");
         return -1;
     }
     return 0;
@@ -102,13 +98,13 @@ int bindAndListen(int sockfd, int portno)
                sizeof(serveraddr));
     if (ret == -1)
     {
-        printf("ERROR binding");
+        printf("ERROR binding\n");
         return -1;
     }
 
     if (listen(sockfd, LISTEN_BACKLOG) == -1)
     {
-        printf("ERROR listening");
+        printf("ERROR listening\n");
         return -1;
     }
     return 0;
@@ -163,7 +159,7 @@ int *socket_stats(int *sockfds, int len_sockfds)
     }
 
     struct timeval timeout;
-    timeout.tv_sec = 5;
+    timeout.tv_sec = 0;
     timeout.tv_usec = 0;
 
     int ret = select(sockfd_max + 1, &readset, &writeset, &errset, &timeout);
@@ -186,7 +182,7 @@ int *socket_stats(int *sockfds, int len_sockfds)
     }
     else
     {
-        printf("select returns ERROR");
+        printf("select returns ERROR\n");
         return NULL;
     }
 }
@@ -197,7 +193,7 @@ int writeSocket(int sockfd, const char *msg)
     int n = write(sockfd, msg, strlen(msg));
     if (n < 0)
     {
-        printf("ERROR writing to socket");
+        printf("ERROR writing to socket\n");
         return n;
     }
     return n;
@@ -208,7 +204,7 @@ int readSocket(int sockfd, const char *msg, int len)
     int n = read(sockfd, msg, len);
     if (n < 0)
     {
-        printf("ERROR reading from socket");
+        printf("ERROR reading from socket\n");
         return -1;
     }
     return n;

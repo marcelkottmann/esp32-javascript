@@ -1,0 +1,30 @@
+function main(num) {
+    var num = num || 1;
+    connectWifi('HAL9000-2.4', 'HalloDuArsch!!!', function (evt) {
+        if (evt.status === 0) {
+            print("WIFI: DISCONNECTED");
+        } else if (evt.status === 1) {
+            sockConnect("www.heise.de", 80,
+                function (socket) {
+                    writeSocket(socket.sockfd, 'GET / HTTP/1.1\r\nHost: www.heise.de\r\nConnection: close\r\n\r\n');
+                },
+                function (data) {
+                    print(data);
+                },
+                function () {
+                    print('ON ERROR');
+                },
+                function () {
+                    print('SOCKET WAS CLOSED!');
+                    setTimeout(function () {
+                        print("TEST PROGRAM FINISHED SUCCESSFULLY =>" + num);
+                        setTimeout(function () {
+                            main(num + 1);
+                        }, 2000);
+                    }, 500);
+                });
+        } else if (evt.status === 2) {
+            print("WIFI: CONNECTING...");
+        }
+    });
+}
