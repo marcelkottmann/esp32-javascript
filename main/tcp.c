@@ -14,28 +14,31 @@
 #define BUFSIZE 1024
 #define LISTEN_BACKLOG 50
 
-int createNonBlockingSocket()
+int createNonBlockingSocket(int domain, int type, int protocol, bool nonblocking)
 {
     int sockfd;
     u32_t opt;
     int ret;
 
     /* socket: create the socket */
-    sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    sockfd = socket(domain, type, protocol);
     if (sockfd < 0)
     {
         printf("ERROR opening socket\n");
         return -1;
     }
 
-    //set non blocking (for connect)
-    opt = lwip_fcntl(sockfd, F_GETFL, 0);
-    opt |= O_NONBLOCK;
-    ret = lwip_fcntl(sockfd, F_SETFL, opt);
-    if (ret < 0)
+    if (nonblocking)
     {
-        printf("Cannot set non-blocking opt.\n");
-        return -1;
+        //set non blocking (for connect)
+        opt = lwip_fcntl(sockfd, F_GETFL, 0);
+        opt |= O_NONBLOCK;
+        ret = lwip_fcntl(sockfd, F_SETFL, opt);
+        if (ret < 0)
+        {
+            printf("Cannot set non-blocking opt.\n");
+            return -1;
+        }
     }
     return sockfd;
 }

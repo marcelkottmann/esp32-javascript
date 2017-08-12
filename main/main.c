@@ -20,6 +20,7 @@
 #include "freertos/timers.h"
 #include <lwip/sockets.h>
 #include "nvs.h"
+#include <netdb.h>
 
 static EventGroupHandle_t wifi_event_group;
 static const int CONNECTED_BIT = BIT0;
@@ -36,7 +37,10 @@ int notConnectedSockets_len = 0;
 int *notConnectedSockets = NULL;
 int connectedSockets_len = 0;
 int *connectedSockets = NULL;
-bool select_task_must_be_killed = false;
+
+int selectClientSocket = -1;
+int selectServerSocket = -1;
+struct sockaddr_in target;
 
 #define EL_TIMER_EVENT_TYPE 0
 #define EL_WIFI_EVENT_TYPE 1
@@ -156,17 +160,110 @@ void init_timer(int timer_period_us, int handle)
     }
 }
 
+int createSocketPair()
+{
+    struct sockaddr_in server;
+
+    ESP_LOGD(tag, "Start creating socket paair\n");
+    int bits = xEventGroupGetBits(wifi_event_group);
+    int connected = CONNECTED_BIT & bits;
+
+    if (connected)
+    {
+        int sd = createNonBlockingSocket(AF_INET, SOCK_DGRAM, 0, true);
+        if (sd >= 0)
+        {
+            int port = 6789;
+            //memset((char *)&server, 0, sizeof(server));
+            server.sin_family = AF_INET;
+            server.sin_addr.s_addr = htonl(INADDR_ANY);
+            server.sin_port = htons(port);
+
+            ESP_LOGD(tag, "Trying to bind socket %d...\n", sd);
+
+            if (bind(sd, (struct sockaddr *)&server, sizeof(server)) >= 0)
+            {
+                ESP_LOGD(tag, "Trying to create client socket...\n");
+
+                int sc = createNonBlockingSocket(AF_INET, SOCK_DGRAM, 0, true);
+
+                ESP_LOGD(tag, "Created socket pair: %d<-->%d\n", sd, sc);
+
+                ESP_LOGD(tag, "Send test data...\n");
+
+                // memset((char *)&target, 0, sizeof(target));
+                target.sin_family = AF_INET;
+                target.sin_port = htons(port);
+                inet_pton(AF_INET, "127.0.0.1", &(target.sin_addr));
+
+                if (sendto(sc, "test", 5, 0, &target, sizeof(target)) < 0)
+                {
+                    ESP_LOGE(tag, "Error sending test data to self-socket: %d\n", errno);
+                }
+                else
+                {
+                    ESP_LOGD(tag, "Trying to receive test data...\n");
+                    char msg[5] = "TEST";
+                    struct sockaddr_in remaddr;
+                    socklen_t addrlen = sizeof(remaddr);
+                    if (recvfrom(sd, msg, 5, 0, (struct sockaddr *)&remaddr, &addrlen) < 0)
+                    {
+                        ESP_LOGE(tag, "Error receiving test data from self-socket: %d\n", errno);
+                    }
+                    ESP_LOGD(tag, "Finished reading.\n");
+
+                    if (strcmp(msg, "test") == 0)
+                    {
+                        ESP_LOGI(tag, "Self-Socket Test successful!\n");
+
+                        selectClientSocket = sc;
+                        selectServerSocket = sd;
+                        ESP_LOGD(tag, "Successfully created socket pair: %d<-->%d\n", selectServerSocket, selectClientSocket);
+                        return 0;
+                    }
+                    else
+                    {
+                        ESP_LOGE(tag, "Self-socket test NOT successful: %s\n", msg);
+                    }
+                }
+                close(sc);
+            }
+            else
+            {
+                ESP_LOGE(tag, "Binding self-socket was unsuccessful: %d\n", errno);
+            }
+
+            close(sd);
+        }
+        else
+        {
+            ESP_LOGE(tag, "Self-socket could not be created: %d", errno);
+        }
+    }
+    else
+    {
+        ESP_LOGI(tag, "Skip until wifi connected: %d\n", errno);
+    }
+
+    ESP_LOGD(tag, "Could not create socket pair... no wifi?\n");
+    return -1;
+}
+
 void select_task(void *ignore)
 {
-    select_task_must_be_killed = true;
     ESP_LOGD(tag, "Starting select task...\n");
 
     while (true)
     {
-        select_task_must_be_killed = true;
         ESP_LOGD(tag, "Starting next select loop.\n");
 
-        if (notConnectedSockets_len + connectedSockets_len > 0)
+        // create socket pair
+        if (selectServerSocket < 0)
+        {
+            createSocketPair();
+        }
+
+        if (selectServerSocket >= 0 && (notConnectedSockets_len + connectedSockets_len) > 0)
         {
             fd_set readset;
             fd_set writeset;
@@ -201,8 +298,39 @@ void select_task(void *ignore)
                 }
             }
 
+            //set self-socket flag
+            //reset (read all data) from self socket
+            int dataAvailable;
+            if (ioctl(selectServerSocket, FIONREAD, &dataAvailable) < 0)
+            {
+                ESP_LOGE(tag, "Error getting data available from self-socket: %d.", errno);
+            }
+            ESP_LOGD(tag, "DATA AVAILABLE %d.\n", dataAvailable);
+            //read self-socket if flag is set
+            if (dataAvailable > 0)
+            {
+                char msg[dataAvailable];
+                struct sockaddr_in remaddr;
+                socklen_t addrlen = sizeof(remaddr);
+                if (recvfrom(selectServerSocket, msg, dataAvailable, 0, (struct sockaddr *)&remaddr, &addrlen) < 0)
+                {
+                    ESP_LOGE(tag, "READ self-socket FAILED: %d\n", errno);
+                }
+                else
+                {
+                    ESP_LOGD(tag, "READ of self-socket.\n");
+                }
+            }
+
+            FD_SET(selectServerSocket, &readset);
+            if (selectServerSocket > sockfd_max)
+            {
+                sockfd_max = selectServerSocket;
+            }
+            // self socket end
+
             int ret = select(sockfd_max + 1, &readset, &writeset, &errset, NULL);
-            select_task_must_be_killed = false;
+            ESP_LOGD(tag, "Select return %d.\n", ret);
             if (ret >= 0)
             {
                 if (ret > 0)
@@ -243,8 +371,15 @@ void select_task(void *ignore)
                         }
                     }
 
-                    ESP_LOGD(tag, "Fire all %d socket events!\n", events.events_len);
-                    el_fire_events(&events);
+                    if (events.events_len > 0)
+                    {
+                        ESP_LOGD(tag, "Fire all %d socket events!\n", events.events_len);
+                        el_fire_events(&events);
+                    }
+                    else
+                    {
+                        ESP_LOGD(tag, "No socket events to fire!\n");
+                    }
                 }
             }
             else
@@ -257,9 +392,6 @@ void select_task(void *ignore)
         int trigger;
         xQueueReceive(el_select_queue, &trigger, portMAX_DELAY);
     }
-    // ESP_LOGD(tag, "select task kills himself now.\n");
-    // select_task_must_be_killed = false;
-    // vTaskDelete(NULL);
 }
 
 void startSelectTask()
@@ -394,6 +526,7 @@ static duk_ret_t el_registerSocketEvents(duk_context *ctx)
         return -1;
     }
 
+    /*
     //check if there are changes between this and the previous call
     bool changes = c_len != connectedSockets_len || nc_len != notConnectedSockets_len;
     //deep check
@@ -422,39 +555,53 @@ static duk_ret_t el_registerSocketEvents(duk_context *ctx)
 
     if (changes)
     {
-        //swap
-        free(notConnectedSockets);
-        notConnectedSockets_len = nc_len;
-        notConnectedSockets = nc_sockfds;
+        */
+    //swap
+    free(notConnectedSockets);
+    notConnectedSockets_len = nc_len;
+    notConnectedSockets = nc_sockfds;
 
-        free(connectedSockets);
-        connectedSockets_len = c_len;
-        connectedSockets = c_sockfds;
+    free(connectedSockets);
+    connectedSockets_len = c_len;
+    connectedSockets = c_sockfds;
+
+    /*
     }
     else
     {
         free(nc_sockfds);
         free(c_sockfds);
     }
+*/
 
-    //manage select task loop
-    if (changes && select_task_must_be_killed)
+    ESP_LOGD(tag, "Trying to trigger the next select iteration... ");
+    //reset queue
+    xQueueReset(el_select_queue);
+
+    if (selectClientSocket >= 0)
     {
-        vTaskDelete(stask);
-        startSelectTask();
+        //interrupt select through self-socket
+        ESP_LOGD(tag, "Sending . to self-socket.");
+        if (sendto(selectClientSocket, ".", 1, 0, &target, sizeof(target)) < 0)
+        {
+            ESP_LOGE(tag, "Self-socket sending was NOT successful: %d\n", errno);
+        }
+        else
+        {
+            ESP_LOGD(tag, "Self-socket sending was successful.\n");
+        }
     }
-    else if (!select_task_must_be_killed)
-    {
-        int trigger = 1;
-        xQueueSendFromISR(el_select_queue, &trigger, NULL);
-    }
+
+    //trigger next select loop
+    int trigger = 1;
+    xQueueSendFromISR(el_select_queue, &trigger, NULL);
 
     return 0;
 }
 
 static duk_ret_t el_createNonBlockingSocket(duk_context *ctx)
 {
-    int sockfd = createNonBlockingSocket();
+    int sockfd = createNonBlockingSocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, true);
 
     duk_push_int(ctx, sockfd);
     return 1;

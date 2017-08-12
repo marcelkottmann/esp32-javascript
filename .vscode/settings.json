@@ -6,6 +6,9 @@
         "api.h": "c",
         "err.h": "c",
         "cerrno": "c",
-        "sockets.h": "c"
+        "sockets.h": "c",
+        "netdb.h": "c",
+        "errno.h": "c",
+        "esp_system.h": "c"
     }
 }

@@ -4,7 +4,7 @@ function main() {
             print("WIFI: DISCONNECTED");
         } else if (evt.status === 1) {
             var complete = '';
-            sockConnect("192.168.188.36", 80,
+            sockConnect("192.168.188.40", 80,
                 function (socket) {
                     writeSocket(socket.sockfd, 'GET /esp32.js HTTP/1.0\r\nHost: localhost\r\nConnection: close\r\n\r\n');
                 },
