@@ -124,6 +124,26 @@ static duk_ret_t el_connectNonBlocking(duk_context *ctx)
     return 1;
 }
 
+static duk_ret_t el_bindAndListen(duk_context *ctx)
+{
+    int sockfd = duk_to_int(ctx, 0);
+    int port = duk_to_int(ctx, 1);
+
+    int ret = bindAndListen(sockfd, port);
+    duk_push_int(ctx, ret);
+    return 1;
+}
+
+static duk_ret_t el_acceptIncoming(duk_context *ctx)
+{
+    int sockfd = duk_to_int(ctx, 0);
+
+    int ret = acceptIncoming(sockfd);
+
+    duk_push_int(ctx, ret);
+    return 1;
+}
+
 static duk_ret_t el_closeSocket(duk_context *ctx)
 {
     int socketfd = duk_to_int(ctx, 0);
@@ -166,7 +186,7 @@ static duk_ret_t el_getSocketStatus(duk_context *ctx)
     return 1;
 }
 
-static duk_ret_t el_socketWrite(duk_context *ctx)
+static duk_ret_t el_writeSocket(duk_context *ctx)
 {
     int sockfd = duk_to_int(ctx, 0);
     const char *msg = duk_to_string(ctx, 1);
@@ -177,7 +197,7 @@ static duk_ret_t el_socketWrite(duk_context *ctx)
     return 1;
 }
 
-static duk_ret_t el_socketRead(duk_context *ctx)
+static duk_ret_t el_readSocket(duk_context *ctx)
 {
     int sockfd = duk_to_int(ctx, 0);
 
@@ -387,14 +407,20 @@ void duktape_task(void *ignore)
     duk_push_c_function(ctx, el_connectNonBlocking, 3 /*nargs*/);
     duk_put_global_string(ctx, "connectNonBlocking");
 
+    duk_push_c_function(ctx, el_bindAndListen, 2 /*nargs*/);
+    duk_put_global_string(ctx, "bindAndListen");
+
+    duk_push_c_function(ctx, el_acceptIncoming, 1 /*nargs*/);
+    duk_put_global_string(ctx, "acceptIncoming");
+
     duk_push_c_function(ctx, el_getSocketStatus, 1 /*nargs*/);
     duk_put_global_string(ctx, "getSocketStatus");
 
-    duk_push_c_function(ctx, el_socketWrite, 2 /*nargs*/);
-    duk_put_global_string(ctx, "socketWrite");
+    duk_push_c_function(ctx, el_writeSocket, 2 /*nargs*/);
+    duk_put_global_string(ctx, "writeSocket");
 
-    duk_push_c_function(ctx, el_socketRead, 1 /*nargs*/);
-    duk_put_global_string(ctx, "socketRead");
+    duk_push_c_function(ctx, el_readSocket, 1 /*nargs*/);
+    duk_put_global_string(ctx, "readSocket");
 
     duk_push_c_function(ctx, el_closeSocket, 1 /*nargs*/);
     duk_put_global_string(ctx, "closeSocket");

@@ -5,11 +5,11 @@ function printSocketStatus(sockfd) {
 
         if (status.error) {
             closeSocket(sockfd);
-        } else if (status.readable) {
-            var cfd = acceptIncoming(sockfd);
-            writeSocket(cfd, "Helo Socket!");
-            closeSocket(cfd);
         } else {
+            if (status.readable && status.readable) {
+                var data = socketRead(sockfd);
+                socketWrite(sockfd, data);
+            }
             printSocketStatus(sockfd);
         }
     }, 1000);
@@ -23,11 +23,8 @@ function main() {
             print("WIFI: SUCCESSFULLY CONNECTED!!!!");
             var sockfd = createNonBlockingSocket();
             print("SOCKET CREATED: " + sockfd);
-            var ret = bindAndListen(sockfd, 9999);
+            var ret = connectNonBlocking(sockfd, '192.168.188.40', 9999);
             print("connect ret=" + ret);
-
-            pinMode(2, OUTPUT);
-            digitalWrite(2, HIGH);
 
             printSocketStatus(sockfd);
         } else if (evt.status === 2) {

@@ -12,6 +12,7 @@
 #include <netdb.h>
 
 #define BUFSIZE 1024
+#define LISTEN_BACKLOG 50
 
 int createNonBlockingSocket()
 {
@@ -49,7 +50,7 @@ int connectNonBlocking(int sockfd, const char *hostname, int portno)
     server = gethostbyname(hostname);
     if (server == NULL)
     {
-        fprintf(stderr, "ERROR, no such host as %s\n", hostname);
+        printf("ERROR, no such host as %s\n", hostname);
         return -1;
     }
 
@@ -69,6 +70,45 @@ int connectNonBlocking(int sockfd, const char *hostname, int portno)
     else if (ret == -1 && errno != EINPROGRESS)
     {
         printf("ERROR connecting");
+        return -1;
+    }
+    return 0;
+}
+
+int acceptIncoming(int sockfd)
+{
+    int cfd = accept(sockfd, NULL, NULL);
+    if (cfd < 0)
+    {
+        printf("ERROR while accepting\n");
+        return cfd;
+    }
+    return cfd;
+}
+
+int bindAndListen(int sockfd, int portno)
+{
+    int ret, n;
+    struct sockaddr_in serveraddr;
+
+    /* build the server's Internet address */
+    bzero((char *)&serveraddr, sizeof(serveraddr));
+    serveraddr.sin_family = AF_INET;
+    serveraddr.sin_port = htons(portno);
+
+    /* connect: create a connection with the server */
+
+    ret = bind(sockfd, (struct sockaddr *)&serveraddr,
+               sizeof(serveraddr));
+    if (ret == -1)
+    {
+        printf("ERROR binding");
+        return -1;
+    }
+
+    if (listen(sockfd, LISTEN_BACKLOG) == -1)
+    {
+        printf("ERROR listening");
         return -1;
     }
     return 0;
