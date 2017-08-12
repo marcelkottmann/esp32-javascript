@@ -144,7 +144,6 @@ int *socket_stats(int *sockfds, int len_sockfds)
     fd_set readset;
     fd_set writeset;
     fd_set errset;
-    struct timeval tv;
 
     int sockfd_max = -1;
     FD_ZERO(&readset);
@@ -163,9 +162,12 @@ int *socket_stats(int *sockfds, int len_sockfds)
         }
     }
 
-    tv.tv_sec = 0;
-    tv.tv_usec = 0;
-    int ret = select(sockfd_max + 1, &readset, &writeset, &errset, &tv);
+    struct timeval timeout;
+    timeout.tv_sec = 5;
+    timeout.tv_usec = 0;
+
+    int ret = select(sockfd_max + 1, &readset, &writeset, &errset, &timeout);
+    printf("RETURN VAL OF SELECT %d\n", ret);
     if (ret >= 0)
     {
         int *result = (int *)calloc(len_sockfds, sizeof(int));
@@ -184,6 +186,7 @@ int *socket_stats(int *sockfds, int len_sockfds)
     }
     else
     {
+        printf("select returns ERROR");
         return NULL;
     }
 }
