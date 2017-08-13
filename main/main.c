@@ -937,6 +937,10 @@ void duktape_task(void *ignore)
     duk_push_c_function(ctx, el_store, 2 /*nargs*/);
     duk_put_global_string(ctx, "el_store");
 
+    char config_js[] = {
+#include "config.hex"
+    };
+
     char main_js[] = {
 #include "main.hex"
     };
@@ -945,6 +949,8 @@ void duktape_task(void *ignore)
 #include "eventloop.hex"
     };
 
+    ESP_LOGI(tag, "Loading config...\n");
+    duk_eval_string_noresult(ctx, config_js);
     ESP_LOGI(tag, "Loading main function...\n");
     duk_eval_string_noresult(ctx, main_js);
     ESP_LOGI(tag, "Loading and starting event loop...\n");

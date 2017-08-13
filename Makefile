@@ -13,7 +13,7 @@ CFLAGS += -DLWIP_NETIF_LOOPBACK_MULTITHREADING=1
 CFLAGS += -DLWIP_LOOPBACK_MAX_PBUFS=10
 
 
-all_binaries: main/main.hex main/eventloop.hex 
+all_binaries: main/config.hex main/main.hex main/eventloop.hex 
 
 %.hex: %.js
 	bash -c "(cat $< && echo -n -e '\0') | xxd -i > $@"

@@ -1,13 +1,13 @@
 function main() {
     print("Trying to connect to Wifi from JS:");
-    connectWifi('XXX', 'XXX', function (evt) {
+    connectWifi(config.wlan.ssid, config.wlan.password, function (evt) {
         if (evt.status === 0) {
             print("WIFI: DISCONNECTED");
         } else if (evt.status === 1) {
             var complete = '';
-            sockConnect("192.168.188.40", 80,
+            sockConnect(config.ota.host, config.ota.port,
                 function (socket) {
-                    writeSocket(socket.sockfd, 'GET /esp32.js HTTP/1.0\r\nHost: localhost\r\nConnection: close\r\n\r\n');
+                    writeSocket(socket.sockfd, 'GET ' + config.ota.path + ' HTTP/1.0\r\nHost: localhost\r\nConnection: close\r\n\r\n');
                 },
                 function (data) {
                     complete = complete + data;
