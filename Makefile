@@ -12,5 +12,13 @@ CFLAGS += -DLWIP_NETIF_LOOPBACK=1
 CFLAGS += -DLWIP_NETIF_LOOPBACK_MULTITHREADING=1
 CFLAGS += -DLWIP_LOOPBACK_MAX_PBUFS=10
 
-include $(IDF_PATH)/make/project.mk
 
+all_binaries: main/main.hex main/eventloop.hex 
+
+%.hex: %.js
+	bash -c "(cat $< && echo -n -e '\0') | xxd -i > $@"
+
+clean:
+	rm -f main/*.hex
+
+include $(IDF_PATH)/make/project.mk
