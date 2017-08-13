@@ -1,6 +1,6 @@
 function main() {
     print("Trying to connect to Wifi from JS:");
-    connectWifi('HAL9000-2.4', 'HalloDuArsch!!!', function (evt) {
+    connectWifi('XXX', 'XXX', function (evt) {
         if (evt.status === 0) {
             print("WIFI: DISCONNECTED");
         } else if (evt.status === 1) {
