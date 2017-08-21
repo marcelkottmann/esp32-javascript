@@ -12,6 +12,8 @@ CFLAGS += -DLWIP_NETIF_LOOPBACK=1
 CFLAGS += -DLWIP_NETIF_LOOPBACK_MULTITHREADING=1
 CFLAGS += -DLWIP_LOOPBACK_MAX_PBUFS=10
 
+##
+CFLAGS += -DLOG_LOCAL_LEVEL=ESP_LOG_INFO
 
 all_binaries: main/config.hex main/main.hex main/eventloop.hex 
 

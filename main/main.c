@@ -1,4 +1,3 @@
-#define LOG_LOCAL_LEVEL ESP_LOG_INFO
 #include <stdio.h>
 #include <string.h>
 #include <stddef.h>
@@ -21,6 +20,7 @@
 #include <lwip/sockets.h>
 #include "nvs.h"
 #include <netdb.h>
+#include "rom/uart.h"
 
 static EventGroupHandle_t wifi_event_group;
 static const int CONNECTED_BIT = BIT0;
@@ -389,7 +389,7 @@ void select_task(void *ignore)
             }
             else
             {
-                ESP_LOGE(tag, "select returns ERROR\n");
+                ESP_LOGE(tag, "select returns ERROR: %d\n", errno);
             }
         }
         //wait for next loop
@@ -650,7 +650,7 @@ static duk_ret_t el_closeSocket(duk_context *ctx)
     return 0;
 }
 
-static duk_ret_t el_getSocketStatus(duk_context *ctx)
+static duk_ret_t getSocketStatus(duk_context *ctx)
 {
     fd_set readset;
     fd_set writeset;
@@ -685,7 +685,7 @@ static duk_ret_t el_getSocketStatus(duk_context *ctx)
     return 1;
 }
 
-static duk_ret_t el_writeSocket(duk_context *ctx)
+static duk_ret_t writeSocket_bind(duk_context *ctx)
 {
     int sockfd = duk_to_int(ctx, 0);
     const char *msg = duk_to_string(ctx, 1);
@@ -717,37 +717,7 @@ static duk_ret_t el_readSocket(duk_context *ctx)
     }
 }
 
-static duk_ret_t el_socket_stats(duk_context *ctx)
-{
-    if (duk_is_array(ctx, 0))
-    {
-        int n = duk_get_length(ctx, 0);
-        int sockfds[n];
-        for (int i = 0; i < n; i++)
-        {
-            duk_get_prop_index(ctx, 0, i);
-            sockfds[i] = duk_to_int(ctx, -1);
-            duk_pop(ctx);
-        }
-
-        int *stats = socket_stats(sockfds, n);
-        if (stats != NULL)
-        {
-            int arr_idx = duk_push_array(ctx);
-            for (int i = 0; i < n; i++)
-            {
-                duk_push_int(ctx, stats[i]);
-                duk_put_prop_index(ctx, arr_idx, i);
-            }
-            return 1;
-        }
-    }
-
-    //error
-    return -1;
-}
-
-static duk_ret_t connectWifi(duk_context *ctx)
+static duk_ret_t el_connectWifi(duk_context *ctx)
 {
 
     const char *ssid = duk_to_string(ctx, 0);
@@ -859,6 +829,12 @@ static duk_ret_t digitalWrite(duk_context *ctx)
     return 0;
 }
 
+static duk_ret_t info(duk_context *ctx)
+{
+    printf("ESP32 SDK version:%s, RAM left %d\n", system_get_sdk_version(), system_get_free_heap_size());
+    return 0;
+}
+
 static void my_fatal(void *udata, const char *msg)
 {
     (void)udata; /* ignored in this case, silence warning */
@@ -878,19 +854,41 @@ void duktape_task(void *ignore)
 
     duk_push_int(ctx, GPIO_MODE_INPUT);
     duk_put_global_string(ctx, "INPUT");
+    
     duk_push_int(ctx, GPIO_MODE_OUTPUT);
     duk_put_global_string(ctx, "OUTPUT");
+    
     duk_push_c_function(ctx, pinMode, 2 /*nargs*/);
     duk_put_global_string(ctx, "pinMode");
+    
     duk_push_c_function(ctx, digitalWrite, 2 /*nargs*/);
     duk_put_global_string(ctx, "digitalWrite");
+    
     duk_push_int(ctx, 1);
     duk_put_global_string(ctx, "HIGH");
+
     duk_push_int(ctx, 0);
     duk_put_global_string(ctx, "LOW");
 
+    duk_push_c_function(ctx, info, 0 /*nargs*/);
+    duk_put_global_string(ctx, "info");
+
+    duk_push_c_function(ctx, getSocketStatus, 1 /*nargs*/);
+    duk_put_global_string(ctx, "getSocketStatus");
+
     duk_push_c_function(ctx, native_delay, 1 /*nargs*/);
     duk_put_global_string(ctx, "delay");
+
+    duk_push_c_function(ctx, writeSocket_bind, 2 /*nargs*/);
+    duk_put_global_string(ctx, "writeSocket");
+
+    duk_push_c_function(ctx, el_readSocket, 1 /*nargs*/);
+    duk_put_global_string(ctx, "readSocket");
+
+    duk_push_c_function(ctx, el_closeSocket, 1 /*nargs*/);
+    duk_put_global_string(ctx, "closeSocket");
+
+    // internal functions. use on your own risk:
 
     duk_push_c_function(ctx, el_suspend, 1 /*nargs*/);
     duk_put_global_string(ctx, "el_suspend");
@@ -898,8 +896,8 @@ void duktape_task(void *ignore)
     duk_push_c_function(ctx, el_install_timer, 2 /*nargs*/);
     duk_put_global_string(ctx, "el_install_timer");
 
-    duk_push_c_function(ctx, connectWifi, 2 /*nargs*/);
-    duk_put_global_string(ctx, "connectWifiInternal");
+    duk_push_c_function(ctx, el_connectWifi, 2 /*nargs*/);
+    duk_put_global_string(ctx, "el_connectWifi");
 
     duk_push_c_function(ctx, el_createNonBlockingSocket, 0 /*nargs*/);
     duk_put_global_string(ctx, "el_createNonBlockingSocket");
@@ -912,21 +910,6 @@ void duktape_task(void *ignore)
 
     duk_push_c_function(ctx, el_acceptIncoming, 1 /*nargs*/);
     duk_put_global_string(ctx, "el_acceptIncoming");
-
-    duk_push_c_function(ctx, el_getSocketStatus, 1 /*nargs*/);
-    duk_put_global_string(ctx, "getSocketStatus");
-
-    duk_push_c_function(ctx, el_writeSocket, 2 /*nargs*/);
-    duk_put_global_string(ctx, "writeSocket");
-
-    duk_push_c_function(ctx, el_readSocket, 1 /*nargs*/);
-    duk_put_global_string(ctx, "readSocket");
-
-    duk_push_c_function(ctx, el_closeSocket, 1 /*nargs*/);
-    duk_put_global_string(ctx, "closeSocket");
-
-    duk_push_c_function(ctx, el_socket_stats, 1 /*nargs*/);
-    duk_put_global_string(ctx, "el_socket_stats");
 
     duk_push_c_function(ctx, el_registerSocketEvents, 2 /*nargs*/);
     duk_put_global_string(ctx, "el_registerSocketEvents");
@@ -977,38 +960,18 @@ void app_main()
     xTaskCreatePinnedToCore(&duktape_task, "duktape_task", 16 * 1024, NULL, 5, &task, 0);
 }
 
-void task1(void *ignore)
-{
-    printf("task1\n");
-    vTaskDelay(3000 / portTICK_PERIOD_MS);
-
-    xSemaphoreTake(xSemaphore, portMAX_DELAY);
-    printf("task1: after take\n");
-
-    printf("task1: trying to give\n");
-    xSemaphoreGive(xSemaphore);
-
-    vTaskDelete(NULL);
-}
-
-void task2(void *ignore)
-{
-    printf("task2\n");
-
-    printf("task2: trying to give\n");
-    xSemaphoreGive(xSemaphore);
-
-    xSemaphoreTake(xSemaphore, portMAX_DELAY);
-    printf("task2: after take\n");
-
-    vTaskDelete(NULL);
-}
-
 /*
 void app_main()
 {
-    xSemaphore = xSemaphoreCreateBinary();
-    xTaskCreatePinnedToCore(&task1, "task1", 6 * 1024, NULL, 5, &task, 0);
-    xTaskCreatePinnedToCore(&task2, "task2", 6 * 1024, NULL, 5, &stask, 0);
+    while (true)
+    {
+        uint8_t in;
+        STATUS s = uart_rx_one_char(&in);
+        if (s == OK)
+        {
+            printf("%c", in);
+        }
+        portYIELD();
+    }
 }
 */

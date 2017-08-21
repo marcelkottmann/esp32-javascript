@@ -13,7 +13,7 @@ function main() {
                     complete = complete + data;
                 },
                 function () {
-                    print('ON ERROR');
+                    print('Could not load http://' + config.ota.host + ':' + config.ota.port + config.ota.path);
                 },
                 function () {
                     var i = complete.indexOf('\r\n\r\n') + 4;

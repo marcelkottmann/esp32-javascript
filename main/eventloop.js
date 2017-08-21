@@ -18,7 +18,7 @@ try {
     function sockConnect(host, port, onConnect, onData, onError, onClose) {
         var sockfd = el_createNonBlockingSocket();
         el_connectNonBlocking(sockfd, host, port);
-        sockets.push({
+        var socket = {
             sockfd: sockfd,
             onData: onData,
             onConnect: onConnect,
@@ -27,7 +27,9 @@ try {
             isConnected: false,
             isError: false,
             isListening: false
-        });
+        };
+        sockets.push(socket);
+        return socket;
     }
 
     function sockListen(port, onAccept, onError, onClose) {
@@ -37,8 +39,9 @@ try {
             if (onError) {
                 onError();
             }
+            return null;
         } else {
-            sockets.push({
+            var socket = {
                 sockfd: sockfd,
                 onAccept: function () {
                     var newsockfd = el_acceptIncoming(sockfd);
@@ -58,7 +61,9 @@ try {
                 isConnected: true,
                 isError: false,
                 isListening: true
-            });
+            };
+            sockets.push(socket);
+            return socket;
         }
     }
 
@@ -66,7 +71,7 @@ try {
         wifi = {
             status: status,
         };
-        connectWifiInternal(ssid, password);
+        el_connectWifi(ssid, password);
     }
 
     function removeSocketFromSockets(sockfd) {
@@ -99,60 +104,75 @@ try {
 
         // print('EVENTLOOP RECEIVES EVENTS:');
         // print(JSON.stringify(events));
-
+        var collected = [];
         for (var evid = 0; evid < events.length; evid++) {
             var evt = events[evid];
             if (evt.type === 0) { //TIMER EVENT
+                var nextTimer = null;
                 for (var timerIdx = 0; timerIdx < timers.length; timerIdx++) {
                     if (timers[timerIdx].handle === evt.status) {
-                        var nextTimer = timers.splice(timerIdx, 1)[0];
-                        return nextTimer.fn;
+                        nextTimer = timers.splice(timerIdx, 1)[0];
+                        collected.push(nextTimer.fn);
                     }
                 }
-                throw "UNKNOWN TIMER HANDLE!!!";
+                if (!nextTimer) {
+                    throw "UNKNOWN TIMER HANDLE!!!";
+                }
             } else if (evt.type === 1) { //WIFI EVENT
-                return wifi.status.bind(this, evt);
+                collected.push(wifi.status.bind(this, evt));
             } else if (evt.type === 2) { //SOCKET EVENT
                 var findSocket = sockets.filter(function (s) { return s.sockfd === evt.fd; });
                 var socket = findSocket[0];
-                if (evt.status === 0) //writable
-                {
-                    socket.isConnected = true;
-                    return socket.onConnect.bind(this, socket);
-                } else if (evt.status === 1) //readable
-                {
-                    if (socket.isListening) {
-                        return socket.onAccept;
-                    } else {
-                        var data = readSocket(socket.sockfd);
-                        if (data.length == 0) {
-                            closeSocket(socket.sockfd);
-                            removeSocketFromSockets(socket.sockfd);
-                            return socket.onClose;
-                        } else {
-                            return socket.onData ? socket.onData.bind(this, data) : undefined;
+                if (socket) {
+                    if (evt.status === 0) //writable
+                    {
+                        socket.isConnected = true;
+                        if (socket.onConnect) {
+                            collected.push(socket.onConnect.bind(this, socket));
                         }
+                    } else if (evt.status === 1) //readable
+                    {
+                        if (socket.isListening && socket.onAccept) {
+                            collected.push(socket.onAccept);
+                        } else {
+                            var data = readSocket(socket.sockfd);
+                            if (data.length == 0) {
+                                closeSocket(socket.sockfd);
+                                removeSocketFromSockets(socket.sockfd);
+                                if (socket.onClose) {
+                                    collected.push(socket.onClose);
+                                }
+                            } else {
+                                if (socket.onData) {
+                                    collected.push(socket.onData.bind(this, data));
+                                }
+                            }
+                        }
+                    } else if (evt.status === 2) //error
+                    {
+                        socket.isError = true;
+                        collected.push(socket.onError);
+                    } else {
+                        throw "UNKNOWN socket event status " + evt.status;
                     }
-                } else if (evt.status === 2) //error
-                {
-                    socket.isError = true;
-                    return socket.onError;
-                } else {
-                    throw "UNKNOWN socket event status " + evt.status;
                 }
             } else {
                 throw "UNKNOWN eventType " + eventType;
             }
         }
+        return collected;
     }
 
-    nextfunc = main;
+
+    nextfuncs = [main];
     while (true) {
-        if (nextfunc) {
-            nextfunc();
+        for (var i = 0; i < nextfuncs.length; i++) {
+            if (nextfuncs[i]) {
+                nextfuncs[i]();
+            }
         }
-        nextfunc = el_select_next();
+        nextfuncs = el_select_next();
     }
 } catch (error) {
-    print('JS ERROR: ' + error);
+    print('JS ERROR: ' + error + '\"' + error.message + '\" (' + error.lineNumber + ')');
 }
