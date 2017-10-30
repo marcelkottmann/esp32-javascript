@@ -1,7 +1,27 @@
-/* 
- * tcpclient.c - A simple TCP client
- * usage: tcpclient <host> <port>
- */
+/*
+MIT License
+
+Copyright (c) 2017 Marcel Kottmann
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -65,7 +85,7 @@ int connectNonBlocking(int sockfd, const char *hostname, int portno)
     serveraddr.sin_port = htons(portno);
 
     /* connect: create a connection with the server */
-    ret = connect(sockfd, &serveraddr, sizeof(serveraddr));
+    ret = connect(sockfd, (const sockaddr*)&serveraddr, sizeof(serveraddr));
     if (ret == -1 && errno != EINPROGRESS)
     {
         printf("ERROR connecting\n");
@@ -77,10 +97,14 @@ int connectNonBlocking(int sockfd, const char *hostname, int portno)
 int acceptIncoming(int sockfd)
 {
     int cfd = accept(sockfd, NULL, NULL);
-    if (cfd < 0)
+    if (cfd < 0 && (errno != EAGAIN))
     {
         printf("ERROR while accepting: %d\n", errno);
-        return cfd;
+    }
+    else
+    {
+        int one = 1;
+        setsockopt(cfd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
     }
     return cfd;
 }
@@ -138,7 +162,7 @@ int checkSockets(int *socketfds, int len_socketfds, fd_set *readset, fd_set *wri
     return select(sockfd_max + 1, readset, writeset, errset, &tv);
 }
 
-int *socket_stats(int *sockfds, int len_sockfds)
+/*int *socket_stats(int *sockfds, int len_sockfds)
 {
     fd_set readset;
     fd_set writeset;
@@ -188,7 +212,7 @@ int *socket_stats(int *sockfds, int len_sockfds)
         printf("select returns ERROR\n");
         return NULL;
     }
-}
+}*/
 
 int writeSocket(int sockfd, const char *msg)
 {
@@ -202,9 +226,9 @@ int writeSocket(int sockfd, const char *msg)
     return n;
 }
 
-int readSocket(int sockfd, const char *msg, int len)
+int readSocket(int sockfd, char *msg, int len)
 {
-    int n = read(sockfd, msg, len);
+    int n = recv(sockfd, msg, len, MSG_DONTWAIT);
     if (n < 0)
     {
         printf("ERROR reading from socket\n");

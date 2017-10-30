@@ -9,6 +9,10 @@
         "sockets.h": "c",
         "netdb.h": "c",
         "errno.h": "c",
-        "esp_system.h": "c"
+        "esp_system.h": "c",
+        "ws2812.h": "c",
+        "esp32-hal-gpio.h": "c",
+        "*.hex": "c",
+        "socket.h": "c"
     }
 }

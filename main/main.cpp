@@ -1,3 +1,27 @@
+/*
+MIT License
+
+Copyright (c) 2017 Marcel Kottmann
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
 #include <stdio.h>
 #include <string.h>
 #include <stddef.h>
@@ -21,6 +45,10 @@
 #include "nvs.h"
 #include <netdb.h>
 #include "rom/uart.h"
+#include "ws2812.h"
+#include "esp32-hal-gpio.h"
+#include "esp32-hal-ledc.h"
+#include "pins_arduino.h"
 
 static EventGroupHandle_t wifi_event_group;
 static const int CONNECTED_BIT = BIT0;
@@ -70,13 +98,13 @@ typedef struct
     int events_len;
 } eventlist_t;
 
-void el_add_event(eventlist_t *events, timer_event_t *event)
+void IRAM_ATTR el_add_event(eventlist_t *events, timer_event_t *event)
 {
     events->events[events->events_len] = *event;
     events->events_len = events->events_len + 1;
 }
 
-void el_fire_events(eventlist_t *events)
+void IRAM_ATTR el_fire_events(eventlist_t *events)
 {
     if (events->events_len > 0)
     {
@@ -85,14 +113,14 @@ void el_fire_events(eventlist_t *events)
     }
 }
 
-void el_create_event(timer_event_t *event, int type, int status, int fd)
+void IRAM_ATTR el_create_event(timer_event_t *event, int type, int status, int fd)
 {
     event->type = type;
     event->status = status;
     event->fd = fd;
 }
 
-void vTimerCallback(TimerHandle_t xTimer)
+void IRAM_ATTR vTimerCallback(TimerHandle_t xTimer)
 {
     timer_event_t event;
     eventlist_t events;
@@ -105,7 +133,7 @@ void vTimerCallback(TimerHandle_t xTimer)
     el_fire_events(&events);
 }
 
-static esp_err_t event_handler(void *ctx, system_event_t *sysevent)
+static IRAM_ATTR esp_err_t event_handler(void *ctx, system_event_t *sysevent)
 {
     eventlist_t events;
     events.events_len = 0;
@@ -126,8 +154,6 @@ static esp_err_t event_handler(void *ctx, system_event_t *sysevent)
         el_add_event(&events, &event);
         break;
     case SYSTEM_EVENT_STA_DISCONNECTED:
-        xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);
-
         el_create_event(&event, EL_WIFI_EVENT_TYPE, EL_WIFI_STATUS_DISCONNECTED, 0);
         el_add_event(&events, &event);
 
@@ -138,6 +164,16 @@ static esp_err_t event_handler(void *ctx, system_event_t *sysevent)
        auto-reassociate. */
         esp_wifi_connect();
         xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);
+        break;
+    case SYSTEM_EVENT_AP_START:
+        xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);
+        el_create_event(&event, EL_WIFI_EVENT_TYPE, EL_WIFI_STATUS_CONNECTED, 0);
+        el_add_event(&events, &event);
+        break;
+    case SYSTEM_EVENT_AP_STOP:
+        xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);
+        el_create_event(&event, EL_WIFI_EVENT_TYPE, EL_WIFI_STATUS_DISCONNECTED, 0);
+        el_add_event(&events, &event);
         break;
     default:
         ESP_LOGE(tag, "UNKNOWN WIFI EVENT %d\n", sysevent->event_id);
@@ -201,7 +237,7 @@ int createSocketPair()
                 target.sin_port = htons(port);
                 inet_pton(AF_INET, "127.0.0.1", &(target.sin_addr));
 
-                if (sendto(sc, "test", 5, 0, &target, sizeof(target)) < 0)
+                if (sendto(sc, "test", 5, 0, (const sockaddr*)&target, sizeof(target)) < 0)
                 {
                     ESP_LOGE(tag, "Error sending test data to self-socket: %d\n", errno);
                 }
@@ -247,11 +283,151 @@ int createSocketPair()
     }
     else
     {
-        ESP_LOGI(tag, "Skip until wifi connected: %d\n", errno);
+        ESP_LOGD(tag, "Skip until wifi connected: %d\n", errno);
     }
 
     ESP_LOGD(tag, "Could not create socket pair... no wifi?\n");
     return -1;
+}
+
+void select_task_it()
+{
+
+    // create socket pair
+    if (selectServerSocket < 0)
+    {
+        createSocketPair();
+    }
+
+    if (selectServerSocket >= 0 && (notConnectedSockets_len + connectedSockets_len) > 0)
+    {
+        fd_set readset;
+        fd_set writeset;
+        fd_set errset;
+
+        int sockfd_max = -1;
+        FD_ZERO(&readset);
+        FD_ZERO(&writeset);
+        FD_ZERO(&errset);
+
+        //register not connected sockets for write ready event
+        for (int i = 0; i < notConnectedSockets_len; i++)
+        {
+            int sockfd = notConnectedSockets[i];
+            FD_SET(sockfd, &writeset);
+            FD_SET(sockfd, &errset);
+            if (sockfd > sockfd_max)
+            {
+                sockfd_max = sockfd;
+            }
+        }
+
+        //register connected sockets for read ready event
+        for (int i = 0; i < connectedSockets_len; i++)
+        {
+            int sockfd = connectedSockets[i];
+            FD_SET(sockfd, &readset);
+            FD_SET(sockfd, &errset);
+            if (sockfd > sockfd_max)
+            {
+                sockfd_max = sockfd;
+            }
+        }
+
+        //set self-socket flag
+        //reset (read all data) from self socket
+        int dataAvailable;
+        if (ioctl(selectServerSocket, FIONREAD, &dataAvailable) < 0)
+        {
+            ESP_LOGE(tag, "Error getting data available from self-socket: %d.", errno);
+        }
+        ESP_LOGD(tag, "DATA AVAILABLE %d.\n", dataAvailable);
+        //read self-socket if flag is set
+        if (dataAvailable > 0)
+        {
+            char msg[dataAvailable];
+            struct sockaddr_in remaddr;
+            socklen_t addrlen = sizeof(remaddr);
+            if (recvfrom(selectServerSocket, msg, dataAvailable, 0, (struct sockaddr *)&remaddr, &addrlen) < 0)
+            {
+                ESP_LOGE(tag, "READ self-socket FAILED: %d\n", errno);
+            }
+            else
+            {
+                ESP_LOGD(tag, "READ of self-socket.\n");
+            }
+        }
+
+        FD_SET(selectServerSocket, &readset);
+        if (selectServerSocket > sockfd_max)
+        {
+            sockfd_max = selectServerSocket;
+        }
+        // self socket end
+        int ret = select(sockfd_max + 1, &readset, &writeset, &errset, NULL);
+        needsUnblock = true;
+        ESP_LOGD(tag, "Select return %d.\n", ret);
+        if (ret >= 0)
+        {
+            if (ret > 0)
+            {
+                eventlist_t events;
+                events.events_len = 0;
+
+                for (int i = 0; i < notConnectedSockets_len; i++)
+                {
+                    int sockfd = notConnectedSockets[i];
+                    if (FD_ISSET(sockfd, &errset))
+                    {
+                        timer_event_t event;
+                        el_create_event(&event, EL_SOCKET_EVENT_TYPE, EL_SOCKET_STATUS_ERROR, sockfd);
+                        el_add_event(&events, &event);
+                    }
+                    else if (FD_ISSET(sockfd, &writeset))
+                    {
+                        timer_event_t event;
+                        el_create_event(&event, EL_SOCKET_EVENT_TYPE, EL_SOCKET_STATUS_WRITE, sockfd);
+                        el_add_event(&events, &event);
+                    }
+                }
+                for (int i = 0; i < connectedSockets_len; i++)
+                {
+                    int sockfd = connectedSockets[i];
+                    if (FD_ISSET(sockfd, &errset))
+                    {
+                        timer_event_t event;
+                        el_create_event(&event, EL_SOCKET_EVENT_TYPE, EL_SOCKET_STATUS_ERROR, sockfd);
+                        el_add_event(&events, &event);
+                    }
+                    else if (FD_ISSET(sockfd, &readset))
+                    {
+                        timer_event_t event;
+                        el_create_event(&event, EL_SOCKET_EVENT_TYPE, EL_SOCKET_STATUS_READ, sockfd);
+                        el_add_event(&events, &event);
+                    }
+                }
+
+                if (events.events_len > 0)
+                {
+                    ESP_LOGD(tag, "Fire all %d socket events!\n", events.events_len);
+                    el_fire_events(&events);
+                }
+                else
+                {
+                    ESP_LOGD(tag, "No socket events to fire!\n");
+                }
+            }
+        }
+        else
+        {
+            ESP_LOGE(tag, "select returns ERROR: %d\n", errno);
+        }
+    }
+    //wait for next loop
+    needsUnblock = true;
+    ESP_LOGD(tag, "Select loop finished and now waits for next iteration.\n");
+    xSemaphoreTake(xSemaphore, portMAX_DELAY);
+    needsUnblock = false;
 }
 
 void select_task(void *ignore)
@@ -261,142 +437,7 @@ void select_task(void *ignore)
     while (true)
     {
         ESP_LOGD(tag, "Starting next select loop.\n");
-
-        // create socket pair
-        if (selectServerSocket < 0)
-        {
-            createSocketPair();
-        }
-
-        if (selectServerSocket >= 0 && (notConnectedSockets_len + connectedSockets_len) > 0)
-        {
-            fd_set readset;
-            fd_set writeset;
-            fd_set errset;
-
-            int sockfd_max = -1;
-            FD_ZERO(&readset);
-            FD_ZERO(&writeset);
-            FD_ZERO(&errset);
-
-            //register not connected sockets for write ready event
-            for (int i = 0; i < notConnectedSockets_len; i++)
-            {
-                int sockfd = notConnectedSockets[i];
-                FD_SET(sockfd, &writeset);
-                FD_SET(sockfd, &errset);
-                if (sockfd > sockfd_max)
-                {
-                    sockfd_max = sockfd;
-                }
-            }
-
-            //register connected sockets for read ready event
-            for (int i = 0; i < connectedSockets_len; i++)
-            {
-                int sockfd = connectedSockets[i];
-                FD_SET(sockfd, &readset);
-                FD_SET(sockfd, &errset);
-                if (sockfd > sockfd_max)
-                {
-                    sockfd_max = sockfd;
-                }
-            }
-
-            //set self-socket flag
-            //reset (read all data) from self socket
-            int dataAvailable;
-            if (ioctl(selectServerSocket, FIONREAD, &dataAvailable) < 0)
-            {
-                ESP_LOGE(tag, "Error getting data available from self-socket: %d.", errno);
-            }
-            ESP_LOGD(tag, "DATA AVAILABLE %d.\n", dataAvailable);
-            //read self-socket if flag is set
-            if (dataAvailable > 0)
-            {
-                char msg[dataAvailable];
-                struct sockaddr_in remaddr;
-                socklen_t addrlen = sizeof(remaddr);
-                if (recvfrom(selectServerSocket, msg, dataAvailable, 0, (struct sockaddr *)&remaddr, &addrlen) < 0)
-                {
-                    ESP_LOGE(tag, "READ self-socket FAILED: %d\n", errno);
-                }
-                else
-                {
-                    ESP_LOGD(tag, "READ of self-socket.\n");
-                }
-            }
-
-            FD_SET(selectServerSocket, &readset);
-            if (selectServerSocket > sockfd_max)
-            {
-                sockfd_max = selectServerSocket;
-            }
-            // self socket end
-            int ret = select(sockfd_max + 1, &readset, &writeset, &errset, NULL);
-            needsUnblock = true;
-            ESP_LOGD(tag, "Select return %d.\n", ret);
-            if (ret >= 0)
-            {
-                if (ret > 0)
-                {
-                    eventlist_t events;
-                    events.events_len = 0;
-
-                    for (int i = 0; i < notConnectedSockets_len; i++)
-                    {
-                        int sockfd = notConnectedSockets[i];
-                        if (FD_ISSET(sockfd, &errset))
-                        {
-                            timer_event_t event;
-                            el_create_event(&event, EL_SOCKET_EVENT_TYPE, EL_SOCKET_STATUS_ERROR, sockfd);
-                            el_add_event(&events, &event);
-                        }
-                        else if (FD_ISSET(sockfd, &writeset))
-                        {
-                            timer_event_t event;
-                            el_create_event(&event, EL_SOCKET_EVENT_TYPE, EL_SOCKET_STATUS_WRITE, sockfd);
-                            el_add_event(&events, &event);
-                        }
-                    }
-                    for (int i = 0; i < connectedSockets_len; i++)
-                    {
-                        int sockfd = connectedSockets[i];
-                        if (FD_ISSET(sockfd, &errset))
-                        {
-                            timer_event_t event;
-                            el_create_event(&event, EL_SOCKET_EVENT_TYPE, EL_SOCKET_STATUS_ERROR, sockfd);
-                            el_add_event(&events, &event);
-                        }
-                        else if (FD_ISSET(sockfd, &readset))
-                        {
-                            timer_event_t event;
-                            el_create_event(&event, EL_SOCKET_EVENT_TYPE, EL_SOCKET_STATUS_READ, sockfd);
-                            el_add_event(&events, &event);
-                        }
-                    }
-
-                    if (events.events_len > 0)
-                    {
-                        ESP_LOGD(tag, "Fire all %d socket events!\n", events.events_len);
-                        el_fire_events(&events);
-                    }
-                    else
-                    {
-                        ESP_LOGD(tag, "No socket events to fire!\n");
-                    }
-                }
-            }
-            else
-            {
-                ESP_LOGE(tag, "select returns ERROR: %d\n", errno);
-            }
-        }
-        //wait for next loop
-        needsUnblock = true;
-        ESP_LOGD(tag, "Select loop finished and now waits for next iteration.\n");
-        xSemaphoreTake(xSemaphore, portMAX_DELAY);
-        needsUnblock = false;
+        select_task_it();
     }
 }
 
@@ -413,7 +454,7 @@ static duk_ret_t el_load(duk_context *ctx)
     const char *key = duk_to_string(ctx, 0);
 
     nvs_handle my_handle;
-    err = nvs_open("storage", NVS_READWRITE, &my_handle);
+    err = nvs_open("storage", NVS_READONLY, &my_handle);
     if (err != ESP_OK)
     {
         ESP_LOGE(tag, "Error (%d) opening NVS!\n", err);
@@ -429,7 +470,7 @@ static duk_ret_t el_load(duk_context *ctx)
     }
     else
     {
-        char *value = malloc(string_size);
+        char *value = (char*)malloc(string_size);
         err = nvs_get_str(my_handle, key, value, &string_size);
         if (err < 0)
         {
@@ -443,12 +484,6 @@ static duk_ret_t el_load(duk_context *ctx)
         }
         free(value);
     }
-    err = nvs_commit(my_handle);
-    if (err < 0)
-    {
-        ESP_LOGE(tag, "Cannot commit changes.\n");
-        ret = -1;
-    }
     nvs_close(my_handle);
     return ret;
 }
@@ -459,6 +494,13 @@ static duk_ret_t el_store(duk_context *ctx)
     esp_err_t err;
 
     const char *key = duk_to_string(ctx, 0);
+
+    if (strlen(key)>15)
+    {
+        ESP_LOGE(tag, "Keys may not be longer that 15 chars. Key '%s' is longer.\n", key);
+        return -1;
+    }
+
     const char *value = duk_to_string(ctx, 1);
 
     ESP_LOGD(tag, "Opening Non-Volatile Storage (NVS) ... ");
@@ -584,7 +626,7 @@ static duk_ret_t el_registerSocketEvents(duk_context *ctx)
             //interrupt select through self-socket
             ESP_LOGD(tag, "Sending . to self-socket.");
             needsUnblock = true;
-            if (sendto(selectClientSocket, ".", 1, 0, &target, sizeof(target)) < 0)
+            if (sendto(selectClientSocket, ".", 1, 0, (const sockaddr*)&target, sizeof(target)) < 0)
             {
                 ESP_LOGE(tag, "Self-socket sending was NOT successful: %d\n", errno);
             }
@@ -638,6 +680,11 @@ static duk_ret_t el_acceptIncoming(duk_context *ctx)
     int sockfd = duk_to_int(ctx, 0);
 
     int ret = acceptIncoming(sockfd);
+    if (ret < 0 && errno == EAGAIN)
+    {
+        //return undefined
+        return 0;
+    }
 
     duk_push_int(ctx, ret);
     return 1;
@@ -703,49 +750,83 @@ static duk_ret_t el_readSocket(duk_context *ctx)
     int len = 256;
     char msg[len];
 
-    int ret = readSocket(sockfd, msg, len - 1);
+    int ret = readSocket(sockfd, (char*)msg, len - 1);
     if (ret >= 0)
     {
         msg[ret] = '\0';
         duk_push_string(ctx, msg);
-        return 1;
     }
     else
     {
         //error
-        return -1;
+        duk_push_null(ctx);
     }
+    return 1;
 }
 
-static duk_ret_t el_connectWifi(duk_context *ctx)
+static duk_ret_t el_stopWifi(duk_context *ctx)
 {
+    esp_wifi_stop();
+    return 0;
+}
 
+static duk_ret_t el_startWifi(duk_context *ctx)
+{
+    esp_wifi_start();
+    return 0;
+}
+
+static duk_ret_t setupWifi(duk_context *ctx, bool softap)
+{
     const char *ssid = duk_to_string(ctx, 0);
     const char *pass = duk_to_string(ctx, 1);
+
+    //try stopping
+    esp_wifi_stop();
 
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 
     ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
-    wifi_config_t wifi_config = {
-        .sta = {},
-    };
-    strcpy((char *)wifi_config.sta.ssid, ssid);
-    strcpy((char *)wifi_config.sta.password, pass);
+    if (softap)
+    {
+        ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
+        wifi_config_t ap_config;
+        ap_config.ap.ssid_len = 0;
+        ap_config.ap.channel = 1;
+        ap_config.ap.authmode = strlen(pass) > 0 ? WIFI_AUTH_WPA2_PSK : WIFI_AUTH_OPEN;
+        ap_config.ap.ssid_hidden = false;
+        ap_config.ap.max_connection = 10;
+        ap_config.ap.beacon_interval = 100;
+        
+        strcpy((char *)ap_config.ap.ssid, ssid);
+        strcpy((char *)ap_config.ap.password, "");
+        ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &ap_config));
+    }
+    else
+    {
+        wifi_config_t wifi_config = {
+            .sta = {},
+        };
+        strcpy((char *)wifi_config.sta.ssid, ssid);
+        strcpy((char *)wifi_config.sta.password, pass);
 
-    ESP_LOGD(tag, "Setting WiFi configuration SSID %s and PASS %s ...", wifi_config.sta.ssid, wifi_config.sta.password);
-    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
+        ESP_LOGD(tag, "Setting WiFi configuration SSID %s and PASS %s ...", wifi_config.sta.ssid, wifi_config.sta.password);
+        ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+        ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
+    }
     ESP_ERROR_CHECK(esp_wifi_start());
     return 0;
 }
 
-duk_double_t esp32_duktape_get_now()
+static duk_ret_t el_connectWifi(duk_context *ctx)
 {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    duk_double_t ret = floor(tv.tv_sec * 1000 + tv.tv_usec / 1000);
-    return ret;
+    return setupWifi(ctx, false);
+}
+
+static duk_ret_t el_createSoftAp(duk_context *ctx)
+{
+    return setupWifi(ctx, true);
 }
 
 static duk_ret_t native_print(duk_context *ctx)
@@ -769,6 +850,9 @@ static duk_ret_t native_delay(duk_context *ctx)
 static duk_ret_t el_install_timer(duk_context *ctx)
 {
     int delay = duk_to_int32(ctx, 0);
+
+    //delay = delay / 600;
+
     int handle = duk_to_int32(ctx, 1);
     if (delay < 0)
     {
@@ -807,31 +891,114 @@ static duk_ret_t el_suspend(duk_context *ctx)
     return 1;
 }
 
-static duk_ret_t pinMode(duk_context *ctx)
+static duk_ret_t el_pinMode(duk_context *ctx)
 {
     int pin = duk_to_int(ctx, 0);
     int dir = duk_to_int(ctx, 1);
 
-    ESP_LOGD(tag, "pin=%d dir=%d\n", pin, dir);
+    ESP_LOGD(tag, "el_pinMode pin=%d dir=%d\n", pin, dir);
 
-    gpio_set_direction(pin, dir);
+    pinMode(pin, dir);
     return 0;
 }
 
-static duk_ret_t digitalWrite(duk_context *ctx)
+static duk_ret_t el_digitalWrite(duk_context *ctx)
 {
     int pin = duk_to_int(ctx, 0);
     int level = duk_to_int(ctx, 1);
 
-    ESP_LOGD(tag, "pin=%d level=%d\n", pin, level);
+    ESP_LOGD(tag, "el_digitalWrite pin=%d level=%d\n", pin, level);
 
-    gpio_set_level(pin, level);
+    digitalWrite(pin, level);
+    return 0;
+}
+
+static duk_ret_t el_digitalRead(duk_context *ctx)
+{
+    int pin = duk_to_int(ctx, 0);
+
+    ESP_LOGD(tag, "el_digitalRead pin=%d\n", pin);
+
+    int val = digitalRead(pin);
+    duk_push_int(ctx, val);
+    return 1;
+}
+
+static duk_ret_t el_ledcSetup(duk_context *ctx)
+{
+    int channel = duk_to_int(ctx, 0);
+    int freq = duk_to_int(ctx, 1);
+    int resolution = duk_to_int(ctx, 2);
+
+    ESP_LOGD(tag, "el_ledcSetup channel=%d freq=%d resolution=%d \n", channel, freq, resolution);
+
+    ledcSetup(channel, freq, resolution);
+    return 0;
+}
+
+static duk_ret_t el_ledcAttachPin(duk_context *ctx)
+{
+    int pin = duk_to_int(ctx, 0);
+    int channel = duk_to_int(ctx, 1);
+
+    ESP_LOGD(tag, "el_ledcAttachPin pin=%d channel=%d\n", pin, channel);
+
+    ledcAttachPin(pin, channel);
+    return 0;
+}
+
+static duk_ret_t el_ledcWrite(duk_context *ctx)
+{
+    int channel = duk_to_int(ctx, 0);
+    int dutyCycle = duk_to_int(ctx, 1);
+
+    ESP_LOGD(tag, "el_ledcWrite channel=%d dutyCycle=%d \n", channel, dutyCycle);
+
+    ledcWrite(channel, dutyCycle);
     return 0;
 }
 
 static duk_ret_t info(duk_context *ctx)
 {
     printf("ESP32 SDK version:%s, RAM left %d\n", system_get_sdk_version(), system_get_free_heap_size());
+    return 0;
+}
+
+rgbVal *pixels = NULL;
+int NUM_PIXELS = 8;
+
+static duk_ret_t setLedColor(duk_context *ctx)
+{
+    int num = duk_to_int(ctx, 0);
+    int r = duk_to_int(ctx, 1);
+    int g = duk_to_int(ctx, 2);
+    int b = duk_to_int(ctx, 3);
+
+    if (pixels == NULL)
+    {
+        if (ws2812_init(18, LED_WS2812B))
+        {
+            ESP_LOGE(tag, "Init FAILURE: halting");
+            //error
+            return -1;
+        }
+
+        pixels = (rgbVal *)malloc(sizeof(rgbVal) * NUM_PIXELS);
+        for (int i = 0; i < NUM_PIXELS; i++)
+        {
+            pixels[i] = makeRGBVal(0, 0, 0);
+        }
+    }
+    //    printf("Values: %d,%d,%d,%d\n", num, r, g, b);
+    pixels[num] = makeRGBVal(r, g, b);
+    ws2812_setColors(NUM_PIXELS, pixels);
+
+    return 0;
+}
+
+static duk_ret_t el_restart(duk_context *ctx)
+{
+    esp_restart();
     return 0;
 }
 
@@ -844,6 +1011,42 @@ static void my_fatal(void *udata, const char *msg)
     abort();
 }
 
+void loadConfig(duk_context *ctx)
+{
+    char config_js[] = {
+#include "boot-js/config.hex"
+    };
+    ESP_LOGI(tag, "Loading config...\n");
+    duk_eval_string_noresult(ctx, config_js);
+}
+
+void loadHttp(duk_context *ctx)
+{
+    char http_js[] = {
+#include "boot-js/http.hex"
+    };
+    ESP_LOGI(tag, "Loading http function...\n");
+    duk_eval_string_noresult(ctx, http_js);
+}
+
+void loadMain(duk_context *ctx)
+{
+    char boot_js[] = {
+#include "boot-js/boot.hex"
+    };
+    ESP_LOGI(tag, "Loading boot function...\n");
+    duk_eval_string_noresult(ctx, boot_js);
+}
+
+void loadEventloop(duk_context *ctx)
+{
+    char eventloop_js[] = {
+#include "boot-js/eventloop.hex"
+    };
+    ESP_LOGI(tag, "Loading and starting event loop...\n");
+    duk_eval_string_noresult(ctx, eventloop_js);
+}
+
 void duktape_task(void *ignore)
 {
     esp_log_level_set(tag, ESP_LOG_DEBUG);
@@ -852,18 +1055,27 @@ void duktape_task(void *ignore)
     duk_push_c_function(ctx, native_print, 1 /*nargs*/);
     duk_put_global_string(ctx, "print");
 
-    duk_push_int(ctx, GPIO_MODE_INPUT);
+    duk_push_int(ctx, INPUT);
     duk_put_global_string(ctx, "INPUT");
-    
-    duk_push_int(ctx, GPIO_MODE_OUTPUT);
+
+    duk_push_int(ctx, OUTPUT);
     duk_put_global_string(ctx, "OUTPUT");
-    
-    duk_push_c_function(ctx, pinMode, 2 /*nargs*/);
+
+    duk_push_int(ctx, KEY_BUILTIN);
+    duk_put_global_string(ctx, "KEY_BUILTIN");
+
+    duk_push_int(ctx, LED_BUILTIN);
+    duk_put_global_string(ctx, "LED_BUILTIN");
+
+    duk_push_c_function(ctx, el_pinMode, 2 /*nargs*/);
     duk_put_global_string(ctx, "pinMode");
-    
-    duk_push_c_function(ctx, digitalWrite, 2 /*nargs*/);
+
+    duk_push_c_function(ctx, el_digitalRead, 1 /*nargs*/);
+    duk_put_global_string(ctx, "digitalRead");
+
+    duk_push_c_function(ctx, el_digitalWrite, 2 /*nargs*/);
     duk_put_global_string(ctx, "digitalWrite");
-    
+
     duk_push_int(ctx, 1);
     duk_put_global_string(ctx, "HIGH");
 
@@ -899,6 +1111,9 @@ void duktape_task(void *ignore)
     duk_push_c_function(ctx, el_connectWifi, 2 /*nargs*/);
     duk_put_global_string(ctx, "el_connectWifi");
 
+    duk_push_c_function(ctx, el_createSoftAp, 2 /*nargs*/);
+    duk_put_global_string(ctx, "el_createSoftAp");
+
     duk_push_c_function(ctx, el_createNonBlockingSocket, 0 /*nargs*/);
     duk_put_global_string(ctx, "el_createNonBlockingSocket");
 
@@ -920,24 +1135,34 @@ void duktape_task(void *ignore)
     duk_push_c_function(ctx, el_store, 2 /*nargs*/);
     duk_put_global_string(ctx, "el_store");
 
-    char config_js[] = {
-#include "config.hex"
-    };
+    duk_push_c_function(ctx, setLedColor, 4 /*nargs*/);
+    duk_put_global_string(ctx, "setLedColor");
 
-    char main_js[] = {
-#include "main.hex"
-    };
+    duk_push_c_function(ctx, el_restart, 0 /*nargs*/);
+    duk_put_global_string(ctx, "restart");
 
-    char eventloop_js[] = {
-#include "eventloop.hex"
-    };
+    duk_push_c_function(ctx, el_stopWifi, 0 /*nargs*/);
+    duk_put_global_string(ctx, "stopWifi");
 
-    ESP_LOGI(tag, "Loading config...\n");
-    duk_eval_string_noresult(ctx, config_js);
-    ESP_LOGI(tag, "Loading main function...\n");
-    duk_eval_string_noresult(ctx, main_js);
-    ESP_LOGI(tag, "Loading and starting event loop...\n");
-    duk_eval_string_noresult(ctx, eventloop_js);
+    duk_push_c_function(ctx, el_startWifi, 0 /*nargs*/);
+    duk_put_global_string(ctx, "startWifi");
+
+    duk_push_c_function(ctx, el_ledcSetup, 3 /*nargs*/);
+    duk_put_global_string(ctx, "ledcSetup");
+
+    duk_push_c_function(ctx, el_ledcAttachPin, 2 /*nargs*/);
+    duk_put_global_string(ctx, "ledcAttachPin");
+
+    duk_push_c_function(ctx, el_ledcWrite, 2 /*nargs*/);
+    duk_put_global_string(ctx, "ledcWrite");
+
+    loadHttp(ctx);
+
+    loadConfig(ctx);
+
+    loadMain(ctx);
+
+    loadEventloop(ctx);
 
     ESP_LOGI(tag, "Reaching end of event loop.\n");
 
@@ -945,9 +1170,8 @@ void duktape_task(void *ignore)
     vTaskDelete(NULL);
 }
 
-void app_main()
+extern "C" int app_main()
 {
-
     nvs_flash_init();
     tcpip_adapter_init();
     wifi_event_group = xEventGroupCreate();
@@ -958,6 +1182,7 @@ void app_main()
     startSelectTask();
 
     xTaskCreatePinnedToCore(&duktape_task, "duktape_task", 16 * 1024, NULL, 5, &task, 0);
+    return 0;
 }
 
 /*

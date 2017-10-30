@@ -11029,6 +11029,16 @@ DUK_INTERNAL_DECL void duk_proxy_ownkeys_postprocess(duk_hthread *thr, duk_hobje
 #endif
 
 #endif  /* DUK_BUILTIN_PROTOS_H_INCLUDED */
+
+
+duk_double_t esp32_duktape_get_now()
+{
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    duk_double_t ret = floor(tv.tv_sec * 1000 + tv.tv_usec / 1000);
+    return ret;
+}
+
 /* #include duk_selftest.h */
 /*
  *  Selftest code

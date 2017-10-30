@@ -1,2 +1,3 @@
 build
-main/*.hex
+*.hex
+main/esp32.js

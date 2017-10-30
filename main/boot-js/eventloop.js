@@ -1,8 +1,19 @@
 try {
+    errorHandler = typeof errorHandler === 'undefined' ?
+        function (error) { print('DEFAULT ERROR HANDLER: ' + error + '\"' + error.message + '\" (' + error.lineNumber + ')') } :
+        errorHandler;
     timers = [];
     handles = 0;
     wifi = undefined;
     sockets = [];
+    socketspool = [];
+    intervals = [];
+
+    sockets.pushNative = sockets.push;
+    sockets.push = function (items) {
+        sockets.pushNative(items);
+        print('SOCKETS:' + JSON.stringify(sockets));
+    }
 
     function setTimeout(fn, timeout) {
         var handle = handles++;
@@ -15,19 +26,69 @@ try {
         return handle;
     }
 
+    function clearInterval(handle) {
+        var idx = intervals.indexOf(handle);
+        if (idx >= 0) {
+            intervals.splice(idx, 1);
+        }
+    }
+
+    function installIntervalTimeout(handle, fn, timeout) {
+        setTimeout(function () {
+            if (intervals.indexOf(handle) >= 0) {
+                fn();
+                installIntervalTimeout(handle, fn, timeout);
+            }
+        }, timeout);
+    }
+
+    function setInterval(fn, timeout) {
+        var handle = handles++;
+        intervals.push(handle);
+        installIntervalTimeout(handle, fn, timeout);
+        return handle;
+    }
+
+    function initSocket(socket) {
+        socket.sockfd = null;
+        socket.onData = null;
+        socket.onConnect = null;
+        socket.onError = null;
+        socket.onClose = null;
+        socket.isConnected = false;
+        socket.isError = false;
+        socket.isListening = false;
+        return socket;
+    }
+
+    function getOrCreateNewSocket() {
+        var socket = null;
+
+        if (socketspool.length > 0) {
+            print('Retrieving recycled socket from socket pool.');
+            socket = socketspool.pop();
+        } else {
+            print('No recycled socket in socket pool, creating new one');
+            socket = initSocket({});
+        }
+
+        return socket;
+    }
+
     function sockConnect(host, port, onConnect, onData, onError, onClose) {
         var sockfd = el_createNonBlockingSocket();
         el_connectNonBlocking(sockfd, host, port);
-        var socket = {
-            sockfd: sockfd,
-            onData: onData,
-            onConnect: onConnect,
-            onError: onError,
-            onClose: onClose,
-            isConnected: false,
-            isError: false,
-            isListening: false
-        };
+
+        var socket = getOrCreateNewSocket();
+        socket.sockfd = sockfd;
+        socket.onData = onData;
+        socket.onConnect = onConnect;
+        socket.onError = onError;
+        socket.onClose = onClose;
+        socket.isConnected = false;
+        socket.isError = false;
+        socket.isListening = false;
+
         sockets.push(socket);
         return socket;
     }
@@ -41,27 +102,34 @@ try {
             }
             return null;
         } else {
-            var socket = {
-                sockfd: sockfd,
-                onAccept: function () {
-                    var newsockfd = el_acceptIncoming(sockfd);
-                    var newSocket = {
-                        sockfd: newsockfd,
-                        isConnected: false,
-                        isError: false,
-                        isListening: false
-                    };
+            var socket = getOrCreateNewSocket();
+            socket.sockfd = sockfd;
+
+            socket.onAccept = function () {
+                var newsockfd = el_acceptIncoming(sockfd);
+                if (newsockfd < 0) {
+                    onError();
+                } else if (typeof newsockfd !== 'undefined') { //EAGAIN
+                    var newSocket = getOrCreateNewSocket();
+                    newSocket.sockfd = newsockfd;
+                    newSocket.isConnected = false;
+                    newSocket.isError = false;
+                    newSocket.isListening = false;
+
                     sockets.push(newSocket);
                     if (onAccept) {
                         onAccept(newSocket);
                     }
-                },
-                onError: onError,
-                onClose: onClose,
-                isConnected: true,
-                isError: false,
-                isListening: true
+                } else {
+                    print('EAGAIN received for accept...trying again next time.');
+                }
             };
+            socket.onError = onError;
+            socket.onClose = onClose;
+            socket.isConnected = true;
+            socket.isError = false;
+            socket.isListening = true;
+
             sockets.push(socket);
             return socket;
         }
@@ -74,10 +142,21 @@ try {
         el_connectWifi(ssid, password);
     }
 
+    function createSoftAp(ssid, password, status) {
+        wifi = {
+            status: status,
+        };
+        el_createSoftAp(ssid, password);
+    }
+
     function removeSocketFromSockets(sockfd) {
         for (var i = 0; i < sockets.length; i++) {
             if (sockets[i].sockfd === sockfd) {
-                sockets.splice(i, 1);
+                var obsoleteSocket = sockets.splice(i, 1);
+                if (obsoleteSocket.length === 1) {
+                    print('Adding recycled socket to socket pool.');
+                    socketspool.push(initSocket(obsoleteSocket[0]));
+                }
                 break;
             }
         }
@@ -136,12 +215,12 @@ try {
                             collected.push(socket.onAccept);
                         } else {
                             var data = readSocket(socket.sockfd);
-                            if (data.length == 0) {
+                            if (!data || data.length == 0) {
+                                if (socket.onClose) {
+                                    socket.onClose();
+                                }
                                 closeSocket(socket.sockfd);
                                 removeSocketFromSockets(socket.sockfd);
-                                if (socket.onClose) {
-                                    collected.push(socket.onClose);
-                                }
                             } else {
                                 if (socket.onData) {
                                     collected.push(socket.onData.bind(this, data));
@@ -166,13 +245,18 @@ try {
 
     nextfuncs = [main];
     while (true) {
-        for (var i = 0; i < nextfuncs.length; i++) {
-            if (nextfuncs[i]) {
-                nextfuncs[i]();
+        for (var nf = 0; nf < nextfuncs.length; nf++) {
+            if (nextfuncs[nf]) {
+                try {
+                    nextfuncs[nf]();
+                } catch (error) {
+                    errorhandler(error);
+                }
             }
         }
+        nextfuncs = null;
         nextfuncs = el_select_next();
     }
 } catch (error) {
-    print('JS ERROR: ' + error + '\"' + error.message + '\" (' + error.lineNumber + ')');
+    print('Unrecoverable JS error in event loop: ' + error + '\"' + error.message + '\" (' + error.lineNumber + ')')
 }
