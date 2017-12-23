@@ -35,7 +35,7 @@ Now you have installed the pre-configured boot script.
 
 If this is your first install, your onboard LED should now blink. Blinking signals that 
 your Board has started a soft ap with the ssid "esp32". With your mobile or desktop connect 
-to the WLAN SSID "esp32" and open http://192.168.4.1/setup
+to the WLAN SSID "esp32" and open http://192.168.4.1:9999/setup
 
 On the Setup page you can configure your WLAN settings and an URL to download your JS script from.
 
