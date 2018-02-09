@@ -25,6 +25,9 @@ SOFTWARE.
 #if !defined(EL_TCP_H_INCLUDED)
 #define EL_TCP_H_INCLUDED
 
+#include <sys/types.h>
+#include <sys/socket.h>
+
 int createNonBlockingSocket(int domain, int type, int protocol, bool nonblocking);
 int connectNonBlocking(int sockfd, const char *hostname, int portno);
 int bindAndListen(int sockfd, int portno);

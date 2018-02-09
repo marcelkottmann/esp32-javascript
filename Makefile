@@ -32,14 +32,14 @@ PROJECT_NAME := esp32-javascript
 CFLAGS += -Wno-error=unused-value
 
 ## LWIP settings
-CFLAGS += -DLWIP_NETIF_LOOPBACK=1
-CFLAGS += -DLWIP_NETIF_LOOPBACK_MULTITHREADING=1
-CFLAGS += -DLWIP_LOOPBACK_MAX_PBUFS=10
+#CFLAGS += -DLWIP_NETIF_LOOPBACK=1
+#CFLAGS += -DLWIP_NETIF_LOOPBACK_MULTITHREADING=1
+#CFLAGS += -DLWIP_LOOPBACK_MAX_PBUFS=10
 
 ##
 CFLAGS += -DLOG_LOCAL_LEVEL=ESP_LOG_INFO
 
-all_binaries: main/boot-js/config.hex main/boot-js/boot.hex main/boot-js/eventloop.hex main/boot-js/http.hex 
+all_binaries: main/boot-js/config.hex main/boot-js/boot.hex main/boot-js/eventloop.hex main/boot-js/http.hex main/boot-js/configserver.hex 
 
 %.hex: %.js
 	bash -c "(cat $< && echo -n -e '\0') | xxd -i > $@"

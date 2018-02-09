@@ -12,8 +12,14 @@ function page(headline, text) {
         '</html>\r\n\r\n';
 }
 
+function redirect(location) {
+    return 'HTTP/1.1 302 Found\r\n' +//
+        'Connection: close\r\n' +//
+        'Location: '+location+'\r\n\r\n';
+}
+
 function httpServer(port, cb) {
-    var sockres = sockListen(9999,
+    var sockres = sockListen(port,
         function (socket) {
             var complete = '';
             var contentLength = 0;
@@ -56,7 +62,6 @@ function httpServer(port, cb) {
                         res.isEnded = true;
                         writeSocket(socket.sockfd, data);
                         closeSocket(socket.sockfd);
-                        removeSocketFromSockets(socket.sockfd);
                     }
 
                     print('Requesting ' + req.path + ' on socket ' + socket.sockfd);

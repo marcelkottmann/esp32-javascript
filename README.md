@@ -13,7 +13,7 @@ and native asynchronous network and timer functions.
 ## Getting started
 
 ### Prerequisites
-Install [esp-idf](https://github.com/espressif/esp-idf/) on your system.
+Install [esp-idf](http://esp-idf.readthedocs.io/en/latest/get-started/index.html#setup-toolchain) on your system.
 
 ### First install
 Clone esp32-javascript inside your esp directory (normally ~/esp):
@@ -35,7 +35,7 @@ Now you have installed the pre-configured boot script.
 
 If this is your first install, your onboard LED should now blink. Blinking signals that 
 your Board has started a soft ap with the ssid "esp32". With your mobile or desktop connect 
-to the WLAN SSID "esp32" and open http://192.168.4.1:9999/setup
+to the WLAN SSID "esp32" and open http://192.168.4.1/setup
 
 On the Setup page you can configure your WLAN settings and an URL to download your JS script from.
 
@@ -54,7 +54,7 @@ That means, to print out "Hello World", you only have to include one line in you
 
 ## Compatibility
 
-Tested with e6afe28bafe5db5ab79fae213f2e8e1ccd9f937c of esp-idf and xtensa-esp32-elf-linux64-1.22.0-73-ge28a011-5.2.0.
+Tested with 475ffe78e8c7674a6b9b2dff78774a4a8b66470a of esp-idf and xtensa-esp32-elf-linux64-1.22.0-80-g6c4433a-5.2.0.
 
 ## API
 
@@ -108,7 +108,7 @@ socket as argument.
     type Socket =
     {
       sockfd: number;
-      onData?: onData(data: string)=>void;
+      onData?: onData(data: string, sockfd: number)=>void;
       onError?: onError()=>void;
       onClose?: onClose()=>void;
       isConnected: boolean;

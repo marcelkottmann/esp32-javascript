@@ -6,45 +6,7 @@ errorhandler = function (error) {
 pinMode(KEY_BUILTIN, INPUT);
 pinMode(LED_BUILTIN, OUTPUT);
 
-var requestHandler = [];
 var successfulWifiConnected = false;
-
-function startConfigServer() {
-    httpServer(9999, function (req, res) {
-        if (req.path === '/restart') {
-            if (req.method === 'GET') {
-                res.end(page('Request restart', '<form action="/restart" method="post"><input type="submit" value="Restart" /></form>'));
-            } else {
-                res.end(page('Restarting...', ''));
-                restart();
-            }
-        } else if (req.path === '/setup') {
-            if (req.method === 'GET') {
-                res.end(page('Setup', '<form action="/setup" method="post">' +
-                    'SSID: <input type="text" name="ssid" value="' + el_load('config.ssid') + '" /><br />' +
-                    'Password: <input type="text" name="password" value="' + el_load('config.password') + '" /><br />' +
-                    'JS File URL: <input type="text" name="url" value="' + el_load('config.url') + '" />' +
-                    '<input type="submit" value="Save" /></form>'));
-            } else {
-                var config = parseQueryStr(req.body);
-                el_store('config.ssid', config.ssid);
-                el_store('config.password', config.password);
-                el_store('config.url', config.url);
-
-                res.end(page('Saved', JSON.stringify(config)));
-            }
-        } else {
-            for (var i = 0; i < requestHandler.length; i++) {
-                if (!res.isEnded) {
-                    requestHandler[i](req, res);
-                }
-            }
-            if (!res.isEnded) {
-                res.end(page('404', 'Not found'));
-            }
-        }
-    });
-}
 
 function blink() {
     var blinkState = 0;
@@ -55,9 +17,11 @@ function blink() {
 }
 
 function startSoftApMode() {
-    print("Starting soft ap mode:");
+    print("Starting soft ap mode.");
     var blinkId = blink();
+    print("Blinking initialized.");
     createSoftAp('esp32', '', function (evt) {
+        print("Event received:" + evt);
         if (evt.status === 1) {
             print("SoftAP: Connected");
             startConfigServer();
@@ -77,14 +41,33 @@ function startSoftApMode() {
     });
 }
 
+function evalScript(content, headers) {
+    print('==> Headers:');
+    print(headers);
+    print('==> Start evaluation:');
+    print(content);
+    print('<==');
+
+    digitalWrite(LED_BUILTIN, 0);
+
+    eval(content);
+}
+
 function connectToWifi() {
+    digitalWrite(LED_BUILTIN, 1);
+
     var retries = 0;
     connectWifi(config.wlan.ssid, config.wlan.password, function (evt) {
         if (evt.status === 0) {
             print("WIFI: DISCONNECTED");
             retries++;
-            if (!successfulWifiConnected && retries >= 5) {
-                startSoftApMode();
+            if (!successfulWifiConnected && retries === 5) {
+                if (config.ota.offline) {
+                    stopWifi();
+                    evalScript(el_load('config.script'));
+                } else {
+                    startSoftApMode();
+                }
             }
         } else if (evt.status === 1) {
             if (!successfulWifiConnected) {
@@ -101,15 +84,21 @@ function connectToWifi() {
                     print('Loading program from: ' + JSON.stringify(config.ota.url));
                     var ret = sockConnect(config.ota.url.host, config.ota.url.port,
                         function (socket) {
-                            writeSocket(socket.sockfd, 'GET ' + config.ota.url.path + ' HTTP/1.1\r\nHost: ' + config.ota.url.host + '\r\nConnection: close\r\n\r\n');
+                            writeSocket(socket.sockfd, 'GET ' + config.ota.url.path + ' HTTP/1.1\r\nHost: ' + config.ota.url.host + '\r\n\r\n');
                         },
-                        function (data) {
+                        function (data, sockfd) {
                             complete = complete + data;
 
                             if (!headerRead && (headerEnd = complete.indexOf('\r\n\r\n')) >= 0) {
                                 headerRead = true;
                                 chunked = complete.toLowerCase().indexOf('transfer-encoding: chunked') != -1;
                                 headerEnd += 4;
+                            }
+                            if (chunked) {
+                                if (complete.substring(complete.length - 5) == '0\r\n\r\n') {
+                                    print('Closing...');
+                                    closeSocket(sockfd);
+                                }
                             }
                         },
                         function () {
@@ -140,11 +129,13 @@ function connectToWifi() {
                             //free complete for GC
                             complete = null;
 
-                            print('==> Start evaluation:');
-                            print(content);
-                            print('<==');
-
-                            eval(content);
+                            if (config.ota.offline) {
+                                el_store('config.script', content);
+                                print('==> Saved offline script length=' + content.length);
+                            } else {
+                                print('==> NOT saving offline script');
+                            }
+                            evalScript(content, headers);
                         });
                 } else {
                     print('No OTA (Over-the-air) url specified.');

@@ -28,7 +28,7 @@ SOFTWARE.
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_system.h"
-#include "duktape.h"
+#include <duktape.h>
 #include "tcp.h"
 #include "esp_event.h"
 #include "esp_system.h"
@@ -37,10 +37,10 @@ SOFTWARE.
 #include "esp_event_loop.h"
 #include "esp_log.h"
 #include "nvs_flash.h"
+#include "freertos/timers.h"
 #include "lwip/err.h"
 #include "lwip/arch.h"
 #include "lwip/api.h"
-#include "freertos/timers.h"
 #include <lwip/sockets.h>
 #include "nvs.h"
 #include <netdb.h>
@@ -141,6 +141,8 @@ static IRAM_ATTR esp_err_t event_handler(void *ctx, system_event_t *sysevent)
     timer_event_t event;
     timer_event_t event2;
 
+    bool flag = true;
+
     switch (sysevent->event_id)
     {
     case SYSTEM_EVENT_STA_START:
@@ -215,10 +217,11 @@ int createSocketPair()
         if (sd >= 0)
         {
             int port = 6789;
-            //memset((char *)&server, 0, sizeof(server));
+            memset((char *)&server, 0, sizeof(server));
             server.sin_family = AF_INET;
             server.sin_addr.s_addr = htonl(INADDR_ANY);
             server.sin_port = htons(port);
+            server.sin_len = sizeof(server);
 
             ESP_LOGD(tag, "Trying to bind socket %d...\n", sd);
 
@@ -232,28 +235,35 @@ int createSocketPair()
 
                 ESP_LOGD(tag, "Send test data...\n");
 
-                // memset((char *)&target, 0, sizeof(target));
+                memset((char *)&target, 0, sizeof(target));
                 target.sin_family = AF_INET;
                 target.sin_port = htons(port);
+                target.sin_len = sizeof(target);
                 inet_pton(AF_INET, "127.0.0.1", &(target.sin_addr));
 
-                if (sendto(sc, "test", 5, 0, (const sockaddr*)&target, sizeof(target)) < 0)
+                if (sendto(sc, "", 1, 0, (const sockaddr *)&target, sizeof(target)) < 0)
                 {
                     ESP_LOGE(tag, "Error sending test data to self-socket: %d\n", errno);
                 }
                 else
                 {
                     ESP_LOGD(tag, "Trying to receive test data...\n");
-                    char msg[5] = "TEST";
+                    char msg[2] = "A";
                     struct sockaddr_in remaddr;
                     socklen_t addrlen = sizeof(remaddr);
-                    if (recvfrom(sd, msg, 5, 0, (struct sockaddr *)&remaddr, &addrlen) < 0)
+
+                    int result = 0;
+                    while ((result = recvfrom(sd, msg, 1, 0, (struct sockaddr *)&remaddr, &addrlen)) < 0 && errno == EAGAIN)
+                    {
+                    }
+
+                    while (result < 0)
                     {
                         ESP_LOGE(tag, "Error receiving test data from self-socket: %d\n", errno);
                     }
                     ESP_LOGD(tag, "Finished reading.\n");
 
-                    if (strcmp(msg, "test") == 0)
+                    if (strcmp(msg, "") == 0)
                     {
                         ESP_LOGI(tag, "Self-Socket Test successful!\n");
 
@@ -337,7 +347,7 @@ void select_task_it()
         //set self-socket flag
         //reset (read all data) from self socket
         int dataAvailable;
-        if (ioctl(selectServerSocket, FIONREAD, &dataAvailable) < 0)
+        if (lwip_ioctl(selectServerSocket, FIONREAD, &dataAvailable) < 0)
         {
             ESP_LOGE(tag, "Error getting data available from self-socket: %d.", errno);
         }
@@ -443,12 +453,12 @@ void select_task(void *ignore)
 
 void startSelectTask()
 {
-    xTaskCreatePinnedToCore(&select_task, "select_task", 16 * 1024, NULL, 5, &stask, 1);
+    xTaskCreatePinnedToCore(&select_task, "select_task", 12 * 1024, NULL, 5, &stask, 1);
 }
 
 static duk_ret_t el_load(duk_context *ctx)
 {
-    int ret;
+    int ret = 0;
     esp_err_t err;
 
     const char *key = duk_to_string(ctx, 0);
@@ -463,18 +473,18 @@ static duk_ret_t el_load(duk_context *ctx)
 
     size_t string_size;
     err = nvs_get_str(my_handle, key, NULL, &string_size);
-    if (err < 0)
+    if (err != ESP_OK)
     {
-        ESP_LOGE(tag, "Cannot get key %s from storage.\n", key);
+        ESP_LOGE(tag, "Cannot get key %s from storage, err=%d\n", key, err);
         ret = -1;
     }
     else
     {
-        char *value = (char*)malloc(string_size);
+        char *value = (char *)malloc(string_size);
         err = nvs_get_str(my_handle, key, value, &string_size);
-        if (err < 0)
+        if (err != ESP_OK)
         {
-            ESP_LOGE(tag, "Cannot get key %s from storage.\n", key);
+            ESP_LOGE(tag, "Cannot get key %s from storage, err=%d\n", key, err);
             ret = -1;
         }
         else
@@ -490,18 +500,23 @@ static duk_ret_t el_load(duk_context *ctx)
 
 static duk_ret_t el_store(duk_context *ctx)
 {
-    int ret;
+    int ret = 0;
     esp_err_t err;
 
     const char *key = duk_to_string(ctx, 0);
-
-    if (strlen(key)>15)
+    if (strlen(key) > 15)
     {
-        ESP_LOGE(tag, "Keys may not be longer that 15 chars. Key '%s' is longer.\n", key);
+        ESP_LOGE(tag, "Keys may not be longer than 15 chars. Key '%s' is longer.\n", key);
         return -1;
     }
 
     const char *value = duk_to_string(ctx, 1);
+    int len = strlen(value);
+    if (len > (1984 - 1))
+    {
+        ESP_LOGE(tag, "Values may not be longer than 1984 chars (including zero-termination). Current string length is %d\n", len);
+        return -1;
+    }
 
     ESP_LOGD(tag, "Opening Non-Volatile Storage (NVS) ... ");
     nvs_handle my_handle;
@@ -513,20 +528,16 @@ static duk_ret_t el_store(duk_context *ctx)
     }
 
     err = nvs_set_str(my_handle, key, value);
-    if (err < 0)
+    if (err != ESP_OK)
     {
-        ESP_LOGE(tag, "Cannot set key %s and value %s from storage.\n", key, value);
+        ESP_LOGE(tag, "Cannot set key %s and value %s from storage, err=%d\n", key, value, err);
         ret = -1;
-    }
-    else
-    {
-        ret = 0;
     }
 
     err = nvs_commit(my_handle);
-    if (err < 0)
+    if (err != ESP_OK)
     {
-        ESP_LOGE(tag, "Cannot commit changes.\n");
+        ESP_LOGE(tag, "Cannot commit changes, err=%d\n", err);
         ret = -1;
     }
     nvs_close(my_handle);
@@ -626,7 +637,7 @@ static duk_ret_t el_registerSocketEvents(duk_context *ctx)
             //interrupt select through self-socket
             ESP_LOGD(tag, "Sending . to self-socket.");
             needsUnblock = true;
-            if (sendto(selectClientSocket, ".", 1, 0, (const sockaddr*)&target, sizeof(target)) < 0)
+            if (sendto(selectClientSocket, ".", 1, 0, (const sockaddr *)&target, sizeof(target)) < 0)
             {
                 ESP_LOGE(tag, "Self-socket sending was NOT successful: %d\n", errno);
             }
@@ -747,14 +758,23 @@ static duk_ret_t el_readSocket(duk_context *ctx)
 {
     int sockfd = duk_to_int(ctx, 0);
 
-    int len = 256;
+    int len = 1024;
     char msg[len];
 
-    int ret = readSocket(sockfd, (char*)msg, len - 1);
+    int ret = readSocket(sockfd, (char *)msg, len - 1);
     if (ret >= 0)
     {
         msg[ret] = '\0';
         duk_push_string(ctx, msg);
+    }
+    else if (errno == EAGAIN)
+    {
+        printf("******************************\n");
+        printf("* EAGAIN RETURNED!!!         *\n");
+        printf("******************************\n");
+
+        //eagain
+        duk_push_undefined(ctx);
     }
     else
     {
@@ -786,6 +806,7 @@ static duk_ret_t setupWifi(duk_context *ctx, bool softap)
 
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+    //ESP_ERROR_CHECK(esp_wifi_set_ps(WIFI_PS_MODEM));
 
     ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
     if (softap)
@@ -798,7 +819,7 @@ static duk_ret_t setupWifi(duk_context *ctx, bool softap)
         ap_config.ap.ssid_hidden = false;
         ap_config.ap.max_connection = 10;
         ap_config.ap.beacon_interval = 100;
-        
+
         strcpy((char *)ap_config.ap.ssid, ssid);
         strcpy((char *)ap_config.ap.password, "");
         ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &ap_config));
@@ -1029,6 +1050,15 @@ void loadHttp(duk_context *ctx)
     duk_eval_string_noresult(ctx, http_js);
 }
 
+void loadConfigserver(duk_context *ctx)
+{
+    char boot_js[] = {
+#include "boot-js/configserver.hex"
+    };
+    ESP_LOGI(tag, "Loading config server function...\n");
+    duk_eval_string_noresult(ctx, boot_js);
+}
+
 void loadMain(duk_context *ctx)
 {
     char boot_js[] = {
@@ -1098,7 +1128,7 @@ void duktape_task(void *ignore)
     duk_put_global_string(ctx, "readSocket");
 
     duk_push_c_function(ctx, el_closeSocket, 1 /*nargs*/);
-    duk_put_global_string(ctx, "closeSocket");
+    duk_put_global_string(ctx, "el_closeSocket");
 
     // internal functions. use on your own risk:
 
@@ -1160,6 +1190,8 @@ void duktape_task(void *ignore)
 
     loadConfig(ctx);
 
+    loadConfigserver(ctx);
+
     loadMain(ctx);
 
     loadEventloop(ctx);
@@ -1181,7 +1213,7 @@ extern "C" int app_main()
     xSemaphore = xSemaphoreCreateBinary();
     startSelectTask();
 
-    xTaskCreatePinnedToCore(&duktape_task, "duktape_task", 16 * 1024, NULL, 5, &task, 0);
+    xTaskCreatePinnedToCore(&duktape_task, "duktape_task", 20 * 1024, NULL, 5, &task, 0);
     return 0;
 }
 

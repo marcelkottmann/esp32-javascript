@@ -30,14 +30,21 @@ SOFTWARE.
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#include "esp_log.h"
+#include "lwip/err.h"
+#include "lwip/arch.h"
+#include "lwip/api.h"
+#include <lwip/sockets.h>
 
 #define BUFSIZE 1024
 #define LISTEN_BACKLOG 50
 
+static const char *tag = "esp32-javascript";
+
 int createNonBlockingSocket(int domain, int type, int protocol, bool nonblocking)
 {
     int sockfd;
-    u32_t opt;
+    int opt;
     int ret;
 
     /* socket: create the socket */
@@ -48,6 +55,7 @@ int createNonBlockingSocket(int domain, int type, int protocol, bool nonblocking
         return -1;
     }
 
+    /*
     if (nonblocking)
     {
         //set non blocking (for connect)
@@ -60,12 +68,25 @@ int createNonBlockingSocket(int domain, int type, int protocol, bool nonblocking
             return -1;
         }
     }
+*/
+
+    if (nonblocking)
+    {
+        opt = 1;
+        ret = lwip_ioctl(sockfd, FIONBIO, &opt);
+        if (ret < 0)
+        {
+            printf("Cannot set non-blocking opt.\n");
+            return -1;
+        }
+    }
+
     return sockfd;
 }
 
 int connectNonBlocking(int sockfd, const char *hostname, int portno)
 {
-    int ret, n;
+    int ret;
     struct sockaddr_in serveraddr;
     struct hostent *server;
 
@@ -85,7 +106,7 @@ int connectNonBlocking(int sockfd, const char *hostname, int portno)
     serveraddr.sin_port = htons(portno);
 
     /* connect: create a connection with the server */
-    ret = connect(sockfd, (const sockaddr*)&serveraddr, sizeof(serveraddr));
+    ret = connect(sockfd, (const sockaddr *)&serveraddr, sizeof(serveraddr));
     if (ret == -1 && errno != EINPROGRESS)
     {
         printf("ERROR connecting\n");
@@ -96,7 +117,7 @@ int connectNonBlocking(int sockfd, const char *hostname, int portno)
 
 int acceptIncoming(int sockfd)
 {
-    int cfd = accept(sockfd, NULL, NULL);
+    int cfd = lwip_accept(sockfd, NULL, NULL);
     if (cfd < 0 && (errno != EAGAIN))
     {
         printf("ERROR while accepting: %d\n", errno);
@@ -228,13 +249,39 @@ int writeSocket(int sockfd, const char *msg)
 
 int readSocket(int sockfd, char *msg, int len)
 {
-    int n = recv(sockfd, msg, len, MSG_DONTWAIT);
-    if (n < 0)
+    struct sockaddr_in remaddr;
+    socklen_t addrlen = sizeof(remaddr);
+
+    int result = 0;
+
+    int opt = 1;
+    int ret = lwip_ioctl(sockfd, FIONBIO, &opt);
+    if (ret < 0)
     {
-        printf("ERROR reading from socket\n");
+        printf("Cannot set non-blocking opt.\n");
         return -1;
     }
-    return n;
+
+    struct timeval tv;
+    tv.tv_sec = 1;
+    tv.tv_usec = 0;
+
+    if (lwip_setsockopt(sockfd,
+                        SOL_SOCKET,
+                        SO_RCVTIMEO,
+                        &tv,
+                        sizeof(struct timeval)) < 0)
+    {
+        printf("Cannot set timeout opt.\n");
+        return -1;
+    }
+
+    ESP_LOGI(tag, "Before recv %d...\n", sockfd);
+
+    result = recvfrom(sockfd, msg, len, MSG_DONTWAIT, (struct sockaddr *)&remaddr, &addrlen);
+    
+    ESP_LOGI(tag, "After recv %d.\n", sockfd);
+    return result;
 }
 
 void closeSocket(int sockfd)

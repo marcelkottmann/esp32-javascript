@@ -2,6 +2,7 @@ try {
     errorHandler = typeof errorHandler === 'undefined' ?
         function (error) { print('DEFAULT ERROR HANDLER: ' + error + '\"' + error.message + '\" (' + error.lineNumber + ')') } :
         errorHandler;
+
     timers = [];
     handles = 0;
     wifi = undefined;
@@ -12,7 +13,6 @@ try {
     sockets.pushNative = sockets.push;
     sockets.push = function (items) {
         sockets.pushNative(items);
-        print('SOCKETS:' + JSON.stringify(sockets));
     }
 
     function setTimeout(fn, timeout) {
@@ -65,14 +65,29 @@ try {
         var socket = null;
 
         if (socketspool.length > 0) {
-            print('Retrieving recycled socket from socket pool.');
             socket = socketspool.pop();
         } else {
-            print('No recycled socket in socket pool, creating new one');
             socket = initSocket({});
         }
 
         return socket;
+    }
+
+    function performOnClose(sockfd) {
+        for (var i = 0; i < sockets.length; i++) {
+            if (sockets[i].sockfd === sockfd) {
+                if (sockets[i].onClose) {
+                    sockets[i].onClose();
+                    break;
+                }
+            }
+        }
+    }
+
+    function closeSocket(sockfd) {
+        el_closeSocket(sockfd);
+        performOnClose(sockfd);
+        removeSocketFromSockets(sockfd);
     }
 
     function sockConnect(host, port, onConnect, onData, onError, onClose) {
@@ -121,7 +136,7 @@ try {
                         onAccept(newSocket);
                     }
                 } else {
-                    print('EAGAIN received for accept...trying again next time.');
+                    print('EAGAIN received after accept...');
                 }
             };
             socket.onError = onError;
@@ -154,7 +169,6 @@ try {
             if (sockets[i].sockfd === sockfd) {
                 var obsoleteSocket = sockets.splice(i, 1);
                 if (obsoleteSocket.length === 1) {
-                    print('Adding recycled socket to socket pool.');
                     socketspool.push(initSocket(obsoleteSocket[0]));
                 }
                 break;
@@ -181,8 +195,6 @@ try {
 
         var events = el_suspend();
 
-        // print('EVENTLOOP RECEIVES EVENTS:');
-        // print(JSON.stringify(events));
         var collected = [];
         for (var evid = 0; evid < events.length; evid++) {
             var evt = events[evid];
@@ -215,15 +227,13 @@ try {
                             collected.push(socket.onAccept);
                         } else {
                             var data = readSocket(socket.sockfd);
-                            if (!data || data.length == 0) {
-                                if (socket.onClose) {
-                                    socket.onClose();
-                                }
+                            if (data === null || (typeof data === 'string' && data.length == 0)) {
                                 closeSocket(socket.sockfd);
-                                removeSocketFromSockets(socket.sockfd);
+                            } else if (!data) {
+                                print('******** EAGAIN!!');
                             } else {
                                 if (socket.onData) {
-                                    collected.push(socket.onData.bind(this, data));
+                                    collected.push(socket.onData.bind(this, data, socket.sockfd));
                                 }
                             }
                         }
@@ -242,21 +252,23 @@ try {
         return collected;
     }
 
-
     nextfuncs = [main];
     while (true) {
-        for (var nf = 0; nf < nextfuncs.length; nf++) {
-            if (nextfuncs[nf]) {
-                try {
-                    nextfuncs[nf]();
-                } catch (error) {
-                    errorhandler(error);
+        try {
+            if (nextfuncs) {
+                for (var nf = 0; nf < nextfuncs.length; nf++) {
+                    if (nextfuncs[nf]) {
+                        nextfuncs[nf]();
+                    }
                 }
+                nextfuncs = null;
             }
+            nextfuncs = el_select_next();
+        } catch (error) {
+            errorhandler(error);
         }
-        nextfuncs = null;
-        nextfuncs = el_select_next();
     }
+
 } catch (error) {
     print('Unrecoverable JS error in event loop: ' + error + '\"' + error.message + '\" (' + error.lineNumber + ')')
 }
