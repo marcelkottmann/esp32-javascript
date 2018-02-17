@@ -465,7 +465,12 @@ static duk_ret_t el_load(duk_context *ctx)
 
     nvs_handle my_handle;
     err = nvs_open("storage", NVS_READONLY, &my_handle);
-    if (err != ESP_OK)
+    if (err == ESP_ERR_NVS_NOT_FOUND)
+    {
+        duk_push_undefined(ctx);
+        return 1;
+    }
+    else if (err != ESP_OK)
     {
         ESP_LOGE(tag, "Error (%d) opening NVS!\n", err);
         return -1;
