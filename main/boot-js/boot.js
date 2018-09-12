@@ -3,157 +3,28 @@ errorhandler = function (error) {
     startSoftApMode();
 };
 
-pinMode(KEY_BUILTIN, INPUT);
-pinMode(LED_BUILTIN, OUTPUT);
-
-var successfulWifiConnected = false;
-
-function blink() {
-    var blinkState = 0;
-    return setInterval(function () {
-        digitalWrite(LED_BUILTIN, blinkState);
-        blinkState = blinkState === 0 ? 1 : 0;
-    }, 333);
-}
-
-function startSoftApMode() {
-    print("Starting soft ap mode.");
-    var blinkId = blink();
-    print("Blinking initialized.");
-    createSoftAp('esp32', '', function (evt) {
-        print("Event received:" + evt);
-        if (evt.status === 1) {
-            print("SoftAP: Connected");
-            startConfigServer();
-
-            //stop soft ap wifi after 5 minutes
-            setTimeout(function () {
-                print('Stopping soft ap now after 5 minutes.');
-                stopWifi();
-                clearInterval(blinkId);
-            }, 5 * 60 * 1000);
-        }
-        else if (evt.status === 0) {
-            print("SoftAP: Disconnected");
-        } else {
-            print("SoftAP: Status " + evt.status);
-        }
-    });
-}
-
-function evalScript(content, headers) {
-    print('==> Headers:');
-    print(headers);
-    print('==> Start evaluation:');
-    print(content);
-    print('<==');
-
-    digitalWrite(LED_BUILTIN, 0);
-
-    eval(content);
-}
-
-function connectToWifi() {
-    digitalWrite(LED_BUILTIN, 1);
-
-    var retries = 0;
-    connectWifi(config.wlan.ssid, config.wlan.password, function (evt) {
-        if (evt.status === 0) {
-            print("WIFI: DISCONNECTED");
-            retries++;
-            if (!successfulWifiConnected && retries === 5) {
-                if (config.ota.offline) {
-                    stopWifi();
-                    evalScript(el_load('config.script'));
-                } else {
-                    startSoftApMode();
-                }
-            }
-        } else if (evt.status === 1) {
-            if (!successfulWifiConnected) {
-                print("WIFI: CONNECTED");
-                successfulWifiConnected = true;
-                startConfigServer();
-
-                retries = 0;
-                var complete = '';
-                var chunked = false;
-                var headerRead = false;
-                var headerEnd = -1;
-                if (config.ota.url) {
-                    print('Loading program from: ' + JSON.stringify(config.ota.url));
-                    var ret = sockConnect(config.ota.url.host, config.ota.url.port,
-                        function (socket) {
-                            writeSocket(socket.sockfd, 'GET ' + config.ota.url.path + ' HTTP/1.1\r\nHost: ' + config.ota.url.host + '\r\n\r\n');
-                        },
-                        function (data, sockfd) {
-                            complete = complete + data;
-
-                            if (!headerRead && (headerEnd = complete.indexOf('\r\n\r\n')) >= 0) {
-                                headerRead = true;
-                                chunked = complete.toLowerCase().indexOf('transfer-encoding: chunked') != -1;
-                                headerEnd += 4;
-                            }
-                            if (chunked) {
-                                if (complete.substring(complete.length - 5) == '0\r\n\r\n') {
-                                    print('Closing...');
-                                    closeSocket(sockfd);
-                                }
-                            }
-                        },
-                        function () {
-                            print('Could not load http://' + config.ota.url.host + ':' + config.ota.url.port + config.ota.url.path);
-                            startSoftApMode();
-                        },
-                        function () {
-                            var startFrom = headerEnd;
-                            var content = null;
-
-                            if (chunked) {
-                                content = "";
-
-                                do {
-                                    var chunkLengthEnd = complete.indexOf('\r\n', startFrom);
-                                    var lengthStr = complete.substring(startFrom, chunkLengthEnd);
-                                    chunkLength = parseInt(lengthStr, 16);
-                                    var chunkEnd = chunkLengthEnd + chunkLength + 2;
-
-                                    content += complete.substring(chunkLengthEnd + 2, chunkEnd);
-                                    startFrom = chunkEnd + 2;
-                                } while (chunkLength > 0);
-                            } else {
-                                content = complete.substring(startFrom);
-                            }
-
-                            var headers = complete.substring(0, headerEnd);
-                            //free complete for GC
-                            complete = null;
-
-                            if (config.ota.offline) {
-                                el_store('config.script', content);
-                                print('==> Saved offline script length=' + content.length);
-                            } else {
-                                print('==> NOT saving offline script');
-                            }
-                            evalScript(content, headers);
-                        });
-                } else {
-                    print('No OTA (Over-the-air) url specified.');
-                    startSoftApMode();
-                }
-            }
-        } else if (evt.status === 2) {
-            print("WIFI: CONNECTING...");
-        }
-    });
-}
-
 function main() {
-    if (digitalRead(KEY_BUILTIN) == 0) {
-        print('Setup key pressed: Start soft ap...');
-        startSoftApMode();
-    } else {
-        print('Trying to connect to Wifi from JS:');
-        connectToWifi();
+    initU8x8();
+    writeU8x8('Configuring lora ...');
+
+    var nwskey = [0xF4, 0xBB, 0x65, 0x5F, 0x9A, 0x04, 0x15, 0xFA, 0xBC, 0x10, 0x0C, 0x69, 0x2D, 0xD2, 0x2E, 0x96];
+    var appskey = [0x93, 0x14, 0xAA, 0x87, 0x00, 0x4B, 0x06, 0x26, 0xF4, 0x8F, 0x95, 0x7C, 0x3A, 0xDF, 0xB8, 0xB5];
+    var devaddr = 0x26011B43;
+
+    lorasetup(nwskey, appskey, devaddr);
+
+    var sendInterval = 60;
+    var count = 50;
+    var func = function () {
+        var message = 'Sending in ' + (sendInterval - count) + ' seconds ...';
+        writeU8x8(message);
+        if ((sendInterval - count) === 0) {
+            writeU8x8('Sending data...');
+            var success = lorasend([0xCA, 0xFF, 0xEE]);
+            writeU8x8(success ? '...successful.' : '...failed.');
+            count = 0;
+        }
+        count++;
     }
+    setInterval(func, 1000);
 }

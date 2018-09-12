@@ -13,6 +13,8 @@
         "ws2812.h": "c",
         "esp32-hal-gpio.h": "c",
         "*.hex": "c",
-        "socket.h": "c"
+        "socket.h": "c",
+        "array": "cpp",
+        "string_view": "cpp"
     }
 }

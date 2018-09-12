@@ -107,6 +107,28 @@ int log_printf(const char *fmt, ...);
 #define log_e(format, ...)
 #endif
 
+#if ARDUHAL_LOG_LEVEL >= ARDUHAL_LOG_LEVEL_NONE
+#define log_n(format, ...) log_printf(ARDUHAL_LOG_FORMAT(E, format), ##__VA_ARGS__)
+#else
+#define log_n(format, ...)
+#endif
+
+#include "esp_log.h"
+
+#ifdef CONFIG_ARDUHAL_ESP_LOG
+#undef ESP_LOGE
+#undef ESP_LOGW
+#undef ESP_LOGI
+#undef ESP_LOGD
+#undef ESP_LOGV
+
+#define ESP_LOGE(tag, ...)  log_e(__VA_ARGS__)
+#define ESP_LOGW(tag, ...)  log_w(__VA_ARGS__)
+#define ESP_LOGI(tag, ...)  log_i(__VA_ARGS__)
+#define ESP_LOGD(tag, ...)  log_d(__VA_ARGS__)
+#define ESP_LOGV(tag, ...)  log_v(__VA_ARGS__)
+#endif
+
 #ifdef __cplusplus
 }
 #endif

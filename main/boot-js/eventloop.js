@@ -245,6 +245,17 @@ try {
                         throw "UNKNOWN socket event status " + evt.status;
                     }
                 }
+            } else if (evt.type === 3) { //LORA EVENT
+                print('Lora event:' + JSON.stringify(evt));
+                var data = getLoraData();
+                if (data) {
+                    print('Data received (len=' + data.length + '):');
+                    var hex = '';
+                    for (var i = 0; i < data.length; i++) {
+                        hex += data[i].toString(16);
+                    }
+                    print('-->' + hex);
+                }
             } else {
                 throw "UNKNOWN eventType " + eventType;
             }

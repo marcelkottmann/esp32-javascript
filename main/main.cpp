@@ -1,7 +1,7 @@
 /*
 MIT License
 
-Copyright (c) 2017 Marcel Kottmann
+Copyright (c) 2018 Marcel Kottmann
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -49,6 +49,12 @@ SOFTWARE.
 #include "esp32-hal-gpio.h"
 #include "esp32-hal-ledc.h"
 #include "pins_arduino.h"
+#include "lora.h"
+#include <lmic.h>
+#include <lmic/hal.h>
+#include "main.h"
+#include "U8x8lib.h"
+#include "U8g2lib.h"
 
 static EventGroupHandle_t wifi_event_group;
 static const int CONNECTED_BIT = BIT0;
@@ -73,6 +79,8 @@ bool needsUnblock = false;
 
 bool flag = false;
 
+U8G2_SSD1306_128X64_NONAME_F_SW_I2C *u8g2;
+
 #define EL_TIMER_EVENT_TYPE 0
 #define EL_WIFI_EVENT_TYPE 1
 #define EL_SOCKET_EVENT_TYPE 2
@@ -84,19 +92,6 @@ bool flag = false;
 #define EL_SOCKET_STATUS_WRITE 0
 #define EL_SOCKET_STATUS_READ 1
 #define EL_SOCKET_STATUS_ERROR 2
-
-typedef struct
-{
-    int type;
-    int status;
-    int fd;
-} timer_event_t;
-
-typedef struct
-{
-    timer_event_t events[4];
-    int events_len;
-} eventlist_t;
 
 void IRAM_ATTR el_add_event(eventlist_t *events, timer_event_t *event)
 {
@@ -1037,6 +1032,22 @@ static void my_fatal(void *udata, const char *msg)
     abort();
 }
 
+static duk_ret_t init_u8x8(duk_context *ctx)
+{
+    u8g2 = new U8G2_SSD1306_128X64_NONAME_F_SW_I2C(U8G2_R0, /* clock=*/15, /* data=*/4, /* reset=*/16);
+    u8g2->begin();
+    return 0;
+}
+
+static duk_ret_t write_u8x8(duk_context *ctx)
+{
+    u8g2->clearBuffer();
+    u8g2->setFont(u8g2_font_t0_12_me);
+    u8g2->drawStr(0, 8, duk_to_string(ctx, 0));
+    u8g2->sendBuffer();
+    return 0;
+}
+
 void loadConfig(duk_context *ctx)
 {
     char config_js[] = {
@@ -1190,6 +1201,21 @@ void duktape_task(void *ignore)
 
     duk_push_c_function(ctx, el_ledcWrite, 2 /*nargs*/);
     duk_put_global_string(ctx, "ledcWrite");
+
+    duk_push_c_function(ctx, el_lorasend, 1 /*nargs*/);
+    duk_put_global_string(ctx, "lorasend");
+
+    duk_push_c_function(ctx, el_lorasetup, 3 /*nargs*/);
+    duk_put_global_string(ctx, "lorasetup");
+
+    duk_push_c_function(ctx, el_loraprint, 0 /*nargs*/);
+    duk_put_global_string(ctx, "getLoraData");
+
+    duk_push_c_function(ctx, init_u8x8, 0 /*nargs*/);
+    duk_put_global_string(ctx, "initU8x8");
+
+    duk_push_c_function(ctx, write_u8x8, 1 /*nargs*/);
+    duk_put_global_string(ctx, "writeU8x8");
 
     loadHttp(ctx);
 

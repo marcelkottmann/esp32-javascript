@@ -23,6 +23,7 @@
 
 #include "WString.h"
 #include "stdlib_noniso.h"
+#include "esp32-hal-log.h"
 //extern "C" {
 //#include "esp_common.h"
 //}
@@ -165,19 +166,23 @@ unsigned char String::reserve(unsigned int size)
 
 unsigned char String::changeBuffer(unsigned int maxStrLen)
 {
-    size_t newSize = (maxStrLen + 16) & (~0xf);
-    char *newbuffer = (char *) malloc(newSize);
+    size_t newSize = ((maxStrLen + 16) & (~0xf)) - 1;
+    char *newbuffer = (char *) realloc(buffer, newSize+1);
     if(newbuffer) {
-        memset(newbuffer, 0, newSize);
-        memcpy(newbuffer, buffer, len);
-        if (buffer) {
-            free(buffer);
+        if(newSize > len){
+            if(newSize > capacity){
+                memset(newbuffer+capacity, 0, newSize-capacity);
+            }
+        } else {
+            //new buffer can not fit the old len
+            newbuffer[newSize] = 0;
+            len = newSize;
         }
-        capacity = newSize - 1;
+        capacity = newSize;
         buffer = newbuffer;
         return 1;
     }
-    buffer = newbuffer;
+    log_e("realloc failed! Buffer unchanged");
     return 0;
 }
 
@@ -875,4 +880,32 @@ float String::toFloat(void) const
         return atof(buffer);
     }
     return 0;
+}
+
+
+unsigned char String::equalsConstantTime(const String &s2) const {
+    // To avoid possible time-based attacks present function
+    // compares given strings in a constant time.
+    if(len != s2.len)
+        return 0;
+    //at this point lengths are the same
+    if(len == 0)
+        return 1;
+    //at this point lenghts are the same and non-zero
+    const char *p1 = buffer;
+    const char *p2 = s2.buffer;
+    unsigned int equalchars = 0;
+    unsigned int diffchars = 0;
+    while(*p1) {
+        if(*p1 == *p2)
+            ++equalchars;
+        else
+            ++diffchars;
+        ++p1;
+        ++p2;
+    }
+    //the following should force a constant time eval of the condition without a compiler "logical shortcut"
+    unsigned char equalcond = (equalchars == len);
+    unsigned char diffcond = (diffchars == 0);
+    return (equalcond & diffcond); //bitwise AND
 }

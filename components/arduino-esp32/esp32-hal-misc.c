@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "esp32-hal.h"
 #include "sdkconfig.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -21,7 +20,10 @@
 #include "nvs.h"
 #include "esp_partition.h"
 #include "esp_log.h"
+#include "esp_timer.h"
+#include "esp_bt.h"
 #include <sys/time.h>
+#include "esp32-hal.h"
 
 //Undocumented!!! Get chip temperature in Farenheit
 //Source: https://github.com/pcbreflux/espressif/blob/master/esp32/arduino/sketchbook/ESP32_int_temp_sensor/ESP32_int_temp_sensor.ino
@@ -37,26 +39,14 @@ void yield()
     vPortYield();
 }
 
-portMUX_TYPE microsMux = portMUX_INITIALIZER_UNLOCKED;
-
 unsigned long IRAM_ATTR micros()
 {
-    static unsigned long lccount = 0;
-    static unsigned long overflow = 0;
-    unsigned long ccount;
-    portENTER_CRITICAL_ISR(&microsMux);
-    __asm__ __volatile__ ( "rsr     %0, ccount" : "=a" (ccount) );
-    if(ccount < lccount){
-        overflow += UINT32_MAX / CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ;
-    }
-    lccount = ccount;
-    portEXIT_CRITICAL_ISR(&microsMux);
-    return overflow + (ccount / CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ);
+    return (unsigned long) esp_timer_get_time();
 }
 
 unsigned long IRAM_ATTR millis()
 {
-    return xTaskGetTickCount() * portTICK_PERIOD_MS;
+    return (unsigned long) (esp_timer_get_time() / 1000);
 }
 
 void delay(uint32_t ms)
@@ -86,8 +76,17 @@ void initVariant() {}
 void init() __attribute__((weak));
 void init() {}
 
+#ifdef CONFIG_BT_ENABLED
+//overwritten in esp32-hal-bt.c
+bool btInUse() __attribute__((weak));
+bool btInUse(){ return false; }
+#endif
+
 void initArduino()
 {
+#if CONFIG_SPIRAM_SUPPORT
+    psramInit();
+#endif
     esp_log_level_set("*", CONFIG_LOG_DEFAULT_LEVEL);
     esp_err_t err = nvs_flash_init();
     if(err == ESP_ERR_NVS_NO_FREE_PAGES){
@@ -104,6 +103,11 @@ void initArduino()
     if(err) {
         log_e("Failed to initialize NVS! Error: %u", err);
     }
+#ifdef CONFIG_BT_ENABLED
+    if(!btInUse()){
+        esp_bt_controller_mem_release(ESP_BT_MODE_BTDM);
+    }
+#endif
     init();
     initVariant();
 }
