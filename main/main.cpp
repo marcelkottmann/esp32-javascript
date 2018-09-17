@@ -1034,7 +1034,7 @@ static void my_fatal(void *udata, const char *msg)
 
 static duk_ret_t init_u8x8(duk_context *ctx)
 {
-    u8g2 = new U8G2_SSD1306_128X64_NONAME_F_SW_I2C(U8G2_R0, /* clock=*/15, /* data=*/4, /* reset=*/16);
+    u8g2 = new U8G2_SSD1306_128X64_NONAME_F_SW_I2C(U8G2_R0, OLED_SCL, OLED_SDA, OLED_RST);
     u8g2->begin();
     return 0;
 }

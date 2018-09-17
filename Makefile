@@ -22,12 +22,32 @@
 # SOFTWARE.
 ##
 
-#
-# This is a project Makefile. It is assumed the directory this Makefile resides in is a
-# project subdirectory.
-#
+PROJECT_NAME := "esp32-javascript"
 
-PROJECT_NAME := esp32-javascript
+### CONFIGURATION SECTION ###
+
+##### Board config #####
+# Specify your board here. Identifier can be any of the directory names in ./components/arduino-esp32/include/variants/
+export BOARD_VARIANT := "heltec_wifi_lora_32"
+
+# LORA sepcific configuration
+
+##### regulatory open frequency for your area/country #####
+# Europe
+CFLAGS += -DCFG_eu868
+# US
+#CFLAGS += -DCFG_us915
+
+##### LORA chip #####
+# This is the SX1272/SX1273 radio, which is also used on the HopeRF RFM92 boards.
+#CFLAGS += -DCFG_sx1272_radio
+
+# This is the SX1276/SX1277/SX1278/SX1279 radio, which is also used on the HopeRF RFM95 boards.
+CFLAGS += -DCFG_sx1276_radio
+
+
+### END OF CONFIGURATION SECTION ###
+
 
 CFLAGS += -Wno-error=unused-value
 CFLAGS += -Wno-error=format=

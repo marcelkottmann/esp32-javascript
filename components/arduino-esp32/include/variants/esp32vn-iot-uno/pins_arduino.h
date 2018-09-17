@@ -11,11 +11,6 @@
 #define digitalPinToInterrupt(p)    (((p)<40)?(p):-1)
 #define digitalPinHasPWM(p)         (p < 34)
 
-static const uint8_t LED_BUILTIN = 2;
-#define BUILTIN_LED  LED_BUILTIN // backward compatibility
-
-static const uint8_t KEY_BUILTIN = 0;
-
 static const uint8_t TX = 1;
 static const uint8_t RX = 3;
 
@@ -29,8 +24,6 @@ static const uint8_t SCK   = 18;
 
 static const uint8_t A0 = 36;
 static const uint8_t A3 = 39;
-static const uint8_t A4 = 32;
-static const uint8_t A5 = 33;
 static const uint8_t A6 = 34;
 static const uint8_t A7 = 35;
 static const uint8_t A10 = 4;
@@ -52,8 +45,7 @@ static const uint8_t T4 = 13;
 static const uint8_t T5 = 12;
 static const uint8_t T6 = 14;
 static const uint8_t T7 = 27;
-static const uint8_t T8 = 33;
-static const uint8_t T9 = 32;
+
 
 static const uint8_t DAC1 = 25;
 static const uint8_t DAC2 = 26;

@@ -46,12 +46,12 @@ void os_getDevKey(u1_t *buf) {}
 
 static const unsigned EL_LORA_EVENT_TYPE = 3;
 
-// Pin mapping for haltec lora 32 board
+// Pin mapping for heltec lora 32 board
 const lmic_pinmap lmic_pins = {
-    .nss = 18,
+    .nss = SS,
     .rxtx = LMIC_UNUSED_PIN,
-    .rst = 14,
-    .dio = {26, 33, 32}};
+    .rst = LORA_RST,
+    .dio = {LORA_IRQ, 33, 32}};
 
 TaskHandle_t lmictask;
 
@@ -192,7 +192,7 @@ void lmic_task(void *ignore)
 {
 
     // SPI settings for heltec esp32 module
-    SPI.begin(5, 19, 27, 18);
+    SPI.begin(SCK, MISO, MOSI, SS);
 
     // LMIC init
     os_init();
