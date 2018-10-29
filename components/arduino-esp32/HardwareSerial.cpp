@@ -5,12 +5,20 @@
 
 #include "HardwareSerial.h"
 
+#if !defined(NO_GLOBAL_INSTANCES) && !defined(NO_GLOBAL_SERIAL)
 HardwareSerial Serial(0);
+HardwareSerial Serial1(1);
+HardwareSerial Serial2(2);
+#endif
 
 HardwareSerial::HardwareSerial(int uart_nr) : _uart_nr(uart_nr), _uart(NULL) {}
 
-void HardwareSerial::begin(unsigned long baud, uint32_t config, int8_t rxPin, int8_t txPin)
+void HardwareSerial::begin(unsigned long baud, uint32_t config, int8_t rxPin, int8_t txPin, bool invert)
 {
+    if(0 > _uart_nr || _uart_nr > 2) {
+        log_e("Serial number is invalid, please use 0, 1 or 2");
+        return;
+    }
     if(_uart) {
         end();
     }
@@ -26,7 +34,7 @@ void HardwareSerial::begin(unsigned long baud, uint32_t config, int8_t rxPin, in
         rxPin = 16;
         txPin = 17;
     }
-    _uart = uartBegin(_uart_nr, baud, config, rxPin, txPin, 256, false);
+    _uart = uartBegin(_uart_nr, baud, config, rxPin, txPin, 256, invert);
 }
 
 void HardwareSerial::end()
@@ -55,6 +63,10 @@ void HardwareSerial::setDebugOutput(bool en)
 int HardwareSerial::available(void)
 {
     return uartAvailable(_uart);
+}
+int HardwareSerial::availableForWrite(void)
+{
+    return uartAvailableForWrite(_uart);
 }
 
 int HardwareSerial::peek(void)

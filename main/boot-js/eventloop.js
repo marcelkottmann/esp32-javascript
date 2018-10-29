@@ -4,11 +4,11 @@ try {
         errorHandler;
 
     timers = [];
-    handles = 0;
     wifi = undefined;
     sockets = [];
     socketspool = [];
     intervals = [];
+    var handles = 0;
 
     sockets.pushNative = sockets.push;
     sockets.push = function (items) {
@@ -16,14 +16,25 @@ try {
     }
 
     function setTimeout(fn, timeout) {
-        var handle = handles++;
+        var handle = el_createTimer(timeout);
         timers.push({
             timeout: Date.now() + timeout,
             fn: fn,
             handle: handle,
-            installed: false
+            installed: true
         });
         return handle;
+    }
+
+    function clearTimeout(handle) {
+        for (var i = 0; i < timers.length; i++) {
+            if (timers[i].handle === handle) {
+                var removed = timers.splice(i, 1);
+                if (removed[0].installed) {
+                    el_removeTimer(handle);
+                }
+            }
+        }
     }
 
     function clearInterval(handle) {
@@ -177,15 +188,6 @@ try {
     }
 
     function el_select_next() {
-        //install all new timers
-        for (var t = 0; t < timers.length; t++) {
-            var timer = timers[t];
-            if (!timer.installed) {
-                el_install_timer(timer.timeout - Date.now(), timer.handle);
-                timer.installed = true;
-            }
-        }
-
         //collect sockets
         var validSockets = sockets.filter(function (s) { return !s.isError; });
         var mapToSockfd = function (s) { return s.sockfd; };
@@ -210,7 +212,7 @@ try {
                     throw "UNKNOWN TIMER HANDLE!!!";
                 }
             } else if (evt.type === 1) { //WIFI EVENT
-                collected.push(wifi.status.bind(this, evt));
+                collected.push(function (evt) { return function () { wifi.status(evt) } }(evt));
             } else if (evt.type === 2) { //SOCKET EVENT
                 var findSocket = sockets.filter(function (s) { return s.sockfd === evt.fd; });
                 var socket = findSocket[0];
@@ -219,7 +221,7 @@ try {
                     {
                         socket.isConnected = true;
                         if (socket.onConnect) {
-                            collected.push(socket.onConnect.bind(this, socket));
+                            collected.push(function (socket) { return function () { socket.onConnect(socket) } }(socket));
                         }
                     } else if (evt.status === 1) //readable
                     {
@@ -233,7 +235,7 @@ try {
                                 print('******** EAGAIN!!');
                             } else {
                                 if (socket.onData) {
-                                    collected.push(socket.onData.bind(this, data, socket.sockfd));
+                                    collected.push(function (data, fd) { return function () { socket.onData(data, fd) } }(data, socket.sockfd));
                                 }
                             }
                         }

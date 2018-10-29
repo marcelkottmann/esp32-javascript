@@ -91,6 +91,6 @@ public:
     friend class DNSClient;
 };
 
-const IPAddress INADDR_NONE(0, 0, 0, 0);
+const IPAddress IP_ADDR_NONE(0, 0, 0, 0);
 
 #endif

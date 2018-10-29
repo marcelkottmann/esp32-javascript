@@ -25,6 +25,8 @@ Change into ~/esp/esp32-javascript.
 
     cd ~/esp/esp32-javascript
 
+Open the Makefile and change settings in the configuration section.
+
 Connect your ESP32 Dev Board via USB and run
 
     make flash monitor
@@ -41,20 +43,14 @@ On the Setup page you can configure your WLAN settings and an URL to download yo
 
 Please note that currently only http (and NO https) is possible.
 
-If you don't own a webserver it's very easy to use cdn.rawgit.com to serve files from a github-respository.
-
-To use rawgit follow this URL scheme:
-http://cdn.rawgit.com/[GITHUB-USERNAME]/[GIT-REPOSITORY-NAME]/[MASTER-OR-TAG]/[FILENAME], e.g.
-"http://cdn.rawgit.com/pepe79/test-ota/master/esp32.js"
-
-Please not that the script, does not need to have a main function, because its evaluated entirely. 
+Please note that the script, does not need to have a main function, because its evaluated entirely. 
 That means, to print out "Hello World", you only have to include one line in your script on the webserver:
 
         print('Hello world!');
 
 ## Compatibility
 
-Tested with 475ffe78e8c7674a6b9b2dff78774a4a8b66470a of esp-idf and xtensa-esp32-elf-linux64-1.22.0-80-g6c4433a-5.2.0.
+Tested with 129d32772e5e5eafe88be5b9eb34687e84a6f8b8 of esp-idf and xtensa-esp32-elf-linux64-1.22.0-80-g6c4433a-5.2.0.
 
 ## API
 
@@ -65,6 +61,12 @@ Tested with 475ffe78e8c7674a6b9b2dff78774a4a8b66470a of esp-idf and xtensa-esp32
     function setTimeout(cb, timeout)
 
 Creates a timer and calls the function cb **once** after the configured timeout. Returns a handle.  
+
+#### clearTimeout
+
+    function clearTimeout(handle)
+
+Clears and removes the timeout timer by specifing the corresponding handle.
 
 #### setInterval
 

@@ -5,24 +5,27 @@ function startConfigServer() {
     print('Starting config server.');
     httpServer(80, function (req, res) {
         if (req.path === '/') {
-            res.end(redirect('/setup'));
+            redirect(res, '/setup');
+        } else if (req.path === '/style.css.gz') {
+            res.write(getHeader(200, 'Content-Encoding: gzip\r\nCache-Control: public, max-age=3600, s-maxage=3600\r\nContent-type: text/css\r\n'));
+            res.end(getCss());
         } else if (req.path === '/restart') {
             if (req.method === 'GET') {
-                res.end(page('Request restart', '<form action="/restart" method="post"><input type="submit" value="Restart" /></form>'));
+                page(res, 'Request restart', '<form action="/restart" method="post"><input type="submit" value="Restart" /></form>');
             } else {
-                res.end(page('Restarting...', ''));
+                page(res, 'Restarting...', '');
                 restart();
             }
         } else if (req.path === '/setup') {
             if (req.method === 'GET') {
-                res.end(page('Setup', '<form action="/setup" method="post">' +
-                    'SSID: <input type="text" name="ssid" value="' + el_load('config.ssid') + '" /><br/>' +
-                    'Password: <input type="text" name="password" value="' + el_load('config.password') + '" /><br/>' +
-                    'JS File URL: <input type="text" name="url" value="' + el_load('config.url') + '" /><br/>' +
-                    'Offline Mode: <input type="checkbox" name="offline" value="true" ' +
-                    (el_load('config.offline') === 'true' ? 'checked' : '') + '/><br/>' +
+                page(res, 'Setup', '<form  class="pure-form pure-form-stacked" action="/setup" method="post"><fieldset>' +
+                    '<label for="ssid">SSID</label><input type="text" name="ssid" value="' + el_load('config.ssid') + '" />' +
+                    '<label for="password">Password</label><input type="text" name="password" value="' + el_load('config.password') + '" />' +
+                    '<label for="url">JS file url</label><input type="text" name="url" value="' + el_load('config.url') + '" />' +
+                    '<label for="offline" class="pure-checkbox"><input type="checkbox" name="offline" value="true" ' +
+                    (el_load('config.offline') === 'true' ? 'checked' : '') + '/> Offline Mode</label>' +
                     '<textarea name="script">' + el_load('config.script') + '</textarea>' +
-                    '<input type="submit" value="Save" /></form>'));
+                    '<input type="submit" class="pure-button pure-button-primary" value="Save" /></fieldset></form>');
             } else {
                 var config = parseQueryStr(req.body);
                 el_store('config.ssid', config.ssid);
@@ -31,7 +34,7 @@ function startConfigServer() {
                 el_store('config.offline', config.offline === 'true' ? 'true' : 'false');
                 el_store('config.script', config.script);
 
-                res.end(page('Saved', JSON.stringify(config)));
+                page(res, 'Saved', JSON.stringify(config));
             }
         } else {
             for (var i = 0; i < requestHandler.length; i++) {
@@ -40,7 +43,8 @@ function startConfigServer() {
                 }
             }
             if (!res.isEnded) {
-                res.end(page('404', 'Not found'));
+                res.write(getHeader(404, 'Content-type: text/plain\r\n'));
+                res.end('Not found');
             }
         }
     });

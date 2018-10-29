@@ -1,21 +1,28 @@
-function page(headline, text) {
-    return 'HTTP/1.1 200 OK\r\n' +//
+function getHeader(statusCode, additionalHeaders) {
+    return 'HTTP/1.1 ' + statusCode + ' OK\r\n' +//
         'Connection: close\r\n' +//
-        'Content-type: text/html\r\n\r\n' +//
-        '<!doctype html>' +//
-        '<html>' +//
-        '<head><title>esp32-javascript</title>' +//
-        '<meta name="viewport" content="width=device-width, initial-scale=1.0"></head>' +//
-        '<body>' +//
-        '<h1>' + headline + '</h1>' + text +//
-        '</body>' +//
-        '</html>\r\n\r\n';
+        (additionalHeaders ? additionalHeaders : '') +
+        '\r\n';
 }
 
-function redirect(location) {
-    return 'HTTP/1.1 302 Found\r\n' +//
-        'Connection: close\r\n' +//
-        'Location: '+location+'\r\n\r\n';
+function page(res, headline, text) {
+    res.write(getHeader(200, 'Content-type: text/html\r\n'));
+    res.end('<!doctype html>' +//
+        '<html>' +//
+        '<head><title>esp32-javascript</title>' +//
+        '<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">' +
+        '<link rel="stylesheet" href="/style.css.gz">' +
+        '</head>' +//
+        '<body>' +//
+        '<div class="pure-g"><div class="pure-u-1"><div class="l-box">' +//
+        '<h1>' + headline + '</h1>' + text +//
+        '</div></div></div>' +//
+        '</body>' +//
+        '</html>\r\n\r\n');
+}
+
+function redirect(res, location) {
+    res.end(getHeader(302, 'Location: ' + location + '\r\n'));
 }
 
 function httpServer(port, cb) {
@@ -39,7 +46,6 @@ function httpServer(port, cb) {
                     if (contentLength > 0) {
                         if (endOfHeaders === (complete.length - 4 - contentLength)) {
                             postedData = complete.substring(endOfHeaders + 4, complete.length);
-                            print('POSTED DATA: |' + postedData + '|');
                         }
                         else {
                             //wait for more data to come (body of  a POST request)
@@ -58,9 +64,27 @@ function httpServer(port, cb) {
                     };
 
                     var res = { isEnded: false };
-                    res.end = function (data) {
+                    res.write = function (data) {
+                        if (typeof data === 'string') {
+                            data = new TextEncoder().encode(data);
+                        }
+                        // data is always Uint8Array
+
                         res.isEnded = true;
-                        writeSocket(socket.sockfd, data);
+                        var written = 0;
+                        var len = data.length;
+                        while (written < len) {
+                            var ret = writeSocket(socket.sockfd, new Uint8Array(data, written), len - written);
+                            if (ret >= 0) {
+                                written += ret;
+                            } else {
+                                print('error writing to socket:' + ret);
+                                break;
+                            }
+                        }
+                    }
+                    res.end = function (data) {
+                        res.write(data);
                         closeSocket(socket.sockfd);
                     }
 
@@ -119,7 +143,7 @@ function parseQueryStr(query) {
 
 function parseUrl(url) {
     if (url) {
-        var match = url.match(/([^\:]+):\/\/([^\/]+):?(\d*)(.*)/);
+        var match = url.match(/([^\:]+):\/\/([^\:]+):?(\d*)(.*)/);
         if (match) {
             return {
                 host: match[2],

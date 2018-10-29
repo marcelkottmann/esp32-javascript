@@ -1,4 +1,4 @@
 build
 *.hex
 main/esp32.js
-sdkconfig.*
+sdkconfig.old*

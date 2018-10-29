@@ -112,14 +112,55 @@ void EspClass::restart(void)
     esp_restart();
 }
 
+uint32_t EspClass::getHeapSize(void)
+{
+    multi_heap_info_t info;
+    heap_caps_get_info(&info, MALLOC_CAP_INTERNAL);
+    return info.total_free_bytes + info.total_allocated_bytes;
+}
+
 uint32_t EspClass::getFreeHeap(void)
 {
-    return esp_get_free_heap_size();
+    return heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
+}
+
+uint32_t EspClass::getMinFreeHeap(void)
+{
+    return heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL);
+}
+
+uint32_t EspClass::getMaxAllocHeap(void)
+{
+    return heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL);
+}
+
+uint32_t EspClass::getPsramSize(void)
+{
+    multi_heap_info_t info;
+    heap_caps_get_info(&info, MALLOC_CAP_SPIRAM);
+    return info.total_free_bytes + info.total_allocated_bytes;
+}
+
+uint32_t EspClass::getFreePsram(void)
+{
+    return heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
+}
+
+uint32_t EspClass::getMinFreePsram(void)
+{
+    return heap_caps_get_minimum_free_size(MALLOC_CAP_SPIRAM);
+}
+
+uint32_t EspClass::getMaxAllocPsram(void)
+{
+    return heap_caps_get_largest_free_block(MALLOC_CAP_SPIRAM);
 }
 
 uint8_t EspClass::getChipRevision(void)
 {
-    return (REG_READ(EFUSE_BLK0_RDATA3_REG) >> EFUSE_RD_CHIP_VER_RESERVE_S) && EFUSE_RD_CHIP_VER_RESERVE_V;
+    esp_chip_info_t chip_info;
+    esp_chip_info(&chip_info);
+    return chip_info.revision;
 }
 
 const char * EspClass::getSdkVersion(void)
@@ -216,7 +257,7 @@ bool EspClass::flashRead(uint32_t offset, uint32_t *data, size_t size)
 
 uint64_t EspClass::getEfuseMac(void)
 {
-    uint64_t _chipmacid;
+    uint64_t _chipmacid = 0LL;
     esp_efuse_mac_get_default((uint8_t*) (&_chipmacid));
     return _chipmacid;
 }

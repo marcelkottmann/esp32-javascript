@@ -13,6 +13,15 @@
         "ws2812.h": "c",
         "esp32-hal-gpio.h": "c",
         "*.hex": "c",
-        "socket.h": "c"
+        "socket.h": "c",
+        "array": "cpp",
+        "string_view": "cpp",
+        "deque": "cpp",
+        "list": "cpp",
+        "unordered_map": "cpp",
+        "unordered_set": "cpp",
+        "vector": "cpp",
+        "initializer_list": "cpp",
+        "*.ipp": "cpp"
     }
 }

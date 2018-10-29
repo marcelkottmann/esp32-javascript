@@ -80,6 +80,7 @@ function connectToWifi() {
                 var chunked = false;
                 var headerRead = false;
                 var headerEnd = -1;
+                var contentLength = -1;
                 if (config.ota.url) {
                     print('Loading program from: ' + JSON.stringify(config.ota.url));
                     var ret = sockConnect(config.ota.url.host, config.ota.url.port,
@@ -91,11 +92,25 @@ function connectToWifi() {
 
                             if (!headerRead && (headerEnd = complete.indexOf('\r\n\r\n')) >= 0) {
                                 headerRead = true;
-                                chunked = complete.toLowerCase().indexOf('transfer-encoding: chunked') != -1;
+                                chunked = complete.toLowerCase().indexOf('transfer-encoding: chunked') >= 0;
+                                var clIndex = complete.toLowerCase().indexOf('content-length: ');
+                                if (clIndex >= 0) {
+                                    var endOfContentLength = complete.indexOf('\r\n', clIndex);
+                                    print('content length parseInt:' + complete.substring(clIndex + 15, endOfContentLength));
+                                    contentLength = parseInt(complete.substring(clIndex + 15, endOfContentLength));
+                                }
                                 headerEnd += 4;
                             }
                             if (chunked) {
                                 if (complete.substring(complete.length - 5) == '0\r\n\r\n') {
+                                    print('Closing...');
+                                    closeSocket(sockfd);
+                                }
+                            }
+                            print('length:' + (complete.length - headerEnd));
+                            print('cl:' + contentLength);
+                            if (contentLength >= 0) {
+                                if ((complete.length - headerEnd) == contentLength) {
                                     print('Closing...');
                                     closeSocket(sockfd);
                                 }

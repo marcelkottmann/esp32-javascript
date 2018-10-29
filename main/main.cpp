@@ -1,7 +1,7 @@
 /*
 MIT License
 
-Copyright (c) 2017 Marcel Kottmann
+Copyright (c) 2018 Marcel Kottmann
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -45,10 +45,10 @@ SOFTWARE.
 #include "nvs.h"
 #include <netdb.h>
 #include "rom/uart.h"
-#include "ws2812.h"
 #include "esp32-hal-gpio.h"
 #include "esp32-hal-ledc.h"
 #include "pins_arduino.h"
+#include "main.h"
 
 static EventGroupHandle_t wifi_event_group;
 static const int CONNECTED_BIT = BIT0;
@@ -85,19 +85,6 @@ bool flag = false;
 #define EL_SOCKET_STATUS_READ 1
 #define EL_SOCKET_STATUS_ERROR 2
 
-typedef struct
-{
-    int type;
-    int status;
-    int fd;
-} timer_event_t;
-
-typedef struct
-{
-    timer_event_t events[4];
-    int events_len;
-} eventlist_t;
-
 void IRAM_ATTR el_add_event(eventlist_t *events, timer_event_t *event)
 {
     events->events[events->events_len] = *event;
@@ -127,7 +114,7 @@ void IRAM_ATTR vTimerCallback(TimerHandle_t xTimer)
 
     xTimerDelete(xTimer, portMAX_DELAY);
 
-    el_create_event(&event, EL_TIMER_EVENT_TYPE, (int)pvTimerGetTimerID(xTimer), 0);
+    el_create_event(&event, EL_TIMER_EVENT_TYPE, (int)xTimer, 0);
     events.events_len = 0;
     el_add_event(&events, &event);
     el_fire_events(&events);
@@ -140,8 +127,6 @@ static IRAM_ATTR esp_err_t event_handler(void *ctx, system_event_t *sysevent)
 
     timer_event_t event;
     timer_event_t event2;
-
-    bool flag = true;
 
     switch (sysevent->event_id)
     {
@@ -164,6 +149,11 @@ static IRAM_ATTR esp_err_t event_handler(void *ctx, system_event_t *sysevent)
 
         /* This is a workaround as ESP32 WiFi libs don't currently
        auto-reassociate. */
+
+        wifi_mode_t mode;
+        esp_wifi_get_mode(&mode);
+        esp_wifi_set_mode(WIFI_MODE_NULL);
+        esp_wifi_set_mode(mode);
         esp_wifi_connect();
         xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);
         break;
@@ -187,7 +177,7 @@ static IRAM_ATTR esp_err_t event_handler(void *ctx, system_event_t *sysevent)
     return ESP_OK;
 }
 
-void init_timer(int timer_period_us, int handle)
+int createTimer(int timer_period_us)
 {
     int interval = timer_period_us / portTICK_PERIOD_MS;
 
@@ -196,11 +186,13 @@ void init_timer(int timer_period_us, int handle)
     {
         interval = 1;
     }
-    TimerHandle_t tmr = xTimerCreate("MyTimer", interval, pdFALSE, (void *)handle, vTimerCallback);
+    TimerHandle_t tmr = xTimerCreate("MyTimer", interval, pdFALSE, NULL, vTimerCallback);
+    printf("Timer created: %d\n", (int)tmr);
     if (xTimerStart(tmr, portMAX_DELAY) != pdPASS)
     {
         ESP_LOGE(tag, "Timer start error");
     }
+    return (int)tmr;
 }
 
 int createSocketPair()
@@ -478,7 +470,12 @@ static duk_ret_t el_load(duk_context *ctx)
 
     size_t string_size;
     err = nvs_get_str(my_handle, key, NULL, &string_size);
-    if (err != ESP_OK)
+    if (err == ESP_ERR_NVS_NOT_FOUND)
+    {
+        duk_push_undefined(ctx);
+        ret = 1;
+    }
+    else if (err != ESP_OK)
     {
         ESP_LOGE(tag, "Cannot get key %s from storage, err=%d\n", key, err);
         ret = -1;
@@ -713,47 +710,43 @@ static duk_ret_t el_closeSocket(duk_context *ctx)
     return 0;
 }
 
-static duk_ret_t getSocketStatus(duk_context *ctx)
-{
-    fd_set readset;
-    fd_set writeset;
-    fd_set errset;
-
-    int socketfd = duk_to_int(ctx, 0);
-
-    int socketfds_len = 1;
-    int socketfds[socketfds_len];
-    socketfds[0] = socketfd;
-
-    int ret = checkSockets(socketfds, socketfds_len, &readset, &writeset, &errset);
-    if (ret >= 0)
-    {
-        int sockfd = socketfds[0];
-        duk_idx_t obj_idx = duk_push_object(ctx);
-        duk_push_boolean(ctx, FD_ISSET(sockfd, &readset));
-        duk_put_prop_string(ctx, obj_idx, "readable");
-        duk_push_boolean(ctx, FD_ISSET(sockfd, &writeset));
-        duk_put_prop_string(ctx, obj_idx, "writable");
-        duk_push_boolean(ctx, FD_ISSET(sockfd, &errset));
-        duk_put_prop_string(ctx, obj_idx, "error");
-    }
-    else
-    {
-        duk_idx_t obj_idx = duk_push_object(ctx);
-        duk_push_boolean(ctx, true);
-        duk_put_prop_string(ctx, obj_idx, "error");
-        duk_push_int(ctx, errno);
-        duk_put_prop_string(ctx, obj_idx, "errno");
-    }
-    return 1;
-}
-
 static duk_ret_t writeSocket_bind(duk_context *ctx)
 {
     int sockfd = duk_to_int(ctx, 0);
-    const char *msg = duk_to_string(ctx, 1);
+    const char *msg = NULL;
+    int len = 0;
+    if (duk_is_string(ctx, 1))
+    {
+        msg = duk_to_string(ctx, 1);
+        if (duk_is_undefined(ctx, 2))
+        {
+            len = strlen(msg);
+        }
+        else
+        {
+            len = duk_to_int(ctx, 2);
+        }
+    }
+    else
+    {
+        duk_size_t buffer_len;
+        msg = (char *)duk_get_buffer_data(ctx, 1, &buffer_len);
+        if (duk_is_undefined(ctx, 2))
+        {
+            len = buffer_len;
+        }
+        else
+        {
+            len = duk_to_int(ctx, 2);
 
-    int ret = writeSocket(sockfd, msg);
+            if (len > buffer_len)
+            {
+                return -1;
+            }
+        }
+    }
+
+    int ret = writeSocket(sockfd, msg, len);
 
     duk_push_int(ctx, ret);
     return 1;
@@ -836,6 +829,8 @@ static duk_ret_t setupWifi(duk_context *ctx, bool softap)
         };
         strcpy((char *)wifi_config.sta.ssid, ssid);
         strcpy((char *)wifi_config.sta.password, pass);
+        wifi_config.sta.scan_method = WIFI_ALL_CHANNEL_SCAN;
+        wifi_config.sta.sort_method = WIFI_CONNECT_AP_BY_SIGNAL;
 
         ESP_LOGD(tag, "Setting WiFi configuration SSID %s and PASS %s ...", wifi_config.sta.ssid, wifi_config.sta.password);
         ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
@@ -873,24 +868,33 @@ static duk_ret_t native_delay(duk_context *ctx)
     return 0;
 }
 
-static duk_ret_t el_install_timer(duk_context *ctx)
+static duk_ret_t el_createTimer(duk_context *ctx)
 {
     int delay = duk_to_int32(ctx, 0);
-
-    //delay = delay / 600;
-
-    int handle = duk_to_int32(ctx, 1);
     if (delay < 0)
     {
         delay = 0;
     }
     ESP_LOGD(tag, "Install timer to notify in  %dms.\n", delay);
-    init_timer(delay, handle);
+    int handle = createTimer(delay);
+    duk_push_int(ctx, handle);
+    return 1;
+}
+
+static duk_ret_t el_removeTimer(duk_context *ctx)
+{
+    int handle = duk_to_int32(ctx, 0);
+    xTimerDelete((TimerHandle_t)handle, portMAX_DELAY);
     return 0;
 }
 
 static duk_ret_t el_suspend(duk_context *ctx)
 {
+    // force garbage collection 2 times see duktape doc
+    duk_gc(ctx, 0);
+    duk_gc(ctx, 0);
+    ESP_LOGI(tag, "Free memory: %d bytes", esp_get_free_heap_size());
+
     eventlist_t events;
 
     ESP_LOGD(tag, "Waiting for events...\n");
@@ -986,39 +990,7 @@ static duk_ret_t el_ledcWrite(duk_context *ctx)
 
 static duk_ret_t info(duk_context *ctx)
 {
-    printf("ESP32 SDK version:%s, RAM left %d\n", system_get_sdk_version(), system_get_free_heap_size());
-    return 0;
-}
-
-rgbVal *pixels = NULL;
-int NUM_PIXELS = 8;
-
-static duk_ret_t setLedColor(duk_context *ctx)
-{
-    int num = duk_to_int(ctx, 0);
-    int r = duk_to_int(ctx, 1);
-    int g = duk_to_int(ctx, 2);
-    int b = duk_to_int(ctx, 3);
-
-    if (pixels == NULL)
-    {
-        if (ws2812_init(18, LED_WS2812B))
-        {
-            ESP_LOGE(tag, "Init FAILURE: halting");
-            //error
-            return -1;
-        }
-
-        pixels = (rgbVal *)malloc(sizeof(rgbVal) * NUM_PIXELS);
-        for (int i = 0; i < NUM_PIXELS; i++)
-        {
-            pixels[i] = makeRGBVal(0, 0, 0);
-        }
-    }
-    //    printf("Values: %d,%d,%d,%d\n", num, r, g, b);
-    pixels[num] = makeRGBVal(r, g, b);
-    ws2812_setColors(NUM_PIXELS, pixels);
-
+    printf("ESP32 RAM left %d\n", esp_get_free_heap_size());
     return 0;
 }
 
@@ -1037,9 +1009,17 @@ static void my_fatal(void *udata, const char *msg)
     abort();
 }
 
+static duk_ret_t setDateTimeOffsetInMillis(duk_context *ctx)
+{
+    double offset = duk_to_number(ctx, 0);
+    printf("offset setted to %f\n", offset);
+    duk_dateTimeOffsetInMillis = offset;
+    return 0;
+}
+
 void loadConfig(duk_context *ctx)
 {
-    char config_js[] = {
+    const char config_js[] = {
 #include "boot-js/config.hex"
     };
     ESP_LOGI(tag, "Loading config...\n");
@@ -1048,7 +1028,7 @@ void loadConfig(duk_context *ctx)
 
 void loadHttp(duk_context *ctx)
 {
-    char http_js[] = {
+    const char http_js[] = {
 #include "boot-js/http.hex"
     };
     ESP_LOGI(tag, "Loading http function...\n");
@@ -1057,7 +1037,7 @@ void loadHttp(duk_context *ctx)
 
 void loadConfigserver(duk_context *ctx)
 {
-    char boot_js[] = {
+    const char boot_js[] = {
 #include "boot-js/configserver.hex"
     };
     ESP_LOGI(tag, "Loading config server function...\n");
@@ -1066,7 +1046,7 @@ void loadConfigserver(duk_context *ctx)
 
 void loadMain(duk_context *ctx)
 {
-    char boot_js[] = {
+    const char boot_js[] = {
 #include "boot-js/boot.hex"
     };
     ESP_LOGI(tag, "Loading boot function...\n");
@@ -1075,11 +1055,23 @@ void loadMain(duk_context *ctx)
 
 void loadEventloop(duk_context *ctx)
 {
-    char eventloop_js[] = {
+    const char eventloop_js[] = {
 #include "boot-js/eventloop.hex"
     };
     ESP_LOGI(tag, "Loading and starting event loop...\n");
     duk_eval_string_noresult(ctx, eventloop_js);
+}
+
+duk_ret_t getCss(duk_context *ctx)
+{
+    const char css[] = {
+#include "boot-js/style.css.hex"
+    };
+    int size = sizeof(css);
+    printf("SIZE: %d\n", size);
+    void *buf = duk_push_fixed_buffer(ctx, size);
+    memcpy(buf, css, size);
+    return 1;
 }
 
 void duktape_task(void *ignore)
@@ -1120,13 +1112,10 @@ void duktape_task(void *ignore)
     duk_push_c_function(ctx, info, 0 /*nargs*/);
     duk_put_global_string(ctx, "info");
 
-    duk_push_c_function(ctx, getSocketStatus, 1 /*nargs*/);
-    duk_put_global_string(ctx, "getSocketStatus");
-
     duk_push_c_function(ctx, native_delay, 1 /*nargs*/);
     duk_put_global_string(ctx, "delay");
 
-    duk_push_c_function(ctx, writeSocket_bind, 2 /*nargs*/);
+    duk_push_c_function(ctx, writeSocket_bind, 3 /*nargs*/);
     duk_put_global_string(ctx, "writeSocket");
 
     duk_push_c_function(ctx, el_readSocket, 1 /*nargs*/);
@@ -1140,8 +1129,11 @@ void duktape_task(void *ignore)
     duk_push_c_function(ctx, el_suspend, 1 /*nargs*/);
     duk_put_global_string(ctx, "el_suspend");
 
-    duk_push_c_function(ctx, el_install_timer, 2 /*nargs*/);
-    duk_put_global_string(ctx, "el_install_timer");
+    duk_push_c_function(ctx, el_createTimer, 1 /*nargs*/);
+    duk_put_global_string(ctx, "el_createTimer");
+
+    duk_push_c_function(ctx, el_removeTimer, 1 /*nargs*/);
+    duk_put_global_string(ctx, "el_removeTimer");
 
     duk_push_c_function(ctx, el_connectWifi, 2 /*nargs*/);
     duk_put_global_string(ctx, "el_connectWifi");
@@ -1170,9 +1162,6 @@ void duktape_task(void *ignore)
     duk_push_c_function(ctx, el_store, 2 /*nargs*/);
     duk_put_global_string(ctx, "el_store");
 
-    duk_push_c_function(ctx, setLedColor, 4 /*nargs*/);
-    duk_put_global_string(ctx, "setLedColor");
-
     duk_push_c_function(ctx, el_restart, 0 /*nargs*/);
     duk_put_global_string(ctx, "restart");
 
@@ -1190,6 +1179,16 @@ void duktape_task(void *ignore)
 
     duk_push_c_function(ctx, el_ledcWrite, 2 /*nargs*/);
     duk_put_global_string(ctx, "ledcWrite");
+
+    duk_push_c_function(ctx, getCss, 0 /*nargs*/);
+    duk_put_global_string(ctx, "getCss");
+
+    duk_push_c_function(ctx, setDateTimeOffsetInMillis, 1 /*nargs*/);
+    duk_put_global_string(ctx, "setDateTimeOffsetInMillis");
+
+#ifdef ESP32_JAVASCRIPT_EXTERN_INIT
+    ESP32_JAVASCRIPT_EXTERN_INIT(ctx);
+#endif
 
     loadHttp(ctx);
 
