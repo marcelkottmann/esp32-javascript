@@ -3,8 +3,14 @@ var requestHandler = [];
 
 function startConfigServer() {
     print('Starting config server.');
+    var defaultConfig = getDefaultConfig();
+    var authString = ('Basic ' + btoa(defaultConfig.basicAuthUsername + ':' + defaultConfig.basicAuthPassword));
     httpServer(80, function (req, res) {
-        if (req.path === '/') {
+        if (req.headers['authorization'] !== authString) {
+            print('401 response');
+            res.write(getHeader(401, 'WWW-Authenticate: Basic realm="Enter credentials"\r\n'));
+            res.end('401 Unauthorized');
+        } else if (req.path === '/') {
             redirect(res, '/setup');
         } else if (req.path === '/style.css.gz') {
             res.write(getHeader(200, 'Content-Encoding: gzip\r\nCache-Control: public, max-age=3600, s-maxage=3600\r\nContent-type: text/css\r\n'));

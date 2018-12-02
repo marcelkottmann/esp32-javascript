@@ -22,13 +22,19 @@
 # SOFTWARE.
 ##
 
-PROJECT_NAME := "esp32-javascript"
+CFLAGS += $(ESP32_JS_FLAGS) -DESP32 -Wno-error=unused-value -Wno-error=format= -Wno-error=maybe-uninitialized
+CPPFLAGS += $(ESP32_JS_FLAGS) -DESP32
 
-### CONFIGURATION SECTION ###
-ESP32_JS_FLAGS :=
+ESP32_JAVASCRIPT_CORE_PATH=${PWD}/components/esp32-javascript
+all_binaries: ${ESP32_JAVASCRIPT_CORE_PATH}/boot-js/config.hex ${ESP32_JAVASCRIPT_CORE_PATH}/boot-js/boot.hex ${ESP32_JAVASCRIPT_CORE_PATH}/boot-js/eventloop.hex ${ESP32_JAVASCRIPT_CORE_PATH}/boot-js/http.hex ${ESP32_JAVASCRIPT_CORE_PATH}/boot-js/configserver.hex ${ESP32_JAVASCRIPT_CORE_PATH}/boot-js/style.css.hex
 
-##### Board config #####
-# Specify your board here. Identifier can be any of the directory names in ./components/arduino-esp32/include/variants/
-export BOARD_VARIANT := "heltec_wifi_lora_32"
+%.hex: %.js
+	bash -c "(cat $< && echo -n -e '\0') | xxd -i > $@"
 
-include $(IDF_PATH)/make/project.mk
+%.hex: %.gz
+	bash -c "(cat $< && echo -n -e '\0') | xxd -i > $@"
+
+clean:
+	rm -f ${ESP32_JAVASCRIPT_CORE_PATH}/boot-js/client.js
+	rm -f ${ESP32_JAVASCRIPT_CORE_PATH}/boot-js/*.hex
+

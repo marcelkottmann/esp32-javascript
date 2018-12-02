@@ -96,7 +96,6 @@ function connectToWifi() {
                                 var clIndex = complete.toLowerCase().indexOf('content-length: ');
                                 if (clIndex >= 0) {
                                     var endOfContentLength = complete.indexOf('\r\n', clIndex);
-                                    print('content length parseInt:' + complete.substring(clIndex + 15, endOfContentLength));
                                     contentLength = parseInt(complete.substring(clIndex + 15, endOfContentLength));
                                 }
                                 headerEnd += 4;
@@ -107,8 +106,6 @@ function connectToWifi() {
                                     closeSocket(sockfd);
                                 }
                             }
-                            print('length:' + (complete.length - headerEnd));
-                            print('cl:' + contentLength);
                             if (contentLength >= 0) {
                                 if ((complete.length - headerEnd) == contentLength) {
                                     print('Closing...');
@@ -164,6 +161,7 @@ function connectToWifi() {
 }
 
 function main() {
+    print('result: ' + btoa('esp32:esp32'));
     if (digitalRead(KEY_BUILTIN) == 0) {
         print('Setup key pressed: Start soft ap...');
         startSoftApMode();

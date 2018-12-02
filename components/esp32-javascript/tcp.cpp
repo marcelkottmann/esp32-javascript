@@ -190,11 +190,7 @@ int readSocket(int sockfd, char *msg, int len)
         return -1;
     }
 
-    ESP_LOGI(tag, "Before recv %d...\n", sockfd);
-
     result = recvfrom(sockfd, msg, len, MSG_DONTWAIT, (struct sockaddr *)&remaddr, &addrlen);
-
-    ESP_LOGI(tag, "After recv %d.\n", sockfd);
     return result;
 }
 

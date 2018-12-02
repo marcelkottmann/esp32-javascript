@@ -1,7 +1,7 @@
 /*
 MIT License
 
-Copyright (c) 2018 Marcel Kottmann
+Copyright (c) 2017 Marcel Kottmann
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,10 +22,35 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "esp32-javascript.h"
-#include "main.h"
+#if !defined(ESP32_JAVASCRIPT_H_INCLUDED)
+#define ESP32_JAVASCRIPT_H_INCLUDED
 
-extern "C" int app_main()
+#include <esp_attr.h>
+#include <duktape.h>
+
+typedef struct
 {
-    return esp32_javascript_init();
-}
+    int type;
+    int status;
+    int fd;
+} timer_event_t;
+
+typedef struct
+{
+    timer_event_t events[4];
+    int events_len;
+} eventlist_t;
+
+void IRAM_ATTR el_add_event(eventlist_t *events, timer_event_t *event);
+
+void IRAM_ATTR el_fire_events(eventlist_t *events);
+
+void IRAM_ATTR el_create_event(timer_event_t *event, int type, int status, int fd);
+
+#ifdef ESP32_JAVASCRIPT_EXTERN_INIT
+extern void ESP32_JAVASCRIPT_EXTERN_INIT(duk_context *ctx);
+#endif
+
+int esp32_javascript_init();
+
+#endif

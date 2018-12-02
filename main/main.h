@@ -25,27 +25,4 @@ SOFTWARE.
 #if !defined(EL_MAIN_H_INCLUDED)
 #define EL_MAIN_H_INCLUDED
 
-typedef struct
-{
-    int type;
-    int status;
-    int fd;
-} timer_event_t;
-
-typedef struct
-{
-    timer_event_t events[4];
-    int events_len;
-} eventlist_t;
-
-void IRAM_ATTR el_add_event(eventlist_t *events, timer_event_t *event);
-
-void IRAM_ATTR el_fire_events(eventlist_t *events);
-
-void IRAM_ATTR el_create_event(timer_event_t *event, int type, int status, int fd);
-
-#ifdef ESP32_JAVASCRIPT_EXTERN_INIT
-extern void ESP32_JAVASCRIPT_EXTERN_INIT(duk_context *ctx);
-#endif
-
 #endif

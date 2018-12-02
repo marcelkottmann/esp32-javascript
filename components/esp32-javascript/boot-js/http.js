@@ -30,17 +30,32 @@ function httpServer(port, cb) {
         function (socket) {
             var complete = '';
             var contentLength = 0;
+            var parsedHeaders = null;
+            var firstLine = null;
             socket.onData = function (data) {
                 complete = complete + data;
                 var endOfHeaders = complete.indexOf('\r\n\r\n');
                 if (complete.length >= 4 && endOfHeaders >= 0) {
+
+                    if (!parsedHeaders) {
+                        var headers = complete.substring(0, endOfHeaders);
+                        var headerTokens = headers.split('\r\n');
+                        firstLine = headerTokens.shift();
+                        print('FIRST LINE:' + firstLine);
+                        parsedHeaders = {};
+                        headerTokens.forEach(function (headerLine) {
+                            var delim = headerLine.indexOf(':');
+                            if (delim >= 0) {
+                                parsedHeaders[headerLine.substring(0, delim).trim().toLowerCase()] = headerLine.substring(delim + 1).trim();
+                            }
+                        });
+                        print('PARSED HEADER:' + JSON.stringify(parsedHeaders));
+                    }
+
                     var postedData = null;
-                    var contentLengthHeader = 'content-length:';
-                    var contentLengthHeaderStart = complete.toLocaleLowerCase().indexOf(contentLengthHeader);
-                    if (contentLengthHeaderStart >= 0) {
-                        var contentLengthHeaderStop = complete.indexOf('\r\n', contentLengthHeaderStart);
-                        var contentLengthStr = complete.substring(contentLengthHeaderStart + contentLengthHeader.length, contentLengthHeaderStop);
-                        contentLength = parseInt(contentLengthStr);
+
+                    if (typeof parsedHeaders['content-length'] !== 'undefined') {
+                        contentLength = parseInt(parsedHeaders['content-length']);
                     }
 
                     if (contentLength > 0) {
@@ -53,14 +68,15 @@ function httpServer(port, cb) {
                         }
                     }
 
-                    var startOfPath = complete.indexOf(' ');
-                    var path = complete.substring(startOfPath + 1, complete.indexOf(' ', startOfPath + 1))
+                    var startOfPath = firstLine.indexOf(' ');
+                    var path = firstLine.substring(startOfPath + 1, firstLine.indexOf(' ', startOfPath + 1))
 
                     var req = {
                         method: complete.substring(0, startOfPath),
                         raw: complete,
                         path: path,
-                        body: postedData
+                        body: postedData,
+                        headers: parsedHeaders
                     };
 
                     var res = { isEnded: false };
