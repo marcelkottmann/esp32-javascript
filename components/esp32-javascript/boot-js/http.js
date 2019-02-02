@@ -80,27 +80,32 @@ function httpServer(port, cb) {
                     };
 
                     var res = { isEnded: false };
-                    res.write = function (data) {
-                        if (typeof data === 'string') {
-                            data = new TextEncoder().encode(data);
+                    res.write = function (dataOrArray) {
+                        var dataArray = dataOrArray;
+                        if (!Array.isArray(dataOrArray)) {
+                            dataArray = [dataOrArray];
                         }
-                        // data is always Uint8Array
 
-                        res.isEnded = true;
-                        var written = 0;
-                        var len = data.length;
-                        while (written < len) {
-                            var ret = writeSocket(socket.sockfd, new Uint8Array(data, written), len - written);
-                            if (ret >= 0) {
-                                written += ret;
-                            } else {
-                                print('error writing to socket:' + ret);
-                                break;
+                        for (var dataidx = 0; dataidx < dataArray.length; dataidx++) {
+                            var data = new TextEncoder().encode(dataArray[dataidx]);
+                            // data is always Uint8Array
+
+                            var written = 0;
+                            var len = data.length;
+                            while (written < len) {
+                                var ret = writeSocket(socket.sockfd, new Uint8Array(data, written), len - written);
+                                if (ret >= 0) {
+                                    written += ret;
+                                } else {
+                                    print('error writing to socket:' + ret);
+                                    break;
+                                }
                             }
                         }
                     }
                     res.end = function (data) {
                         res.write(data);
+                        res.isEnded = true;
                         closeSocket(socket.sockfd);
                     }
 
