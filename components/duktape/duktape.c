@@ -10638,8 +10638,9 @@ duk_double_t esp32_duktape_get_now()
     return ret;
 }
 
+uint16_t duk_dateTimeZoneOffsetInHours = 0;
 duk_double_t esp32_duktape_get_tz(double d){
-	return 2*60*60;
+	return duk_dateTimeZoneOffsetInHours * 60 * 60;
 }
 
 /* #include duk_selftest.h */

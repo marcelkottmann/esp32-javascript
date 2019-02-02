@@ -2993,6 +2993,7 @@ typedef struct duk_hthread duk_context;
 duk_double_t esp32_duktape_get_tz(double d);
 duk_double_t esp32_duktape_get_now();
 extern double duk_dateTimeOffsetInMillis;
+extern uint16_t duk_dateTimeZoneOffsetInHours;
 
 #endif /* MAIN_INCLUDE_DUKTAPE_FIXUP_H_ */
 

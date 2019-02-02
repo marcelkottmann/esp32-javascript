@@ -1091,6 +1091,13 @@ static duk_ret_t setDateTimeOffsetInMillis(duk_context *ctx)
     return 0;
 }
 
+static duk_ret_t setDateTimeZoneOffsetInHours(duk_context *ctx)
+{
+    uint16_t offset = duk_to_uint16(ctx, 0);
+    duk_dateTimeZoneOffsetInHours = offset;
+    return 0;
+}
+
 void loadConfig(duk_context *ctx)
 {
     const char config_js[] = {
@@ -1314,6 +1321,9 @@ void duktape_task(void *ignore)
 
     duk_push_c_function(ctx, setDateTimeOffsetInMillis, 1 /*nargs*/);
     duk_put_global_string(ctx, "setDateTimeOffsetInMillis");
+
+    duk_push_c_function(ctx, setDateTimeZoneOffsetInHours, 1 /*nargs*/);
+    duk_put_global_string(ctx, "setDateTimeZoneOffsetInHours");
 
     duk_push_c_function(ctx, getDefaultConfig, 0 /*nargs*/);
     duk_put_global_string(ctx, "getDefaultConfig");
