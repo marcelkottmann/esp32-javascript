@@ -87,7 +87,10 @@ function httpServer(port, cb) {
                         }
 
                         for (var dataidx = 0; dataidx < dataArray.length; dataidx++) {
-                            var data = new TextEncoder().encode(dataArray[dataidx]);
+                            var data = dataArray[dataidx];
+                            if (typeof data === 'string') {
+                                data = new TextEncoder().encode(dataArray[dataidx]);
+                            }
                             // data is always Uint8Array
 
                             var written = 0;
