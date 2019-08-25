@@ -21,8 +21,18 @@
 #include "esp_partition.h"
 #include "esp_log.h"
 #include "esp_timer.h"
+#ifdef CONFIG_APP_ROLLBACK_ENABLE
+#include "esp_ota_ops.h"
+#endif //CONFIG_APP_ROLLBACK_ENABLE
+#ifdef CONFIG_BT_ENABLED
 #include "esp_bt.h"
+#endif //CONFIG_BT_ENABLED
 #include <sys/time.h>
+#include "soc/rtc.h"
+#include "soc/rtc_cntl_reg.h"
+#include "soc/apb_ctrl_reg.h"
+#include "rom/rtc.h"
+#include "esp_task_wdt.h"
 #include "esp32-hal.h"
 
 //Undocumented!!! Get chip temperature in Farenheit
@@ -39,14 +49,94 @@ void yield()
     vPortYield();
 }
 
+#if CONFIG_AUTOSTART_ARDUINO
+
+extern TaskHandle_t loopTaskHandle;
+extern bool loopTaskWDTEnabled;
+
+void enableLoopWDT(){
+    if(loopTaskHandle != NULL){
+        if(esp_task_wdt_add(loopTaskHandle) != ESP_OK){
+            log_e("Failed to add loop task to WDT");
+        } else {
+            loopTaskWDTEnabled = true;
+        }
+    }
+}
+
+void disableLoopWDT(){
+    if(loopTaskHandle != NULL && loopTaskWDTEnabled){
+        loopTaskWDTEnabled = false;
+        if(esp_task_wdt_delete(loopTaskHandle) != ESP_OK){
+            log_e("Failed to remove loop task from WDT");
+        }
+    }
+}
+
+void feedLoopWDT(){
+    esp_err_t err = esp_task_wdt_reset();
+    if(err != ESP_OK){
+        log_e("Failed to feed WDT! Error: %d", err);
+    }
+}
+#endif
+
+void enableCore0WDT(){
+    TaskHandle_t idle_0 = xTaskGetIdleTaskHandleForCPU(0);
+    if(idle_0 == NULL || esp_task_wdt_add(idle_0) != ESP_OK){
+        log_e("Failed to add Core 0 IDLE task to WDT");
+    }
+}
+
+void disableCore0WDT(){
+    TaskHandle_t idle_0 = xTaskGetIdleTaskHandleForCPU(0);
+    if(idle_0 == NULL || esp_task_wdt_delete(idle_0) != ESP_OK){
+        log_e("Failed to remove Core 0 IDLE task from WDT");
+    }
+}
+
+#ifndef CONFIG_FREERTOS_UNICORE
+void enableCore1WDT(){
+    TaskHandle_t idle_1 = xTaskGetIdleTaskHandleForCPU(1);
+    if(idle_1 == NULL || esp_task_wdt_add(idle_1) != ESP_OK){
+        log_e("Failed to add Core 1 IDLE task to WDT");
+    }
+}
+
+void disableCore1WDT(){
+    TaskHandle_t idle_1 = xTaskGetIdleTaskHandleForCPU(1);
+    if(idle_1 == NULL || esp_task_wdt_delete(idle_1) != ESP_OK){
+        log_e("Failed to remove Core 1 IDLE task from WDT");
+    }
+}
+#endif
+
+BaseType_t xTaskCreateUniversal( TaskFunction_t pxTaskCode,
+                        const char * const pcName,
+                        const uint32_t usStackDepth,
+                        void * const pvParameters,
+                        UBaseType_t uxPriority,
+                        TaskHandle_t * const pxCreatedTask,
+                        const BaseType_t xCoreID ){
+#ifndef CONFIG_FREERTOS_UNICORE
+    if(xCoreID >= 0 && xCoreID < 2) {
+        return xTaskCreatePinnedToCore(pxTaskCode, pcName, usStackDepth, pvParameters, uxPriority, pxCreatedTask, xCoreID);
+    } else {
+#endif
+    return xTaskCreate(pxTaskCode, pcName, usStackDepth, pvParameters, uxPriority, pxCreatedTask);
+#ifndef CONFIG_FREERTOS_UNICORE
+    }
+#endif
+}
+
 unsigned long IRAM_ATTR micros()
 {
-    return (unsigned long) esp_timer_get_time();
+    return (unsigned long) (esp_timer_get_time());
 }
 
 unsigned long IRAM_ATTR millis()
 {
-    return (unsigned long) (esp_timer_get_time() / 1000);
+    return (unsigned long) (esp_timer_get_time() / 1000ULL);
 }
 
 void delay(uint32_t ms)
@@ -76,6 +166,9 @@ void initVariant() {}
 void init() __attribute__((weak));
 void init() {}
 
+bool verifyOta() __attribute__((weak));
+bool verifyOta() { return true; }
+
 #ifdef CONFIG_BT_ENABLED
 //overwritten in esp32-hal-bt.c
 bool btInUse() __attribute__((weak));
@@ -84,6 +177,25 @@ bool btInUse(){ return false; }
 
 void initArduino()
 {
+#ifdef CONFIG_APP_ROLLBACK_ENABLE
+    const esp_partition_t *running = esp_ota_get_running_partition();
+    esp_ota_img_states_t ota_state;
+    if (esp_ota_get_state_partition(running, &ota_state) == ESP_OK) {
+        if (ota_state == ESP_OTA_IMG_PENDING_VERIFY) {
+            if (verifyOta()) {
+                esp_ota_mark_app_valid_cancel_rollback();
+            } else {
+                log_e("OTA verification failed! Start rollback to the previous version ...");
+                esp_ota_mark_app_invalid_rollback_and_reboot();
+            }
+        }
+    }
+#endif
+    //init proper ref tick value for PLL (uncomment if REF_TICK is different than 1MHz)
+    //ESP_REG(APB_CTRL_PLL_TICK_CONF_REG) = APB_CLK_FREQ / REF_CLK_FREQ - 1;
+#ifdef F_CPU
+    setCpuFrequencyMhz(F_CPU/1000000);
+#endif
 #if CONFIG_SPIRAM_SUPPORT
     psramInit();
 #endif

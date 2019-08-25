@@ -1,7 +1,7 @@
 /*
 MIT License
 
-Copyright (c) 2017 Marcel Kottmann
+Copyright (c) 2019 Marcel Kottmann
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -27,29 +27,47 @@ SOFTWARE.
 
 #include <esp_attr.h>
 #include <duktape.h>
+#include "esp32-javascript-config.h"
 
 typedef struct
 {
     int type;
     int status;
-    int fd;
-} timer_event_t;
+    void *fd;
+} js_event_t;
 
+const uint8_t MAX_EVENTS = 4;
 typedef struct
 {
-    timer_event_t events[4];
+    js_event_t events[MAX_EVENTS];
     int events_len;
-} eventlist_t;
+} js_eventlist_t;
 
-void IRAM_ATTR el_add_event(eventlist_t *events, timer_event_t *event);
+typedef enum
+{
+    TRACE = 0,
+    DEBUG,
+    INFO,
+    WARN,
+    ERROR,
+    FATAL
+} log_level_t;
 
-void IRAM_ATTR el_fire_events(eventlist_t *events);
+void IRAM_ATTR el_add_event(js_eventlist_t *events, js_event_t *event);
 
-void IRAM_ATTR el_create_event(timer_event_t *event, int type, int status, int fd);
+void IRAM_ATTR el_fire_events(js_eventlist_t *events);
 
-#ifdef ESP32_JAVASCRIPT_EXTERN_INIT
-extern void ESP32_JAVASCRIPT_EXTERN_INIT(duk_context *ctx);
-#endif
+void IRAM_ATTR el_create_event(js_event_t *event, int type, int status, void *fd);
+
+IRAM_ATTR void *spiram_malloc(size_t size);
+IRAM_ATTR void spiram_free(void *ptr);
+
+#define ESP32_JAVASCRIPT_EXTERN ESP32_JAVASCRIPT_EXTERN_INCLUDE
+#include "esp32-javascript-config.h"
+#undef ESP32_JAVASCRIPT_EXTERN
+
+void loadJS(duk_context *ctx, const char *name, char *start, char *end);
+void log(log_level_t level, const char *msg, ...);
 
 int esp32_javascript_init();
 

@@ -1,7 +1,7 @@
 ##
 # MIT License
 #
-# Copyright (c) 2017 Marcel Kottmann
+# Copyright (c) 2019 Marcel Kottmann
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -28,7 +28,20 @@ PROJECT_NAME := "esp32-javascript"
 ESP32_JS_FLAGS :=
 
 ##### Board config #####
-# Specify your board here. Identifier can be any of the directory names in ./components/arduino-esp32/include/variants/
-export BOARD_VARIANT := "heltec_wifi_lora_32"
+# Specify your board here. Identifier can be any of the directory names in 
+# ./components/arduino-esp32/include/variants/
+# or you can create your own variant in ./components/esp32-javascript/include/variants
+export BOARD_VARIANT := "my"
 
 include $(IDF_PATH)/make/project.mk
+
+clean:
+	rm -rf build/modules
+
+cp_modules: 
+	./scripts/copy-modules.sh
+
+SPIFFS_IMAGE_FLASH_IN_PROJECT := 1
+SPIFFS_IMAGE_DEPENDS += cp_modules
+$(eval $(call spiffs_create_partition_image,storage,build/modules))
+

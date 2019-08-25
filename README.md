@@ -1,7 +1,8 @@
 # esp32-javascript
 
 "Lightweight" JS interpreter for ESP32. Provides JS-based eventloop implementation
-and native asynchronous network and timer functions.    
+and native asynchronous network and timer functions.
+Because of the limited memory on ESP32-WROOM modules, the full functionality is currently only realizable on ESP32-WROVER modules, that include additional 4MB of SPIRAM memory.   
 
 ## Content
 [Getting started](#getting-started)
@@ -35,94 +36,24 @@ Use the keyboard shortcut `AltGr + ]` to leave serial monitor.
 
 Now you have installed the pre-configured boot script.
 
-If this is your first install, your onboard LED should now blink. Blinking signals that 
-your Board has started a soft ap with the ssid "esp32". With your mobile or desktop connect 
-to the WLAN SSID "esp32" and open http://192.168.4.1/setup
+If this is your first install, your onboard LED should blink now. Blinking signals that 
+your board has started a soft ap with the ssid "esp32". With your mobile or desktop connect 
+to the WLAN SSID "esp32" and open http://192.168.4.1/setup (if you have not changed the default 
+credentials your username / password is esp32 / esp32 ).
 
-On the Setup page you can configure your WLAN settings and an URL to download your JS script from.
-
-Please note that currently only http (and NO https) is possible.
+On the Setup page you can configure your WLAN settings and an URL to download your JS main script from.
 
 Please note that the script, does not need to have a main function, because its evaluated entirely. 
 That means, to print out "Hello World", you only have to include one line in your script on the webserver:
 
-        print('Hello world!');
+        console.log('Hello world!');
 
 ## Compatibility
 
-Tested with 129d32772e5e5eafe88be5b9eb34687e84a6f8b8 of esp-idf and xtensa-esp32-elf-linux64-1.22.0-80-g6c4433a-5.2.0.
+Tested with release/v4.0 (ba0f4f17ed91c3372149beacdfbee6af58e4f634) of esp-idf.
 
 ## API
-
-### Timer API
-
-#### setTimeout
-
-    function setTimeout(cb, timeout)
-
-Creates a timer and calls the function cb **once** after the configured timeout. Returns a handle.  
-
-#### clearTimeout
-
-    function clearTimeout(handle)
-
-Clears and removes the timeout timer by specifing the corresponding handle.
-
-#### setInterval
-
-    function setInterval(cb, interval)
-
-Creates a interval timer and call the function cb endlessly in the configured interval time. Returns a handle.  
-
-#### clearInterval
-
-    function clearInterval(handle)
-
-Clears and removes an interval timer by specifing the corresponding handle.
-
-### Socket API
-
-#### sockConnect
-
-    function sockConnect(host, port, onConnect, onData, onError, onClose)
-
-Creates a non-blocking sockets and connects it to host and port. Provides some callback functions:
-
-* onConnect: ()=>void called once upon successful connect.
-* onData: (data:string)=>void called several times providing a data string, on each call.
-* onError: ()=>void called once upon error.
-* onClose: function() called once upon socket close.
-
-#### sockListen
-
-    function sockListen(port, onAccept, onError, onClose)
-
-Creates a non-blocking listening socket, which automatically accepts incoming connections. Upon connection the onAccept call back is called with the connected 
-socket as argument.
-
-* port: number The listening port.
-* onAccept: (socket: Socket)=>void Called once for every incoming connection.
-* onError: ()=>void called once upon error with the listening socket.
-* onClose: ()=>void called once upon socket close.
-
-#### Socket
-
-    type Socket =
-    {
-      sockfd: number;
-      onData?: onData(data: string, sockfd: number)=>void;
-      onError?: onError()=>void;
-      onClose?: onClose()=>void;
-      isConnected: boolean;
-      isError: boolean;
-      isListening: boolean;
-          
-      //only for listening sockets
-      onAccept?: onAccept(socket: Socket)=>void;
-      
-      //only for non-listening sockets
-      onConnect?: onConnect()=>void;
-    }
+[API documentation](api.md)
 
 ## License
 See source files.

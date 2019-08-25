@@ -12,7 +12,6 @@
         "esp_system.h": "c",
         "ws2812.h": "c",
         "esp32-hal-gpio.h": "c",
-        "*.hex": "c",
         "socket.h": "c",
         "array": "cpp",
         "string_view": "cpp",
@@ -22,6 +21,22 @@
         "unordered_set": "cpp",
         "vector": "cpp",
         "initializer_list": "cpp",
-        "*.ipp": "cpp"
+        "*.ipp": "cpp",
+        "system_error": "cpp",
+        "opt.h": "c",
+        "esp_spiram.h": "c",
+        "*.tcc": "cpp",
+        "streambuf": "cpp",
+        "task.h": "c",
+        "ssl.h": "c",
+        "ssl_lib.h": "c",
+        "ssl_types.h": "c",
+        "ssl_dbg.h": "c",
+        "cstddef": "cpp",
+        "stdlib.h": "c",
+        "time.h": "c",
+        "reent.h": "c",
+        "thread": "cpp",
+        "cmath": "cpp"
     }
 }

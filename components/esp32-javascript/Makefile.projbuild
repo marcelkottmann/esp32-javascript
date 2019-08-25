@@ -1,7 +1,7 @@
 ##
 # MIT License
 #
-# Copyright (c) 2017 Marcel Kottmann
+# Copyright (c) 2019 Marcel Kottmann
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,17 +24,3 @@
 
 CFLAGS += $(ESP32_JS_FLAGS) -DESP32 -Wno-error=unused-value -Wno-error=format= -Wno-error=maybe-uninitialized
 CPPFLAGS += $(ESP32_JS_FLAGS) -DESP32
-
-ESP32_JAVASCRIPT_CORE_PATH=${PWD}/components/esp32-javascript
-all_binaries: ${ESP32_JAVASCRIPT_CORE_PATH}/boot-js/config.hex ${ESP32_JAVASCRIPT_CORE_PATH}/boot-js/boot.hex ${ESP32_JAVASCRIPT_CORE_PATH}/boot-js/eventloop.hex ${ESP32_JAVASCRIPT_CORE_PATH}/boot-js/http.hex ${ESP32_JAVASCRIPT_CORE_PATH}/boot-js/configserver.hex ${ESP32_JAVASCRIPT_CORE_PATH}/boot-js/style.css.hex
-
-%.hex: %.js
-	bash -c "(cat $< && echo -n -e '\0') | xxd -i > $@"
-
-%.hex: %.gz
-	bash -c "(cat $< && echo -n -e '\0') | xxd -i > $@"
-
-clean:
-	rm -f ${ESP32_JAVASCRIPT_CORE_PATH}/boot-js/client.js
-	rm -f ${ESP32_JAVASCRIPT_CORE_PATH}/boot-js/*.hex
-
