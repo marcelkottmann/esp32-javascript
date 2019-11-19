@@ -29,6 +29,7 @@ SOFTWARE.
 #define EL_TIMER_EVENT_TYPE 0
 #define EL_WIFI_EVENT_TYPE 1
 #define EL_SOCKET_EVENT_TYPE 2
+#define RADIO_RECEIVE_EVENT_TYPE 3
 // define your custom event types here
 // #define CUSTOM_XXX_EVENT_TYPE 3
 
@@ -41,6 +42,7 @@ extern void registerWifiEventsBindings(duk_context *ctx);
 extern void loadWifiEvents(duk_context *ctx);
 // put your init function declaration here
 // extern void init_esp32_XXX(duk_context *ctx);
+extern void init_esp32_home(duk_context *ctx);
 #endif
 
 #if ESP32_JAVASCRIPT_EXTERN == ESP32_JAVASCRIPT_EXTERN_REGISTER
@@ -50,4 +52,5 @@ initSocketFunctions(ctx);
 registerWifiEventsBindings(ctx);
 // call your init function here
 // init_esp32_XXX(ctx);
+init_esp32_home(ctx);
 #endif

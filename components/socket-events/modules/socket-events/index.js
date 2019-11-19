@@ -91,7 +91,7 @@ function getOrCreateNewSocket() {
 
 Socket.prototype.write = function (data) {
 	if (this.dataBuffer) {
-		if (typeof data === 'undefined') {
+		if (typeof data === 'undefined' || data === null) {
 			return;
 		} else if (Array.isArray(data)) {
 			throw Error('arrays not allowed anymore');
