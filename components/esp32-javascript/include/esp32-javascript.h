@@ -29,6 +29,8 @@ SOFTWARE.
 #include <duktape.h>
 #include "esp32-javascript-config.h"
 
+extern bool DISABLE_EVENTS;
+
 typedef struct
 {
     int type;

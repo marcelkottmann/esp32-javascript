@@ -59,6 +59,9 @@ bool flag = false;
 bool spiramAvailable = false;
 duk_context *ctx = NULL;
 
+// only for debug purposes
+bool DISABLE_EVENTS = false;
+
 void log(log_level_t level, const char *msg, ...)
 {
     char *my_string;
@@ -148,14 +151,21 @@ void IRAM_ATTR el_add_event(js_eventlist_t *events, js_event_t *event)
 
 void IRAM_ATTR el_fire_events(js_eventlist_t *events)
 {
-    if (events->events_len > 0)
+    if (DISABLE_EVENTS)
     {
-        log(DEBUG, "Send %d events to queue...\n", events->events_len);
-        int ret = xQueueSendFromISR(el_event_queue, events, NULL);
-        if (ret != pdTRUE)
+        log(WARN, "Events are disabled. They will never be fired.\n");
+    }
+    else
+    {
+        if (events->events_len > 0)
         {
-            log(ERROR, "Event queue is full...aborting.\n");
-            abort();
+            log(DEBUG, "Send %d events to queue...\n", events->events_len);
+            int ret = xQueueSendFromISR(el_event_queue, events, NULL);
+            if (ret != pdTRUE)
+            {
+                log(ERROR, "Event queue is full... is something blocking the event loop?...aborting.\n");
+                abort();
+            }
         }
     }
 }

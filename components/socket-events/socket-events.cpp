@@ -865,5 +865,5 @@ void initSocketFunctions(duk_context *ctx)
 
     xSemaphore = xSemaphoreCreateBinary();
 
-    xTaskCreatePinnedToCore(&select_task, "select_task", 12 * 1024, NULL, 5, &stask, 1);
+    xTaskCreatePinnedToCore(&select_task, "select_task", 12 * 1024, NULL, 5, &stask, 0);
 }

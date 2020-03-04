@@ -78,7 +78,8 @@ try {
                     }
                 }
                 if (!nextTimer) {
-                    throw Error('UNKNOWN TIMER HANDLE!!!');
+                    //throw Error('UNKNOWN TIMER HANDLE!!!');
+                    console.warn('UNKNOWN TIMER HANDLE:' + JSON.stringify(evt) + ';' + JSON.stringify(timers));
                 }
             } else {
                 var eventHandled = false;
