@@ -118,7 +118,7 @@ typedef unsigned int word;
 void setup(void);
 void loop(void);
 
-long random(long, long);
+long random(void);
 void randomSeed(unsigned long);
 long map(long, long, long, long, long);
 
@@ -176,7 +176,7 @@ extern "C" void configTzTime(const char* tz,
         const char* server1, const char* server2 = nullptr, const char* server3 = nullptr);
 
 // WMath prototypes
-long random(long);
+long random(void);
 #endif /* __cplusplus */
 
 #define _min(a,b) ((a)<(b)?(a):(b))
