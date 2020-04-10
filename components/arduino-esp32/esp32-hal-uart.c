@@ -208,6 +208,11 @@ uart_t* uartBegin(uint8_t uart_nr, uint32_t baudrate, uint32_t config, int8_t rx
         uart->dev->conf0.stop_bit_num = ONE_STOP_BITS_CONF;
         uart->dev->rs485_conf.dl1_en = 1;
     }
+
+    // tx_idle_num : idle interval after tx FIFO is empty(unit: the time it takes to send one bit under current baudrate)
+    // Setting it to 0 prevents line idle time/delays when sending messages with small intervals
+    uart->dev->idle_conf.tx_idle_num = 0;  //
+
     UART_MUTEX_UNLOCK();
 
     if(rxPin != -1) {
@@ -217,7 +222,6 @@ uart_t* uartBegin(uint8_t uart_nr, uint32_t baudrate, uint32_t config, int8_t rx
     if(txPin != -1) {
         uartAttachTx(uart, txPin, inverted);
     }
-
     addApbChangeCallback(uart, uart_on_apb_change);
     return uart;
 }
@@ -266,7 +270,7 @@ uint32_t uartAvailable(uart_t* uart)
     if(uart == NULL || uart->queue == NULL) {
         return 0;
     }
-    return uxQueueMessagesWaiting(uart->queue);
+    return (uxQueueMessagesWaiting(uart->queue) + uart->dev->status.rxfifo_cnt) ;
 }
 
 uint32_t uartAvailableForWrite(uart_t* uart)
@@ -277,12 +281,27 @@ uint32_t uartAvailableForWrite(uart_t* uart)
     return 0x7f - uart->dev->status.txfifo_cnt;
 }
 
+void uartRxFifoToQueue(uart_t* uart)
+{
+	uint8_t c;
+    UART_MUTEX_LOCK();
+    while(uart->dev->status.rxfifo_cnt || (uart->dev->mem_rx_status.wr_addr != uart->dev->mem_rx_status.rd_addr)) {
+        c = uart->dev->fifo.rw_byte;
+        xQueueSend(uart->queue, &c, 0);
+    }
+    UART_MUTEX_UNLOCK();
+}
+
 uint8_t uartRead(uart_t* uart)
 {
     if(uart == NULL || uart->queue == NULL) {
         return 0;
     }
     uint8_t c;
+    if ((uxQueueMessagesWaiting(uart->queue) == 0) && (uart->dev->status.rxfifo_cnt > 0))
+    {
+    	uartRxFifoToQueue(uart);
+    }
     if(xQueueReceive(uart->queue, &c, 0)) {
         return c;
     }
@@ -295,6 +314,10 @@ uint8_t uartPeek(uart_t* uart)
         return 0;
     }
     uint8_t c;
+    if ((uxQueueMessagesWaiting(uart->queue) == 0) && (uart->dev->status.rxfifo_cnt > 0))
+    {
+    	uartRxFifoToQueue(uart);
+    }
     if(xQueuePeek(uart->queue, &c, 0)) {
         return c;
     }
@@ -328,21 +351,30 @@ void uartWriteBuf(uart_t* uart, const uint8_t * data, size_t len)
 
 void uartFlush(uart_t* uart)
 {
+    uartFlushTxOnly(uart,false);
+}
+
+void uartFlushTxOnly(uart_t* uart, bool txOnly)
+{
     if(uart == NULL) {
         return;
     }
 
     UART_MUTEX_LOCK();
     while(uart->dev->status.txfifo_cnt || uart->dev->status.st_utx_out);
+    
+    if( !txOnly ){
+        //Due to hardware issue, we can not use fifo_rst to reset uart fifo.
+        //See description about UART_TXFIFO_RST and UART_RXFIFO_RST in <<esp32_technical_reference_manual>> v2.6 or later.
 
-    //Due to hardware issue, we can not use fifo_rst to reset uart fifo.
-    //See description about UART_TXFIFO_RST and UART_RXFIFO_RST in <<esp32_technical_reference_manual>> v2.6 or later.
+        // we read the data out and make `fifo_len == 0 && rd_addr == wr_addr`.
+        while(uart->dev->status.rxfifo_cnt != 0 || (uart->dev->mem_rx_status.wr_addr != uart->dev->mem_rx_status.rd_addr)) {
+            READ_PERI_REG(UART_FIFO_REG(uart->num));
+        }
 
-    // we read the data out and make `fifo_len == 0 && rd_addr == wr_addr`.
-    while(uart->dev->status.rxfifo_cnt != 0 || (uart->dev->mem_rx_status.wr_addr != uart->dev->mem_rx_status.rd_addr)) {
-        READ_PERI_REG(UART_FIFO_REG(uart->num));
+        xQueueReset(uart->queue);
     }
-
+    
     UART_MUTEX_UNLOCK();
 }
 
@@ -368,18 +400,21 @@ static void uart_on_apb_change(void * arg, apb_change_ev_t ev_type, uint32_t old
         uart->dev->int_clr.val = 0xffffffff;
         // read RX fifo
         uint8_t c;
-        BaseType_t xHigherPriorityTaskWoken;
+   //     BaseType_t xHigherPriorityTaskWoken;
         while(uart->dev->status.rxfifo_cnt != 0 || (uart->dev->mem_rx_status.wr_addr != uart->dev->mem_rx_status.rd_addr)) {
             c = uart->dev->fifo.rw_byte;
-            if(uart->queue != NULL && !xQueueIsQueueFullFromISR(uart->queue)) {
-                xQueueSendFromISR(uart->queue, &c, &xHigherPriorityTaskWoken);
+            if(uart->queue != NULL ) {
+                xQueueSend(uart->queue, &c, 1); //&xHigherPriorityTaskWoken);
             }
         }
+        UART_MUTEX_UNLOCK();
+ 
         // wait TX empty
         while(uart->dev->status.txfifo_cnt || uart->dev->status.st_utx_out);
     } else {
         //todo:
         // set baudrate
+        UART_MUTEX_LOCK();
         uint32_t clk_div = (uart->dev->clk_div.div_int << 4) | (uart->dev->clk_div.div_frag & 0x0F);
         uint32_t baud_rate = ((old_apb<<4)/clk_div);
         clk_div = ((new_apb<<4)/baud_rate);
@@ -399,7 +434,12 @@ uint32_t uartGetBaudRate(uart_t* uart)
     if(uart == NULL) {
         return 0;
     }
+
     uint32_t clk_div = (uart->dev->clk_div.div_int << 4) | (uart->dev->clk_div.div_frag & 0x0F);
+    if(!clk_div) {
+        return 0;
+    }
+
     return ((getApbFrequency()<<4)/clk_div);
 }
 
@@ -520,6 +560,14 @@ unsigned long uartBaudrateDetect(uart_t *uart, bool flg)
  * detected calling uartBadrateDetect(). The raw baudrate is computed using the UART_CLK_FREQ. The raw baudrate is 
  * rounded to the closed real baudrate.
 */
+void uartStartDetectBaudrate(uart_t *uart) {
+  if(!uart) return;
+
+  uart->dev->auto_baud.glitch_filt = 0x08;
+  uart->dev->auto_baud.en = 0;
+  uart->dev->auto_baud.en = 1;
+}
+
 unsigned long
 uartDetectBaudrate(uart_t *uart)
 {

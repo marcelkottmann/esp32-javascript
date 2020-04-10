@@ -4,12 +4,17 @@
 #include <stdint.h>
 
 #define EXTERNAL_NUM_INTERRUPTS 16
-#define NUM_DIGITAL_PINS        40
+#define NUM_DIGITAL_PINS        38
 #define NUM_ANALOG_INPUTS       16
 
 #define analogInputToDigitalPin(p)  (((p)<20)?(esp32_adc2gpio[(p)]):-1)
 #define digitalPinToInterrupt(p)    (((p)<40)?(p):-1)
 #define digitalPinHasPWM(p)         (p < 34)
+
+static const uint8_t LED_BUILTIN = 16;
+#define BUILTIN_LED  LED_BUILTIN // backward compatibility
+
+static const uint8_t BUILTIN_KEY = 0;
 
 static const uint8_t TX = 1;
 static const uint8_t RX = 3;
@@ -52,20 +57,5 @@ static const uint8_t T9 = 32;
 
 static const uint8_t DAC1 = 25;
 static const uint8_t DAC2 = 26;
-
-static const uint8_t BUZZER = 25;
-static const uint8_t RED_LED = 27;
-static const uint8_t YELLOW_LED = 18;
-static const uint8_t GREEN_LED = 16;
-static const uint8_t BLUE_LED = 17;
-static const uint8_t LDR = 36;
-static const uint8_t POT = 39;
-static const uint8_t RIGHT_PUTTON = 34;
-static const uint8_t LEFT_BUTTON = 35;
-static const uint8_t MOTOR1A = 27;
-static const uint8_t MOTOR1B = 18;
-static const uint8_t MOTOR2A = 16;
-static const uint8_t MOTOR2B = 17;
-static const uint8_t LED_BUILTIN=16;
 
 #endif /* Pins_Arduino_h */

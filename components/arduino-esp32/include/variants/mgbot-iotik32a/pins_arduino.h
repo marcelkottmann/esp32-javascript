@@ -11,8 +11,18 @@
 #define digitalPinToInterrupt(p)    (((p)<40)?(p):-1)
 #define digitalPinHasPWM(p)         (p < 34)
 
+static const uint8_t LED_BUILTIN = 4;
+#define BUILTIN_LED  LED_BUILTIN // backward compatibility
+
 static const uint8_t TX = 1;
 static const uint8_t RX = 3;
+#define TXD TX
+#define RXD RX
+
+static const uint8_t TX2 = 17;
+static const uint8_t RX2 = 16;
+#define TXD2 TX2
+#define RXD2 RX2
 
 static const uint8_t SDA = 21;
 static const uint8_t SCL = 22;
@@ -52,20 +62,5 @@ static const uint8_t T9 = 32;
 
 static const uint8_t DAC1 = 25;
 static const uint8_t DAC2 = 26;
-
-static const uint8_t BUZZER = 25;
-static const uint8_t RED_LED = 27;
-static const uint8_t YELLOW_LED = 18;
-static const uint8_t GREEN_LED = 16;
-static const uint8_t BLUE_LED = 17;
-static const uint8_t LDR = 36;
-static const uint8_t POT = 39;
-static const uint8_t RIGHT_PUTTON = 34;
-static const uint8_t LEFT_BUTTON = 35;
-static const uint8_t MOTOR1A = 27;
-static const uint8_t MOTOR1B = 18;
-static const uint8_t MOTOR2A = 16;
-static const uint8_t MOTOR2B = 17;
-static const uint8_t LED_BUILTIN=16;
 
 #endif /* Pins_Arduino_h */

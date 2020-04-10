@@ -14,7 +14,7 @@
 static const uint8_t TX = 1;
 static const uint8_t RX = 3;
 
-static const uint8_t SDA = 21;
+static const uint8_t SDA = 23;
 static const uint8_t SCL = 22;
 
 static const uint8_t SS    = 5;
@@ -53,19 +53,38 @@ static const uint8_t T9 = 32;
 static const uint8_t DAC1 = 25;
 static const uint8_t DAC2 = 26;
 
-static const uint8_t BUZZER = 25;
-static const uint8_t RED_LED = 27;
-static const uint8_t YELLOW_LED = 18;
-static const uint8_t GREEN_LED = 16;
-static const uint8_t BLUE_LED = 17;
-static const uint8_t LDR = 36;
-static const uint8_t POT = 39;
-static const uint8_t RIGHT_PUTTON = 34;
-static const uint8_t LEFT_BUTTON = 35;
-static const uint8_t MOTOR1A = 27;
-static const uint8_t MOTOR1B = 18;
-static const uint8_t MOTOR2A = 16;
-static const uint8_t MOTOR2B = 17;
-static const uint8_t LED_BUILTIN=16;
+
+static const uint8_t P0 = 33;
+static const uint8_t P1 = 32;
+static const uint8_t P2 = 35;
+static const uint8_t P3 = 34;
+static const uint8_t P4 = 39;
+static const uint8_t P5 = 0;
+static const uint8_t P6 = 16;
+static const uint8_t P7 = 17;
+static const uint8_t P8 = 26;
+static const uint8_t P9 = 25;
+static const uint8_t P10 = 36;
+static const uint8_t P11 = 2;
+static const uint8_t P13 = 18;
+static const uint8_t P14 = 19;
+static const uint8_t P15 = 21;
+static const uint8_t P16 = 5;
+static const uint8_t P19 = 22;
+static const uint8_t P20 = 23;
+
+static const uint8_t P = 27;
+static const uint8_t Y = 14;
+static const uint8_t T = 12;
+static const uint8_t H = 13;
+static const uint8_t O = 15;
+static const uint8_t N = 4;
+
+static const uint8_t BTN_A = 0;
+static const uint8_t BTN_B = 2;
+static const uint8_t SOUND = 36;
+static const uint8_t LIGHT = 39;
+static const uint8_t BUZZER = 16;
+
 
 #endif /* Pins_Arduino_h */
