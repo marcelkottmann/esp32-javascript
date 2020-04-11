@@ -1,3 +1,0 @@
-COMPONENT_SRCDIRS := . libb64
-
-COMPONENT_EMBED_TXTFILES += urlparse.js

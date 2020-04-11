@@ -1,7 +1,7 @@
 /*
 MIT License
 
-Copyright (c) 2019 Marcel Kottmann
+Copyright (c) 2020 Marcel Kottmann
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -23,9 +23,16 @@ SOFTWARE.
 */
 
 #include "esp32-javascript.h"
-#include "main.h"
 
 extern "C" int app_main()
 {
     return esp32_javascript_init();
 }
+
+#if __has_include("project.cpp")
+#include "project.cpp"
+#else
+extern void esp32_javascript_main(duk_context *ctx)
+{
+}
+#endif

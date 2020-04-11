@@ -1,7 +1,7 @@
 /*
 MIT License
 
-Copyright (c) 2019 Marcel Kottmann
+Copyright (c) 2020 Marcel Kottmann
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -45,16 +45,6 @@ typedef struct
     int events_len;
 } js_eventlist_t;
 
-typedef enum
-{
-    TRACE = 0,
-    DEBUG,
-    INFO,
-    WARN,
-    ERROR,
-    FATAL
-} log_level_t;
-
 void IRAM_ATTR el_add_event(js_eventlist_t *events, js_event_t *event);
 
 void IRAM_ATTR el_fire_events(js_eventlist_t *events);
@@ -69,7 +59,6 @@ IRAM_ATTR void spiram_free(void *ptr);
 #undef ESP32_JAVASCRIPT_EXTERN
 
 void loadJS(duk_context *ctx, const char *name, char *start, char *end);
-void log(log_level_t level, const char *msg, ...);
 
 int esp32_javascript_init();
 

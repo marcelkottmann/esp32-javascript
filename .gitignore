@@ -1,3 +1,3 @@
 build
-main/esp32.js
 sdkconfig.old*
+main/project.cpp

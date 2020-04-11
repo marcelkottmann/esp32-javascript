@@ -1,7 +1,7 @@
 /*
 MIT License
 
-Copyright (c) 2019 Marcel Kottmann
+Copyright (c) 2020 Marcel Kottmann
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -24,6 +24,7 @@ SOFTWARE.
 
 #include "wifi-events.h"
 #include "esp32-javascript.h"
+#include "esp32-js-log.h"
 #include "esp_wifi.h"
 #include "esp_event_loop.h"
 #include "freertos/event_groups.h"

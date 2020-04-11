@@ -1,7 +1,7 @@
 /*
 MIT License
 
-Copyright (c) 2019 Marcel Kottmann
+Copyright (c) 2020 Marcel Kottmann
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -31,6 +31,7 @@ SOFTWARE.
 #include "esp_log.h"
 #include "tcp.h"
 #include "esp32-javascript.h"
+#include "esp32-js-log.h"
 
 static const char *tag = "esp32-javascript";
 

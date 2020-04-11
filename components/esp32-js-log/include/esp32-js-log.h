@@ -22,31 +22,19 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#define ESP32_JAVASCRIPT_EXTERN_INCLUDE 1
-#define ESP32_JAVASCRIPT_EXTERN_LOAD 2
-#define ESP32_JAVASCRIPT_EXTERN_REGISTER 3
+#if !defined(ESP32_JS_LOG_H_INCLUDED)
+#define ESP32_JS_LOG_H_INCLUDED
 
-#define EL_TIMER_EVENT_TYPE 0
-#define EL_WIFI_EVENT_TYPE 1
-#define EL_SOCKET_EVENT_TYPE 2
-#define RADIO_RECEIVE_EVENT_TYPE 3
-// define your custom event types here
-// #define CUSTOM_XXX_EVENT_TYPE 3
+typedef enum
+{
+    TRACE = 0,
+    DEBUG,
+    INFO,
+    WARN,
+    ERROR,
+    FATAL
+} log_level_t;
 
-#if ESP32_JAVASCRIPT_EXTERN == ESP32_JAVASCRIPT_EXTERN_INCLUDE
-extern void initSpiffs(duk_context *ctx);
-extern void registerDukModuleBindings(duk_context *ctx);
-extern void initSocketFunctions(duk_context *ctx);
-extern void loadSocketEvents(duk_context *ctx);
-extern void registerWifiEventsBindings(duk_context *ctx);
-extern void loadWifiEvents(duk_context *ctx);
-extern void esp32_javascript_main(duk_context *ctx);
-#endif
+void log(log_level_t level, const char *msg, ...);
 
-#if ESP32_JAVASCRIPT_EXTERN == ESP32_JAVASCRIPT_EXTERN_REGISTER
-initSpiffs(ctx);
-registerDukModuleBindings(ctx);
-initSocketFunctions(ctx);
-registerWifiEventsBindings(ctx);
-esp32_javascript_main(ctx);
 #endif

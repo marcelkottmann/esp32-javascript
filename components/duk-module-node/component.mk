@@ -1,1 +1,0 @@
-COMPONENT_EMBED_TXTFILES := loader.js

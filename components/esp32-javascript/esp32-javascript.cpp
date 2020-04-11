@@ -1,7 +1,7 @@
 /*
 MIT License
 
-Copyright (c) 2019 Marcel Kottmann
+Copyright (c) 2020 Marcel Kottmann
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -43,6 +43,7 @@ SOFTWARE.
 #include "pins_arduino.h"
 #include "duk_module_node.h"
 #include "esp32-javascript.h"
+#include "esp32-js-log.h"
 extern "C"
 {
 #include "libb64/cdecode.h"
@@ -722,18 +723,6 @@ void duktape_task(void *ignore)
     loadUrlPolyfill(ctx);
 
     duk_eval_string_noresult(ctx, "require('esp32-javascript')");
-
-    //loadStringBuffer(ctx);
-
-    //loadHttp(ctx);
-
-    // loadFetch(ctx);
-
-    //loadConfig(ctx);
-
-    //loadConfigserver(ctx);
-
-    //loadBoot(ctx);
 
 #define ESP32_JAVASCRIPT_EXTERN ESP32_JAVASCRIPT_EXTERN_LOAD
 #include "esp32-javascript-config.h"
