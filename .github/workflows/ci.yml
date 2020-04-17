@@ -1,0 +1,11 @@
+name: Build
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+      - name: Build
+        run: docker run -v ${PWD}:/opt/esp32-javascript -w /opt/esp32-javascript -t espressif/idf idf.py build

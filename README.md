@@ -1,5 +1,7 @@
 # esp32-javascript
 
+![](https://github.com/marcelkottmann/esp32-javascript/workflows/Build/badge.svg)
+
 "Lightweight" JS interpreter for ESP32. Provides JS-based eventloop implementation
 and native asynchronous network and timer functions.
 Because of the limited memory on ESP32-WROOM modules, the full functionality is currently only realizable on ESP32-WROVER modules, that include additional 4MB of SPIRAM memory.   
