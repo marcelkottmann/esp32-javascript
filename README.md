@@ -64,6 +64,8 @@ If you need to create your own C/C++ bindings for your JS code, this are the ste
 1. Create a file named `project.cpp` in the `./main` directory
 2. Implement the esp32_javascript_main callback function inside this `project.ccp`:
 ```c
+   #include "esp32-javascript.h"
+
    extern void esp32_javascript_main(duk_context *ctx)
    {
      // do your own duktape bindings here
