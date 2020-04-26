@@ -1,19 +1,15 @@
-var config = {};
+Object.defineProperty(exports, "__esModule", { value: true });
 function reloadConfig() {
-    config = {
+    exports.config = {
         wlan: {
-            ssid: el_load('config.ssid'),
-            password: el_load('config.password')
+            ssid: el_load("config.ssid"),
+            password: el_load("config.password"),
         },
         ota: {
-            url: urlparse(el_load('config.url')),
-            offline: el_load('config.offline') === 'true'
-        }
+            url: urlparse(el_load("config.url")),
+            offline: el_load("config.offline") === "true",
+        },
     };
 }
+exports.reloadConfig = reloadConfig;
 reloadConfig();
-
-module.exports = {
-    config: config,
-    reloadConfig: reloadConfig
-}

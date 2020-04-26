@@ -30,7 +30,7 @@
  * @param {number} sockfd The socket file descriptor.
  */
 
-var eventloop = require('esp32-javascript/eventloop');
+var eventloop = require('esp32-js-eventloop');
 var beforeSuspendHandlers = eventloop.beforeSuspendHandlers;
 var afterSuspendHandlers = eventloop.afterSuspendHandlers;
 
