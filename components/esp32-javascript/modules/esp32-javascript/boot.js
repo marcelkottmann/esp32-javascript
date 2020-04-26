@@ -1,22 +1,20 @@
-var configServer = require('./configserver');
-var config = require('./config').config;
-var wifi = require('wifi-events');
-
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.main = exports.getBootTime = void 0;
+var wifi = require("wifi-events");
+var configServer = require("./configserver");
+var config_1 = require("./config");
 errorhandler = function (error) {
     console.error(error.stack || error);
     startSoftApMode();
 };
-
-if (typeof KEY_BUILTIN !== 'undefined') {
+if (typeof KEY_BUILTIN !== "undefined") {
     pinMode(KEY_BUILTIN, INPUT);
 }
-if (typeof LED_BUILTIN !== 'undefined') {
+if (typeof LED_BUILTIN !== "undefined") {
     pinMode(LED_BUILTIN, OUTPUT);
 }
-
 var configServerStarted = false;
 var programLoaded = false;
-
 function blink() {
     var blinkState = 0;
     return setInterval(function () {
@@ -24,139 +22,187 @@ function blink() {
         blinkState = blinkState === 0 ? 1 : 0;
     }, 333);
 }
-
+var bootTime = new Date();
+function setBootTime(date) {
+    bootTime = date;
+}
+function getBootTime() {
+    return bootTime;
+}
+exports.getBootTime = getBootTime;
 function startSoftApMode() {
     console.info("Starting soft ap mode.");
     var blinkId = blink();
     console.debug("Blinking initialized.");
-    wifi.createSoftAp('esp32', '', function (evt) {
-        console.debug("Event received:" + evt);
+    wifi.createSoftAp("esp32", "", function (evt) {
+        console.debug("WiFi Event received: " + evt);
         if (evt.status === 1) {
             console.info("SoftAP: Connected");
             if (!configServerStarted) {
                 configServer.startConfigServer();
                 configServerStarted = true;
             }
-            var timeout = 5;
+            var timeout_1 = 5;
             //stop soft ap wifi after <timeout> minutes
             setTimeout(function () {
-                console.info('Stopping soft ap now after ' + timeout + ' minutes.');
+                console.info("Stopping soft ap now after " + timeout_1 + " minutes.");
                 stopWifi();
                 clearInterval(blinkId);
                 // start normal wifi connection attempts
                 connectToWifi();
-            }, timeout * 60 * 1000);
+            }, timeout_1 * 60 * 1000);
         }
         else if (evt.status === 0) {
             console.info("SoftAP: Disconnected");
-        } else {
-            console.debug("SoftAP: Status " + evt.status);
+        }
+        else {
+            console.debug("Unhandled wifi soft ap status " + evt.status);
         }
     });
 }
-
 function parseDate(d) {
     var day = parseInt(d.substr(5, 2));
-    var month = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].indexOf(d.substr(8, 3));
+    var month = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+    ].indexOf(d.substr(8, 3));
     var year = parseInt(d.substr(12, 4));
     var hour = parseInt(d.substr(17, 2));
     var minute = parseInt(d.substr(20, 2));
     var second = parseInt(d.substr(23, 2));
-
-    var date = new Date(Date.UTC(year, month, day, hour, minute, second, 0));
-    return date;
+    var utc = Date.UTC(year, month, day, hour, minute, second, 0);
+    if (isNaN(utc)) {
+        throw Error("Invalid date");
+    }
+    return new Date(utc);
 }
-
 function evalScript(content, headers) {
-    console.debug('==> Start evaluation:');
+    console.debug("==> Start evaluation:");
     digitalWrite(LED_BUILTIN, 0);
-    eval(content);
+    eval(content); // this uses headers implicitly (TODO CHECK)
 }
-
+function loadOfflineScript() {
+    var _a;
+    var programLoadedPrev = programLoaded;
+    programLoaded = true;
+    if (!programLoadedPrev && ((_a = config_1.config === null || config_1.config === void 0 ? void 0 : config_1.config.ota) === null || _a === void 0 ? void 0 : _a.script)) {
+        console.log("An offline script was found. Trying to execute...");
+        evalScript(config_1.config.ota.script);
+    }
+}
 function connectToWifi() {
+    var _a, _b;
     digitalWrite(LED_BUILTIN, 1);
-
+    if (!((_a = config_1.config === null || config_1.config === void 0 ? void 0 : config_1.config.wifi) === null || _a === void 0 ? void 0 : _a.ssid) || !((_b = config_1.config === null || config_1.config === void 0 ? void 0 : config_1.config.wifi) === null || _b === void 0 ? void 0 : _b.password)) {
+        console.error("No ssid and/or password was configured. Cannot connect to wifi: ");
+        return;
+    }
     var retries = 0;
-    wifi.connectWifi(config.wlan.ssid, config.wlan.password, function (evt) {
+    wifi.connectWifi(config_1.config.wifi.ssid, config_1.config.wifi.password, function (evt) {
+        var _a, _b;
         if (evt.status === 0) {
             console.info("WIFI: DISCONNECTED");
             if (!configServerStarted) {
                 retries++;
             }
             if (!configServerStarted && retries === 5) {
-                if (config.ota.offline) {
+                console.warn("Maximum retries exceeded to connect to wifi.");
+                if ((_a = config_1.config === null || config_1.config === void 0 ? void 0 : config_1.config.ota) === null || _a === void 0 ? void 0 : _a.offline) {
                     stopWifi();
-                    var programLoadedPrev = programLoaded;
-                    programLoaded = true;
-                    if (!programLoadedPrev) {
-                        evalScript(el_load('config.script'));
-                    }
-                } else {
+                    loadOfflineScript();
+                }
+                else {
+                    console.warn("No offline script was found.");
                     startSoftApMode();
                 }
             }
-        } else if (evt.status === 1) {
+        }
+        else if (evt.status === 1) {
             if (!programLoaded) {
                 console.info("WIFI: CONNECTED");
                 if (!configServerStarted) {
                     configServer.startConfigServer();
                     configServerStarted = true;
                 }
-
                 retries = 0;
-
-                if (config.ota.url) {
+                if ((_b = config_1.config === null || config_1.config === void 0 ? void 0 : config_1.config.ota) === null || _b === void 0 ? void 0 : _b.url) {
                     programLoaded = true;
-                    console.info('Loading program from: ' + config.ota.url.href);
-
-                    var headers = null;
-                    fetch(config.ota.url.href)
+                    console.info("Loading program from: " + config_1.config.ota.url);
+                    var headers_1;
+                    fetch(config_1.config.ota.url)
                         .then(function (r) {
-                            headers = r.headers;
-                            return r.text()
-                        })
+                        headers_1 = r.headers;
+                        return r.text();
+                    })
                         .then(function (data) {
-                            if (config.ota.offline) {
-                                el_store('config.script', data);
-                                console.info('==> Saved offline script length=' + data.length);
-                            } else {
-                                console.info('==> NOT saving offline script');
-                            }
-
-                            var dateString = headers.get('Date');
-                            if (dateString) {
-                                var now = parseDate(dateString);
-                                setDateTimeInMillis(now.getTime());
-                                setDateTimeZoneOffsetInHours(2);
-                                console.debug('Setting date to ' + new Date());
-                            }
-                            evalScript(data, headers);
-                        })
+                        var _a;
+                        if ((_a = config_1.config === null || config_1.config === void 0 ? void 0 : config_1.config.ota) === null || _a === void 0 ? void 0 : _a.offline) {
+                            config_1.config.ota.script = data;
+                            config_1.saveConfig(config_1.config);
+                            console.info("==> Saved offline script length=" + data.length);
+                        }
+                        else {
+                            console.info("==> NOT saving offline script");
+                        }
+                        var dateString = headers_1.get("Date");
+                        if (dateString) {
+                            var now = parseDate(dateString);
+                            setDateTimeInMillis(now.getTime());
+                            setDateTimeZoneOffsetInHours(2);
+                            setBootTime(new Date());
+                            console.debug("Setting boot time to " + getBootTime());
+                        }
+                        evalScript(data, headers_1);
+                    })
                         .catch(function (error) {
-                            console.error(error);
-                            startSoftApMode();
-                        });
-                } else {
-                    console.error('No OTA (Over-the-air) url specified.');
-                    startSoftApMode();
+                        console.error(error);
+                        startSoftApMode();
+                    });
+                }
+                else {
+                    console.error("No OTA (Over-the-air) url specified.");
+                    loadOfflineScript();
                 }
             }
-        } else if (evt.status === 2) {
+        }
+        else if (evt.status === 2) {
             console.info("WIFI: CONNECTING...");
         }
     });
 }
-
 function main() {
-    if ((typeof KEY_BUILTIN !== 'undefined' && digitalRead(KEY_BUILTIN) == 0) || (typeof config.wlan.ssid === 'undefined')) {
-        console.info('Setup key pressed: Start soft ap...');
+    var _a, _b;
+    var showSetup = false;
+    console.log("Current configuration:");
+    console.log(JSON.stringify(config_1.config));
+    if (typeof KEY_BUILTIN !== "undefined" && digitalRead(KEY_BUILTIN) == 0) {
+        console.info("Setup key pressed: Starting setup mode ...");
+        showSetup = true;
+    }
+    if (!((_a = config_1.config === null || config_1.config === void 0 ? void 0 : config_1.config.wifi) === null || _a === void 0 ? void 0 : _a.ssid)) {
+        console.info("Missing wifi SSID configuration: Starting setup mode ...");
+        showSetup = true;
+    }
+    if (!((_b = config_1.config === null || config_1.config === void 0 ? void 0 : config_1.config.wifi) === null || _b === void 0 ? void 0 : _b.password)) {
+        console.info("Missing wifi password configuration: Starting setup mode ...");
+        showSetup = true;
+    }
+    if (showSetup) {
         startSoftApMode();
-    } else {
-        console.info('Trying to connect to Wifi from JS:');
+    }
+    else {
+        console.info("Trying to connect to Wifi from JS:");
         connectToWifi();
     }
 }
-
-module.exports = {
-    main: main
-}
+exports.main = main;

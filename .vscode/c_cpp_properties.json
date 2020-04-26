@@ -1,28 +1,20 @@
 {
-    "configurations": [
-        {
-            "name": "ESP32",
-            "includePath": [
-                "${workspaceRoot}/**",
-                "${workspaceRoot}/components/**",
-                "${workspaceRoot}/build/**",
-                "${workspaceRoot}/build/include/**",
-                "${env:IDF_PATH}/components/**"
-            ],
-            "intelliSenseMode": "clang-x64",
-            "browse": {
-                "path": [
-                    "${workspaceRoot}/**",
-                    "${workspaceRoot}/components/**",
-                    "${workspaceRoot}/build/**",
-                    "${workspaceRoot}/build/include/**",
-                    "${env:IDF_PATH}/components/**"
-                    ],
-                "limitSymbolsToIncludedHeaders": true
-            },
-            "cStandard": "c11",
-            "cppStandard": "c++17"
-        }
-    ],
-    "version": 4
+  "configurations": [
+    {
+      "name": "ESP32",
+      "includePath": [
+        "${workspaceRoot}/**",
+        "${workspaceRoot}/components/**",
+        "${workspaceRoot}/build/**",
+        "${IDF_PATH}/components/**",
+        "${IDF_PATH}/../xtensa-esp32-elf/xtensa-esp32-elf/include/",
+        "${IDF_PATH}/../xtensa-esp32-elf/xtensa-esp32-elf/include/**"
+      ],
+      "intelliSenseMode": "gcc-x86",
+      "cStandard": "c18",
+      "cppStandard": "c++17"
+    }
+  ],
+  "enableConfigurationSquiggles": true,
+  "version": 4
 }

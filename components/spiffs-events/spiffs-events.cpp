@@ -35,15 +35,15 @@ SOFTWARE.
 
 static const char *tag = "esp32-javascript";
 
-void initFilesystem()
+void initFilesystem(const char *label, const char *basePath)
 {
-	log(INFO,"Initializing SPIFFS");
+	log(INFO, "Initializing SPIFFS");
 
 	esp_vfs_spiffs_conf_t conf = {
-		.base_path = "/modules",
-		.partition_label = NULL,
+		.base_path = basePath,
+		.partition_label = label,
 		.max_files = 5,
-		.format_if_mount_failed = false};
+		.format_if_mount_failed = true};
 
 	// Use settings defined above to initialize and mount SPIFFS filesystem.
 	// Note: esp_vfs_spiffs_register is an all-in-one convenience function.
@@ -53,38 +53,38 @@ void initFilesystem()
 	{
 		if (ret == ESP_FAIL)
 		{
-			log(ERROR,"Failed to mount or format filesystem");
+			log(ERROR, "Failed to mount or format filesystem");
 		}
 		else if (ret == ESP_ERR_NOT_FOUND)
 		{
-			log(ERROR,"Failed to find SPIFFS partition");
+			log(ERROR, "Failed to find SPIFFS partition");
 		}
 		else
 		{
-			log(ERROR,"Failed to initialize SPIFFS (%s)", esp_err_to_name(ret));
+			log(ERROR, "Failed to initialize SPIFFS (%s)", esp_err_to_name(ret));
 		}
 		return;
 	}
 
 	size_t total = 0, used = 0;
-	ret = esp_spiffs_info(NULL, &total, &used);
+	ret = esp_spiffs_info(label, &total, &used);
 	if (ret != ESP_OK)
 	{
-		log(ERROR,"Failed to get SPIFFS partition information (%s)", esp_err_to_name(ret));
+		log(ERROR, "Failed to get SPIFFS partition information (%s)", esp_err_to_name(ret));
 	}
 	else
 	{
-		log(INFO,"Partition size: total: %x, used: %x", total, used);
+		log(INFO, "Partition size: total: %x, used: %x", total, used);
 	}
 }
 
 char *readFile(const char *path)
 {
-	log(INFO,"Reading file %s", path);
+	log(INFO, "Reading file %s", path);
 	FILE *f = fopen(path, "r");
 	if (f == NULL)
 	{
-		log(ERROR,"Failed to open file for reading");
+		log(ERROR, "Failed to open file for reading");
 		return NULL;
 	}
 
@@ -99,6 +99,20 @@ char *readFile(const char *path)
 	string[fsize] = 0;
 
 	return string;
+}
+
+int writeFile(const char *path, const char *content)
+{
+	log(INFO, "Writing file %s", path);
+	FILE *f = fopen(path, "w");
+	if (f == NULL)
+	{
+		log(ERROR, "Failed to open file for writing");
+		return -1;
+	}
+	int result = fputs(content, f);
+	fclose(f);
+	return result;
 }
 
 bool fileExists(const char *path)
@@ -123,6 +137,14 @@ duk_ret_t el_readFile(duk_context *ctx)
 	}
 }
 
+duk_ret_t el_writeFile(duk_context *ctx)
+{
+	const char *path = duk_to_string(ctx, 0);
+	const char *content = duk_to_string(ctx, 1);
+	duk_push_int(ctx, writeFile(path, content));
+	return 1;
+}
+
 duk_ret_t el_fileExists(duk_context *ctx)
 {
 	const char *path = duk_to_string(ctx, 0);
@@ -132,15 +154,17 @@ duk_ret_t el_fileExists(duk_context *ctx)
 
 void registerBindings(duk_context *ctx)
 {
-
 	duk_push_c_function(ctx, el_readFile, 1);
 	duk_put_global_string(ctx, "readFile");
 	duk_push_c_function(ctx, el_fileExists, 1);
 	duk_put_global_string(ctx, "fileExists");
+	duk_push_c_function(ctx, el_writeFile, 2);
+	duk_put_global_string(ctx, "writeFile");
 }
 
 void initSpiffs(duk_context *ctx)
 {
-	initFilesystem();
+	initFilesystem("modules", "/modules");
+	initFilesystem("data", "/data");
 	registerBindings(ctx);
 }

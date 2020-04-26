@@ -1,3 +1,5 @@
 build
 sdkconfig.old*
 main/project.cpp
+node_modules
+

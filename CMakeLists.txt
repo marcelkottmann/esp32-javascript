@@ -20,5 +20,5 @@ add_custom_target(cp_modules ALL
     COMMAND scripts/copy-modules.sh
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
-spiffs_create_partition_image(storage build/modules FLASH_IN_PROJECT
+spiffs_create_partition_image(modules build/modules FLASH_IN_PROJECT
     DEPENDS cp_modules)

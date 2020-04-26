@@ -1,102 +1,239 @@
-var configManager = require('./config');
-var http = require('./http');
-var httpServer = http.httpServer;
-
-var requestHandler = [];
-var baExceptionPathes = [];
-
-function getHeader(statusCode, additionalHeaders) {
-    return ['HTTP/1.1 ', statusCode, ' OK\r\n',//
-        'Connection: close\r\n',//
-        (additionalHeaders ? additionalHeaders : ''),
-        '\r\n'].join('');
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.startConfigServer = exports.redirect = exports.baExceptionPathes = exports.requestHandler = exports.addSchema = void 0;
+var configManager = require("./config");
+var boot_1 = require("./boot");
+var http_1 = require("./http");
+var schema = {
+    access: {
+        type: "object",
+        options: {
+            disable_collapse: true,
+            disable_properties: true,
+        },
+        title: "Access",
+        additionalProperties: false,
+        required: ["username", "password"],
+        properties: {
+            username: {
+                type: "string",
+                title: "Username",
+            },
+            password: {
+                type: "string",
+                title: "Password",
+            },
+        },
+    },
+    wifi: {
+        type: "object",
+        options: {
+            disable_collapse: true,
+            disable_properties: true,
+        },
+        title: "WiFi",
+        additionalProperties: false,
+        required: ["ssid", "password"],
+        properties: {
+            ssid: {
+                type: "string",
+                title: "SSID",
+            },
+            password: {
+                type: "string",
+                title: "Password",
+            },
+        },
+    },
+    ota: {
+        type: "object",
+        options: {
+            disable_collapse: true,
+            disable_properties: true,
+        },
+        title: "Ota",
+        additionalProperties: false,
+        required: ["url", "offline", "script"],
+        properties: {
+            url: {
+                type: "string",
+                title: "Firmware url",
+            },
+            offline: {
+                type: "boolean",
+                title: "Offline",
+            },
+            script: {
+                type: "string",
+                format: "textarea",
+                title: "Offline",
+            },
+        },
+    },
+};
+function addSchema(additional) {
+    schema = __assign(__assign({}, schema), additional);
 }
-
+exports.addSchema = addSchema;
+exports.requestHandler = [];
+exports.baExceptionPathes = [];
 function redirect(res, location) {
-    res.end(getHeader(302, 'Location: ' + location + '\r\n'));
+    res.setStatus(302);
+    res.headers.set("location", location);
+    res.headers.set("content-length", "0");
+    res.end();
 }
-
+exports.redirect = redirect;
 function page(res, headline, text, cb) {
-    res.write(getHeader(200, 'Content-type: text/html\r\n'));
-    res.write('<!doctype html><html><head><title>esp32-javascript</title>');
-    res.write('<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">');
-    res.write('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pure/1.0.1/pure-min.css"></head>');
-    res.write('<body><div class="pure-g"><div class="pure-u-1"><div class="l-box"><h1>');
-    res.write(headline);
-    res.write('</h1>');
+    if (cb) {
+        // register callback
+        res.on("end", cb);
+    }
+    res.setStatus(200);
+    res.headers.set("content-type", "text/html");
+    res.write("<!doctype html><html><head><title>esp32-javascript</title>\n      <meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\">\n      <style>\n      body {\n        font-family: monospace;\n        font-size: 13pt;\n      }\n      .input {\n        font-family: monospace;\n        font-size: 13pt;\n      }\n      .fill {\n        width: calc(100% - 146px);\n      }\n      .full {\n        width: calc(100% - 16px);\n      }\n      .txt {\n        height: 100px;\n      }\n      .formlabel {\n        display: inline-block;\n        width: 130px;\n      }\n      .formpad {\n        padding: 8px;\n      }\n      .green {\n        color: green;\n      }\n      .red {\n        color: red;\n      }\n      </style>\n      \n      </head>\n      <body><div><div><div><h1>" + headline + "</h1>");
     if (Array.isArray(text)) {
-        text.forEach(function (t) { res.write(t) });
-    } else {
+        res.write(text.join(""));
+    }
+    else {
         res.write(text);
     }
-    res.end('</div></div></div></body></html>\r\n\r\n', cb);
+    res.end("</div></div></div></body></html>\r\n\r\n");
 }
-
 function startConfigServer() {
-    console.info('Starting config server.');
-    var defaultConfig = getDefaultConfig();
-    var authString = ('Basic ' + btoa(defaultConfig.basicAuthUsername + ':' + defaultConfig.basicAuthPassword));
-    httpServer(80, false, function (req, res) {
-        if (req.headers['authorization'] !== authString && baExceptionPathes.indexOf(req.path) < 0) {
-            console.debug('401 response');
-            res.write(getHeader(401, 'WWW-Authenticate: Basic realm="Enter credentials"\r\n'));
-            res.end('401 Unauthorized');
-        } else if (req.path === '/restart' && req.method === 'POST'){
-            page(res, 'Restarting...<br /><a href="/">Home</a>', '', function () { setTimeout(restart, 1000) }); 
-        } else if (req.path === '/setup' || req.path === '/restart') {
-            if (req.method === 'GET') {
-                page(res, 'Setup', ['<form  class="pure-form pure-form-stacked" action="/setup" method="post"><fieldset>',
-                    '<label for="ssid">SSID</label><input type="text" name="ssid" value="', el_load('config.ssid'), '" />',
-                    '<label for="password">Password</label><input type="text" name="password" value="', el_load('config.password'), '" />',
-                    '<label for="url">JS file url</label><input type="text" name="url" value="', el_load('config.url'), '" />',
-                    '<label for="offline" class="pure-checkbox"><input type="checkbox" name="offline" value="true" ',
-                    (el_load('config.offline') === 'true' ? 'checked' : ''), '/> Offline Mode</label>',
-                    '<textarea name="script">', el_load('config.script'), '</textarea>',
-                    '<input type="submit" class="pure-button pure-button-primary" value="Save" /></fieldset></form>',
-                '<h1>Request restart</h1>',
-                '<form action="/restart" method="post"><input type="submit" class="pure-button pure-button-primary" value="Restart" /></form>']);
-            } else {
-                var config = http.parseQueryStr(req.body);
-                el_store('config.ssid', config.ssid);
-                el_store('config.password', config.password);
-                el_store('config.url', config.url);
-                el_store('config.offline', config.offline === 'true' ? 'true' : 'false');
-                el_store('config.script', config.script);
-
-                page(res, 'Saved', JSON.stringify(config));
-                configManager.reloadConfig();
+    console.info("Starting config server.");
+    var authString = "Basic " +
+        btoa(configManager.config.access.username +
+            ":" +
+            configManager.config.access.password);
+    http_1.httpServer(80, false, function (req, res) {
+        var _a, _b, _c, _d, _e;
+        if (req.headers.get("authorization") !== authString &&
+            exports.baExceptionPathes.indexOf(req.path) < 0) {
+            console.debug("401 response");
+            res.setStatus(401);
+            res.headers.set("WWW-Authenticate", 'Basic realm="Enter credentials"');
+            res.end("401 Unauthorized");
+        }
+        else if (req.path === "/restart" && req.method === "POST") {
+            page(res, "Restart", '<div class="formpad green">Restarting... please wait. <a href="/">Home</a></div>', function () {
+                setTimeout(restart, 1000);
+            });
+        }
+        else if (req.path === "/setup" || req.path === "/restart") {
+            var saved = false;
+            var error = undefined;
+            if (req.path === "/setup" && req.method === "POST") {
+                try {
+                    var storedConfig = configManager.config;
+                    if (!storedConfig.wifi) {
+                        storedConfig.wifi = {};
+                    }
+                    if (!storedConfig.ota) {
+                        storedConfig.ota = {};
+                    }
+                    var config_1 = http_1.parseQueryStr(req.body);
+                    storedConfig.wifi.ssid = config_1.ssid;
+                    storedConfig.wifi.password = config_1.password;
+                    storedConfig.ota.url = config_1.url;
+                    storedConfig.ota.offline = config_1.offline === "true";
+                    storedConfig.ota.script = config_1.script;
+                    configManager.saveConfig(storedConfig);
+                    saved = true;
+                }
+                catch (err) {
+                    error = err;
+                }
             }
-        } else {
-            for (var i = 0; i < requestHandler.length; i++) {
+            var config = configManager.config;
+            page(res, "Setup", "" + (saved
+                ? '<div class="formpad green">Saved. Some settings require a restart.</div>'
+                : "") + (error
+                ? "<div class=\"formpad red\">Saving failed. Error message: " + error + "</div>"
+                : "") + "<form action=\"/setup\" method=\"post\">\n        <div class=\"formpad\"><label for=\"ssid\" class=\"formlabel\">SSID</label><input type=\"text\" name=\"ssid\" class=\"fill input\" value=\"" + (((_a = config.wifi) === null || _a === void 0 ? void 0 : _a.ssid) || "") + "\" /></div>\n        <div class=\"formpad\"><label for=\"password\" class=\"formlabel\">Password</label><input type=\"text\" name=\"password\" class=\"fill input\" value=\"" + (((_b = config.wifi) === null || _b === void 0 ? void 0 : _b.password) || "") + "\" /></div>\n        <div class=\"formpad\"><label for=\"url\" class=\"formlabel\">JS file url</label><input type=\"text\" name=\"url\" class=\"fill input\" value=\"" + (((_c = config.ota) === null || _c === void 0 ? void 0 : _c.url) || "") + "\" /></div>\n        <div class=\"formpad\"><label for=\"offline\"><input type=\"checkbox\" name=\"offline\" value=\"true\" " + (((_d = config.ota) === null || _d === void 0 ? void 0 : _d.offline) ? "checked" : "") + "/> Offline Mode</label></div>\n        <label for=\"script\" class=\"formpad\">Offline Script</label><div class=\"formpad\"><textarea name=\"script\" class=\"full input txt\">" + (((_e = config.ota) === null || _e === void 0 ? void 0 : _e.script) || "") + "</textarea></div>\n        <div class=\"formpad\"><input type=\"submit\" value=\"Save\" class=\"formpad input\"/></div></form>\n        <h1>Request restart</h1>\n        <form action=\"/restart\" method=\"post\"><div class=\"formpad\"><input type=\"submit\" value=\"Restart\" class=\"formpad input\"/></div></form>\n        <h1>Uptime</h1>\n        <div class=\"formpad\">\n          Boot time: " + boot_1.getBootTime() + "\n        </div>\n        <div class=\"formpad\">\n          Uptime (hours): " + Math.floor((Date.now() - boot_1.getBootTime().getTime()) / 10 / 60 / 60) /
+                100 + "<br />\n        </div>\n        <div class=\"formpad\">\n          Boot time is only available if a valid 'JS file url' is configured, otherwise it starts at unix epoch (1970).\n        </div>");
+        }
+        else {
+            var handled = false;
+            for (var i = 0; i < exports.requestHandler.length; i++) {
                 if (!res.isEnded) {
                     try {
-                        requestHandler[i](req, res);
-                    } catch (error) {
-                        var errorMessage = 'Internal server error: ' + error;
+                        var reqHandled = exports.requestHandler[i](req, res);
+                        handled = Boolean(handled || reqHandled);
+                    }
+                    catch (error) {
+                        var errorMessage = "Internal server error: " + error;
                         console.error(errorMessage);
                         if (!res.isEnded) {
-                            res.write(getHeader(500, 'Content-type: text/plain\r\n'));
+                            res.setStatus(500);
+                            res.headers.set("Content-type", "text/plain");
                             res.end(errorMessage);
                         }
                     }
                 }
             }
-            if (!res.isEnded) {
-                if (req.path === '/') {
-                    redirect(res, '/setup');
-                } else {
-                    res.write(getHeader(404, 'Content-type: text/plain\r\n'));
-                    res.end('Not found');
+            if (!handled && !res.isEnded) {
+                if (req.path === "/") {
+                    redirect(res, "/setup");
+                }
+                else {
+                    res.setStatus(404, "Not found");
+                    res.headers.set("Content-type", "text/plain");
+                    res.end("Not found");
+                }
+            }
+        }
+    });
+    exports.requestHandler.push(function (req, res) {
+        if (req.path === "/config") {
+            res.setStatus(200);
+            res.headers.set("Content-type", "text/html");
+            res.end("<html>\n      <head>\n        <title>Configuration</title>\n        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\">\n        <link \n          rel=\"stylesheet\" \n          href=\"https://bootswatch.com/4/united/bootstrap.min.css\" \n          crossorigin=\"anonymous\"\n        />\n        <link\n          rel=\"stylesheet\"\n          href=\"https://use.fontawesome.com/releases/v5.6.1/css/all.css\"\n          crossorigin=\"anonymous\"\n        />\n      </head>\n      <body>\n        <div class=\"container\">\n          <div id=\"editor_holder\"></div>\n          <p>\n            <form action=\"/restart\" method=\"post\">\n              <button\n                type=\"button\"\n                class=\"btn btn-primary\"\n                onclick=\"save(editor.getValue())\"\n              >\n                Save\n              </button>\n              <button\n                type=\"submit\"\n                class=\"btn btn-secondary\"\n              >\n                Restart\n              </button>\n            </form>\n          </p>\n        </div>\n        <script\n          src=\"https://code.jquery.com/jquery-3.2.1.slim.min.js\"\n          integrity=\"sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN\"\n          crossorigin=\"anonymous\"\n        ></script>\n        <script\n          src=\"https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js\"\n          integrity=\"sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q\"\n          crossorigin=\"anonymous\"\n        ></script>\n        <script\n          src=\"https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js\"\n          integrity=\"sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl\"\n          crossorigin=\"anonymous\"\n        ></script>\n        <script src=\"https://cdn.jsdelivr.net/npm/@json-editor/json-editor@latest/dist/jsoneditor.min.js\"\n          crossorigin=\"anonymous\"\n        ></script>\n        <script>\n          const element = document.getElementById(\"editor_holder\");\n          const editor = new JSONEditor(element, \n            {\n              theme: \"bootstrap4\",\n              iconlib: \"fontawesome5\",\n              disable_edit_json: true,\n              disable_array_delete_all_rows: true,\n              disable_array_delete_last_row: true,\n              ajax: true,\n              schema: {\n                $schema: \"http://json-schema.org/draft-07/schema\",\n                $ref: '/config/schema'\n              }\n            });\n          editor.on('ready', () => {\n            editor.disable();\n            fetch('/config/current').then(r=>r.json()).then(data => {\n              editor.setValue(data);\n              editor.enable();\n            });\n          });\n\n          function save(data)\n          {\n            fetch('/config/current', { method: 'POST', body: JSON.stringify(data)}).then(()=>alert('Saved. Some settings may require a restart.'));\n          }\n        </script>\n      </body>\n    </html>");
+        }
+    });
+    exports.requestHandler.push(function (req, res) {
+        if (req.path === "/config/schema") {
+            res.setStatus(200);
+            res.headers.set("Content-type", "application/json");
+            res.end("\n      {\n        \"type\": \"object\",\n        \"format\": \"categories\",\n        \"options\": {\n          \"disable_collapse\": true,\n          \"disable_properties\": true\n        },\n        \"title\": \"Configuration\",\n        \"description\": \"Configure every aspect.\",\n        \"additionalProperties\": false,\n        \"required\": " + JSON.stringify(Object.keys(schema)) + ",\n        \"properties\": " + JSON.stringify(schema) + "\n      }");
+        }
+    });
+    exports.requestHandler.push(function (req, res) {
+        if (req.path === "/config/current") {
+            if (req.method === "GET") {
+                res.setStatus(200);
+                res.headers.set("Content-type", "application/json");
+                res.end(JSON.stringify(configManager.config));
+            }
+            else if (req.method === "POST") {
+                try {
+                    if (req.body) {
+                        configManager.saveConfig(JSON.parse(req.body));
+                        res.setStatus(204);
+                        res.end();
+                    }
+                    else {
+                        res.setStatus(400);
+                        res.end("No config provided.");
+                    }
+                }
+                catch (error) {
+                    console.error(error);
+                    res.setStatus(500);
+                    res.end("Internal server error while saving configuration.");
                 }
             }
         }
     });
 }
-
-module.exports = {
-    requestHandler: requestHandler,
-    baExceptionPathes: baExceptionPathes,
-    startConfigServer: startConfigServer,
-    redirect: redirect,
-    getHeader: getHeader
-}
+exports.startConfigServer = startConfigServer;

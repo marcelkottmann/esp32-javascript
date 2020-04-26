@@ -1,0 +1,29 @@
+{
+  "name": "esp32-javascript",
+  "version": "0.0.0",
+  "description": "",
+  "scripts": {
+    "compile": "tsc",
+    "doc": "typedoc --mode modules --plugin typedoc-plugin-markdown --readme none"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/marcelkottmann/esp32-javascript.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/marcelkottmann/esp32-javascript/issues"
+  },
+  "homepage": "https://github.com/marcelkottmann/esp32-javascript#readme",
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^3.6.0",
+    "@typescript-eslint/parser": "^3.6.0",
+    "cp2": "file:scripts/cp2",
+    "eslint": "^7.4.0",
+    "eslint-plugin-inclusive-language": "^1.2.0",
+    "typedoc": "^0.17.0-3",
+    "typedoc-plugin-markdown": "^2.2.17",
+    "typescript": "^3.8.3"
+  }
+}

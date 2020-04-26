@@ -106,6 +106,14 @@ int acceptIncoming(int sockfd)
     {
         int one = 1;
         setsockopt(cfd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
+
+        int opt = 1;
+        int ret = lwip_ioctl(cfd, FIONBIO, &opt);
+        if (ret < 0)
+        {
+            log(ERROR, "ERROR while accepting and setting non blocking: %d\n", errno);
+            return -1;
+        }
     }
     else
     {

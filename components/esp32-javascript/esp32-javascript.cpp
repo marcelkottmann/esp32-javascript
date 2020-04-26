@@ -520,7 +520,7 @@ void loadUrlPolyfill(duk_context *ctx)
     loadJS(ctx, "urlparse.js", _start, _end);
 }
 
-duk_ret_t getDefaultConfig(duk_context *ctx)
+duk_ret_t getFirmwareDefaults(duk_context *ctx)
 {
     duk_idx_t obj_idx = duk_push_object(ctx);
 
@@ -640,7 +640,7 @@ void duktape_task(void *ignore)
     duk_push_c_function(ctx, console_info_binding, 1 /*nargs*/);
     duk_put_global_string(ctx, "print");
 
-    log(INFO, "NEW LOG!!!!!! Free memory: %d bytes", esp_get_free_heap_size());
+    log(INFO, "Free memory: %d bytes", esp_get_free_heap_size());
 
     duk_push_int(ctx, INPUT);
     duk_put_global_string(ctx, "INPUT");
@@ -707,8 +707,8 @@ void duktape_task(void *ignore)
     duk_push_c_function(ctx, setDateTimeZoneOffsetInHours, 1 /*nargs*/);
     duk_put_global_string(ctx, "setDateTimeZoneOffsetInHours");
 
-    duk_push_c_function(ctx, getDefaultConfig, 0 /*nargs*/);
-    duk_put_global_string(ctx, "getDefaultConfig");
+    duk_push_c_function(ctx, getFirmwareDefaults, 0 /*nargs*/);
+    duk_put_global_string(ctx, "getFirmwareDefaults");
 
     duk_push_c_function(ctx, btoa, 1 /*nargs*/);
     duk_put_global_string(ctx, "btoa");
@@ -739,7 +739,7 @@ int esp32_javascript_init()
     esp_log_level_set("*", ESP_LOG_ERROR);
     esp_log_level_set("wifi", ESP_LOG_WARN);
     esp_log_level_set("dhcpc", ESP_LOG_WARN);
-    esp_log_level_set(tag, ESP_LOG_INFO);
+    esp_log_level_set(tag, ESP_LOG_DEBUG);
 
     nvs_flash_init();
     tcpip_adapter_init();

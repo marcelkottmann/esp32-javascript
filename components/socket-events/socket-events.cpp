@@ -24,7 +24,10 @@ SOFTWARE.
 
 #include "socket-events.h"
 
-#include "openssl/ssl.h"
+#include <openssl/ssl.h>
+#include <mbedtls/ssl.h>
+#include <mbedtls/compat-1.3.h>
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/semphr.h"
@@ -534,10 +537,12 @@ static duk_ret_t acceptSSL(duk_context *ctx)
     int sockfd = duk_to_int(ctx, 1);
     log(INFO, "SSL server accept client ......");
     SSL_set_fd(ssl, sockfd);
+    log(INFO, "SSL_accept ......");
+    errno = 0;
     int ret = SSL_accept(ssl);
     if (ret <= 0)
     {
-        log(INFO, "SSL_accept failed; return value %d", ret);
+        log(INFO, "SSL_accept failed; return value %d and error %d and errno %d", ret, SSL_get_error(ssl, ret), errno);
     }
     else
     {
@@ -730,7 +735,7 @@ void select_task(void *ignore)
 SSL_CTX *createSSLServerContext()
 {
     log(INFO, "SSL server context create ......");
-    SSL_CTX *ctx = SSL_CTX_new(TLSv1_2_server_method());
+    SSL_CTX *ctx = SSL_CTX_new(TLS_server_method());
     if (!ctx)
     {
         abort();
@@ -779,6 +784,9 @@ SSL *createSSL(SSL_CTX *ctx)
         log(INFO, "failed");
         abort();
     }
+
+    //ssl_set_client_transport_id((mbedtls_ssl_context *)ssl, (unsigned char*)"test", 4);
+
     log(INFO, "OK");
     return ssl;
 }

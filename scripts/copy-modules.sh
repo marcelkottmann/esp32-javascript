@@ -1,4 +1,7 @@
 #!/bin/bash
+set -e
 
-mkdir -p build/modules
-cp -r components/*/modules/* build/modules
+npm install
+npx tsc
+rm -rf build/modules
+npx cp2 --verbose 'components/**/modules/**/*.js' 'f=>f.replace(/components\/([^\/]+)/,"build")'

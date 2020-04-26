@@ -37,6 +37,9 @@
         "time.h": "c",
         "reent.h": "c",
         "thread": "cpp",
-        "cmath": "cpp"
-    }
+        "cmath": "cpp",
+        "string": "cpp",
+        "*.contiki": "cpp"
+    },
+    "C_Cpp.errorSquiggles": "Enabled"
 }

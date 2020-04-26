@@ -46,7 +46,7 @@ Use the keyboard shortcut `AltGr + ]` to leave serial monitor.
 
 Now you have installed the pre-configured boot script.
 
-If this is your first install, your onboard LED should blink now. Blinking signals that your board has started a soft ap with the ssid "esp32". With your mobile or desktop connect to the WLAN SSID "esp32" and open http://192.168.4.1/setup (if you have not changed the default credentials your username / password is esp32 / esp32 ).
+If this is your first install, your onboard LED should blink now. Blinking signals that your board has started a soft ap with the ssid "esp32". With your mobile or desktop connect to the WLAN SSID "esp32" and open http://192.168.4.1/setup (if you have not changed the default credentials your username / password is esp32 / esp32 ). You can change the default password in `./sdkconfig` by changing the value of `CONFIG_ESP32_JS_BASIC_AUTH_PASSWORD`.  
 
 On the Setup page you can configure your WLAN settings and an URL to download your JS main script from.
 
@@ -80,10 +80,18 @@ See [ESP Build System](https://docs.espressif.com/projects/esp-idf/en/latest/esp
 
 ### Clean        
 
-You can clean the project with
+You can clean the project by executing
 
 ```shell
     idf.py fullclean
+```
+
+### Factory reset        
+
+You can erase the persistent flash memory, which will be equivalent to a factory reset, by executing
+
+```shell
+    idf.py erase_flash
 ```
 
 ## Compatibility
@@ -91,7 +99,15 @@ You can clean the project with
 Tested with esp-idf (master branch commit hash 2e14149b).
 
 ## API
-[API documentation](api.md)
+[API documentation](docs/README.md)
+
+### Update docs
+
+Update documentation by executing
+
+```shell
+    npm run doc
+```
 
 ## License
 See source files.

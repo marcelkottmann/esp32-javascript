@@ -46,7 +46,7 @@ void startScan()
 	int ret = esp_wifi_scan_start(&scanConf, false);
 	if (ret > 0)
 	{
-		log(WARN,"SCAN RETURNED %d\n", ret);
+		log(WARN, "SCAN RETURNED %d\n", ret);
 	}
 	else
 	{
@@ -63,7 +63,7 @@ static IRAM_ATTR esp_err_t event_handler(void *ctx, system_event_t *sysevent)
 	js_event_t event2;
 	wifi_mode_t mode;
 
-	log(INFO,"WIFI EVENT %d\n", sysevent->event_id);
+	log(DEBUG, "WIFI EVENT %d\n", sysevent->event_id);
 	switch (sysevent->event_id)
 	{
 	case SYSTEM_EVENT_SCAN_DONE:
@@ -73,7 +73,7 @@ static IRAM_ATTR esp_err_t event_handler(void *ctx, system_event_t *sysevent)
 
 		uint16_t apCount = 0;
 		esp_wifi_scan_get_ap_num(&apCount);
-		log(INFO,"Number of access points found: %d\n", sysevent->event_info.scan_done.number);
+		log(DEBUG, "Number of access points found: %d\n", sysevent->event_info.scan_done.number);
 		uint8_t *bssid = NULL;
 		int8_t rssi = -127;
 		wifi_ap_record_t *list = NULL;
@@ -99,15 +99,15 @@ static IRAM_ATTR esp_err_t event_handler(void *ctx, system_event_t *sysevent)
 		xEventGroupClearBits(wifi_event_group, SCANNING_BIT);
 		if (bssid != NULL)
 		{
-			log(INFO,"SSID %s found, best rssi %d, bssid=%02x:%02x:%02x:%02x:%02x:%02x\n", wifi_config.sta.ssid, rssi,
-					 bssid[0], bssid[1], bssid[2], bssid[3], bssid[4], bssid[5]);
+			log(INFO, "SSID %s found, best rssi %d, bssid=%02x:%02x:%02x:%02x:%02x:%02x\n", wifi_config.sta.ssid, rssi,
+				bssid[0], bssid[1], bssid[2], bssid[3], bssid[4], bssid[5]);
 			memcpy(wifi_config.sta.bssid, bssid, 6 * sizeof(uint8_t));
 			ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
 			esp_wifi_connect();
 		}
 		else
 		{
-			log(ERROR,"SSID not found %s\n", wifi_config.sta.ssid);
+			log(ERROR, "SSID not found %s\n", wifi_config.sta.ssid);
 
 			xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);
 			el_create_event(&event, EL_WIFI_EVENT_TYPE, EL_WIFI_STATUS_DISCONNECTED, 0);
@@ -125,6 +125,9 @@ static IRAM_ATTR esp_err_t event_handler(void *ctx, system_event_t *sysevent)
 	case SYSTEM_EVENT_STA_START:
 		el_create_event(&event, EL_WIFI_EVENT_TYPE, EL_WIFI_STATUS_CONNECTING, 0);
 		el_add_event(&events, &event);
+		break;
+	case SYSTEM_EVENT_STA_CONNECTED:
+		// connected state will be handled by SYSTEM_EVENT_STA_GOT_IP, see below.
 		break;
 	case SYSTEM_EVENT_STA_GOT_IP:
 		xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);
@@ -154,7 +157,7 @@ static IRAM_ATTR esp_err_t event_handler(void *ctx, system_event_t *sysevent)
 		el_add_event(&events, &event);
 		break;
 	default:
-		log(ERROR,"UNKNOWN WIFI EVENT %d\n", sysevent->event_id);
+		log(ERROR, "UNKNOWN WIFI EVENT %d\n", sysevent->event_id);
 		break;
 	}
 
@@ -290,7 +293,6 @@ void registerWifiEventsBindings(duk_context *ctx)
 	duk_push_c_function(ctx, getWifiConfig, 0 /*nargs*/);
 	duk_put_global_string(ctx, "getWifiConfig");
 
-    duk_push_int(ctx, EL_WIFI_EVENT_TYPE);
-    duk_put_global_string(ctx, "EL_WIFI_EVENT_TYPE");
-	
+	duk_push_int(ctx, EL_WIFI_EVENT_TYPE);
+	duk_put_global_string(ctx, "EL_WIFI_EVENT_TYPE");
 }
