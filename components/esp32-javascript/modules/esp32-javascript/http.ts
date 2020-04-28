@@ -43,7 +43,7 @@ function parseHeaders(complete: string, endOfHeaders: number) {
 }
 
 export function httpServer(
-  port: number,
+  port: string|number,
   isSSL: boolean,
   cb: (req: Esp32JsRequest, res: Esp32JsResponse) => void
 ) {

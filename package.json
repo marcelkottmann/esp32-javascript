@@ -1,0 +1,22 @@
+{
+  "name": "esp32-javascript",
+  "version": "0.0.0",
+  "description": "",
+  "scripts": {
+    "doc": "typedoc --mode modules"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/marcelkottmann/esp32-javascript.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/marcelkottmann/esp32-javascript/issues"
+  },
+  "homepage": "https://github.com/marcelkottmann/esp32-javascript#readme",
+  "devDependencies": {
+    "typedoc": "next",
+    "typescript": "^3.8.3"
+  }
+}

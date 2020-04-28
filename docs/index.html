@@ -1,0 +1,261 @@
+<!doctype html>
+<html class="default no-js">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>esp32-javascript</title>
+	<meta name="description" content="">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="assets/css/main.css">
+</head>
+<body>
+<header>
+	<div class="tsd-page-toolbar">
+		<div class="container">
+			<div class="table-wrap">
+				<div class="table-cell" id="tsd-search" data-index="assets/js/search.js" data-base=".">
+					<div class="field">
+						<label for="tsd-search-field" class="tsd-widget search no-caption">Search</label>
+						<input id="tsd-search-field" type="text" />
+					</div>
+					<ul class="results">
+						<li class="state loading">Preparing search index...</li>
+						<li class="state failure">The search index is not available</li>
+					</ul>
+					<a href="index.html" class="title">esp32-javascript</a>
+				</div>
+				<div class="table-cell" id="tsd-widgets">
+					<div id="tsd-filter">
+						<a href="#" class="tsd-widget options no-caption" data-toggle="options">Options</a>
+						<div class="tsd-filter-group">
+							<div class="tsd-select" id="tsd-filter-visibility">
+								<span class="tsd-select-label">All</span>
+								<ul class="tsd-select-list">
+									<li data-value="public">Public</li>
+									<li data-value="protected">Public/Protected</li>
+									<li data-value="private" class="selected">All</li>
+								</ul>
+							</div>
+							<input type="checkbox" id="tsd-filter-inherited" checked />
+							<label class="tsd-widget" for="tsd-filter-inherited">Inherited</label>
+							<input type="checkbox" id="tsd-filter-externals" checked />
+							<label class="tsd-widget" for="tsd-filter-externals">Externals</label>
+							<input type="checkbox" id="tsd-filter-only-exported" />
+							<label class="tsd-widget" for="tsd-filter-only-exported">Only exported</label>
+						</div>
+					</div>
+					<a href="#" class="tsd-widget menu no-caption" data-toggle="menu">Menu</a>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="tsd-page-title">
+		<div class="container">
+			<ul class="tsd-breadcrumb">
+				<li>
+					<a href="globals.html">Globals</a>
+				</li>
+			</ul>
+			<h1>esp32-javascript</h1>
+		</div>
+	</div>
+</header>
+<div class="container container-main">
+	<div class="row">
+		<div class="col-8 col-content">
+			<div class="tsd-panel tsd-typography">
+				<a href="#esp32-javascript" id="esp32-javascript" style="color: inherit; text-decoration: none;">
+					<h1>esp32-javascript</h1>
+				</a>
+				<p><img src="https://github.com/marcelkottmann/esp32-javascript/workflows/Build/badge.svg" alt=""></p>
+				<p>&quot;Lightweight&quot; JS interpreter for ESP32. Provides JS-based eventloop implementation
+					and native asynchronous network and timer functions.
+				Because of the limited memory on ESP32-WROOM modules, the full functionality is currently only realizable on ESP32-WROVER modules, that include additional 4MB of SPIRAM memory.   </p>
+				<a href="#content" id="content" style="color: inherit; text-decoration: none;">
+					<h2>Content</h2>
+				</a>
+				<p><a href="#getting-started">Getting started</a></p>
+				<p><a href="#api">API</a></p>
+				<p><a href="#compatibility">Compatibility</a></p>
+				<a href="#getting-started" id="getting-started" style="color: inherit; text-decoration: none;">
+					<h2>Getting started</h2>
+				</a>
+				<a href="#prerequisites" id="prerequisites" style="color: inherit; text-decoration: none;">
+					<h3>Prerequisites</h3>
+				</a>
+				<p>Install <a href="http://esp-idf.readthedocs.io/en/latest/get-started/index.html#setup-toolchain">esp-idf</a> on your system.</p>
+				<a href="#first-install" id="first-install" style="color: inherit; text-decoration: none;">
+					<h3>First install</h3>
+				</a>
+				<p>Clone esp32-javascript inside your esp directory (normally ~/esp):</p>
+				<pre><code class="language-shell">    cd ~/esp
+    git clone https://github.com/pepe79/esp32-javascript.git</code></pre>
+				<p>Change into ~/esp/esp32-javascript.</p>
+				<pre><code class="language-shell">    cd ~/esp/esp32-javascript</code></pre>
+				<p>Maybe you want to change the BOARD_VARIANT in the ./CMakeLists.txt file.</p>
+				<p>First build the project with</p>
+				<pre><code class="language-shell">    idf.py build</code></pre>
+				<p>Connect your ESP32 Dev Board via USB and run</p>
+				<pre><code class="language-shell">    idf.py flash monitor</code></pre>
+				<p>Use the keyboard shortcut <code>AltGr + ]</code> to leave serial monitor.</p>
+				<p>Now you have installed the pre-configured boot script.</p>
+				<p>If this is your first install, your onboard LED should blink now. Blinking signals that your board has started a soft ap with the ssid &quot;esp32&quot;. With your mobile or desktop connect to the WLAN SSID &quot;esp32&quot; and open <a href="http://192.168.4.1/setup">http://192.168.4.1/setup</a> (if you have not changed the default credentials your username / password is esp32 / esp32 ).</p>
+				<p>On the Setup page you can configure your WLAN settings and an URL to download your JS main script from.</p>
+				<p>Please note that the script, does not need to have a main function, because its evaluated entirely.
+				That means, to print out &quot;Hello World&quot;, you only have to include one line in your script on the webserver:</p>
+				<pre><code class="language-js">    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'Hello world!'</span>);</code></pre>
+				<a href="#ccbindings" id="ccbindings" style="color: inherit; text-decoration: none;">
+					<h3>C/C++bindings</h3>
+				</a>
+				<p>If you need to create your own C/C++ bindings for your JS code, this are the steps to perform:</p>
+				<ol>
+					<li><p>Create a file named <code>project.cpp</code> in the <code>./main</code> directory</p>
+					</li>
+					<li><p>Implement the esp32_javascript_main callback function inside this <code>project.ccp</code>:</p>
+						<pre><code class="language-c"><span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">"esp32-javascript.h"</span></span>
+
+<span class="hljs-function"><span class="hljs-keyword">extern</span> <span class="hljs-keyword">void</span> <span class="hljs-title">esp32_javascript_main</span><span class="hljs-params">(duk_context *ctx)</span>
+</span>{
+  <span class="hljs-comment">// do your own duktape bindings here</span>
+}</code></pre>
+					</li>
+				</ol>
+				<p>See <a href="https://duktape.org/guide.html">Duktape Programmer&#39;s Guide</a> for more information regarding Duktape bindings.</p>
+				<p>If you need more than this, you can create your own esp-idf component below <code>./components</code>. Then delegate the <code>esp32_javascript_main</code> function to this component.
+					Additionally you have to set your component name in the top level <code>./CMakeLists.txt</code>. Refer to the documentation next to the setting <code>ESP32_JS_PROJECT_NAME</code>.
+				See <a href="https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/build-system.html">ESP Build System</a> for information on how to create a component with the esp-idf build system.</p>
+				<a href="#clean" id="clean" style="color: inherit; text-decoration: none;">
+					<h3>Clean</h3>
+				</a>
+				<p>You can clean the project with</p>
+				<pre><code class="language-shell">    idf.py fullclean</code></pre>
+				<a href="#compatibility" id="compatibility" style="color: inherit; text-decoration: none;">
+					<h2>Compatibility</h2>
+				</a>
+				<p>Tested with esp-idf (master branch commit hash 2e14149b).</p>
+				<a href="#api" id="api" style="color: inherit; text-decoration: none;">
+					<h2>API</h2>
+				</a>
+				<p><a href="api.md">API documentation</a></p>
+				<a href="#license" id="license" style="color: inherit; text-decoration: none;">
+					<h2>License</h2>
+				</a>
+				<p>See source files.</p>
+			</div>
+		</div>
+		<div class="col-4 col-menu menu-sticky-wrap menu-highlight">
+			<nav class="tsd-navigation primary">
+				<ul>
+					<li class="globals  ">
+						<a href="globals.html"><em>Globals</em></a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="modules/_esp32_javascript_modules_esp32_javascript_boot_.html">&quot;esp32-<wbr>javascript/modules/esp32-<wbr>javascript/boot&quot;</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="modules/_esp32_javascript_modules_esp32_javascript_config_.html">&quot;esp32-<wbr>javascript/modules/esp32-<wbr>javascript/config&quot;</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="modules/_esp32_javascript_modules_esp32_javascript_configserver_.html">&quot;esp32-<wbr>javascript/modules/esp32-<wbr>javascript/configserver&quot;</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="modules/_esp32_javascript_modules_esp32_javascript_global_.html">&quot;esp32-<wbr>javascript/modules/esp32-<wbr>javascript/global&quot;</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="modules/_esp32_javascript_modules_esp32_javascript_http_.html">&quot;esp32-<wbr>javascript/modules/esp32-<wbr>javascript/http&quot;</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="modules/_esp32_javascript_modules_esp32_javascript_index_.html">&quot;esp32-<wbr>javascript/modules/esp32-<wbr>javascript/index&quot;</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="modules/_esp32_javascript_modules_esp32_javascript_stringbuffer_.html">&quot;esp32-<wbr>javascript/modules/esp32-<wbr>javascript/stringbuffer&quot;</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="modules/_esp32_javascript_modules_esp32_js_eventloop_index_.html">&quot;esp32-<wbr>javascript/modules/esp32-<wbr>js-<wbr>eventloop/index&quot;</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="modules/_esp32_javascript_urlparse_.html">&quot;esp32-<wbr>javascript/urlparse&quot;</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="modules/_socket_events_modules_socket_events_index_.html">&quot;socket-<wbr>events/modules/socket-<wbr>events/index&quot;</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="modules/_wifi_events_modules_wifi_events_index_.html">&quot;wifi-<wbr>events/modules/wifi-<wbr>events/index&quot;</a>
+					</li>
+				</ul>
+			</nav>
+			<nav class="tsd-navigation secondary menu-sticky">
+				<ul class="before-current">
+				</ul>
+			</nav>
+		</div>
+	</div>
+</div>
+<footer class="with-border-bottom">
+	<div class="container">
+		<h2>Legend</h2>
+		<div class="tsd-legend-group">
+			<ul class="tsd-legend">
+				<li class="tsd-kind-module"><span class="tsd-kind-icon">Module</span></li>
+				<li class="tsd-kind-object-literal"><span class="tsd-kind-icon">Object literal</span></li>
+				<li class="tsd-kind-variable"><span class="tsd-kind-icon">Variable</span></li>
+				<li class="tsd-kind-function"><span class="tsd-kind-icon">Function</span></li>
+				<li class="tsd-kind-function tsd-has-type-parameter"><span class="tsd-kind-icon">Function with type parameter</span></li>
+				<li class="tsd-kind-index-signature"><span class="tsd-kind-icon">Index signature</span></li>
+				<li class="tsd-kind-type-alias"><span class="tsd-kind-icon">Type alias</span></li>
+				<li class="tsd-kind-type-alias tsd-has-type-parameter"><span class="tsd-kind-icon">Type alias with type parameter</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-enum"><span class="tsd-kind-icon">Enumeration</span></li>
+				<li class="tsd-kind-enum-member"><span class="tsd-kind-icon">Enumeration member</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-enum"><span class="tsd-kind-icon">Property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-enum"><span class="tsd-kind-icon">Method</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-interface"><span class="tsd-kind-icon">Interface</span></li>
+				<li class="tsd-kind-interface tsd-has-type-parameter"><span class="tsd-kind-icon">Interface with type parameter</span></li>
+				<li class="tsd-kind-constructor tsd-parent-kind-interface"><span class="tsd-kind-icon">Constructor</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-interface"><span class="tsd-kind-icon">Property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-interface"><span class="tsd-kind-icon">Method</span></li>
+				<li class="tsd-kind-index-signature tsd-parent-kind-interface"><span class="tsd-kind-icon">Index signature</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-class"><span class="tsd-kind-icon">Class</span></li>
+				<li class="tsd-kind-class tsd-has-type-parameter"><span class="tsd-kind-icon">Class with type parameter</span></li>
+				<li class="tsd-kind-constructor tsd-parent-kind-class"><span class="tsd-kind-icon">Constructor</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-class"><span class="tsd-kind-icon">Property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class"><span class="tsd-kind-icon">Method</span></li>
+				<li class="tsd-kind-accessor tsd-parent-kind-class"><span class="tsd-kind-icon">Accessor</span></li>
+				<li class="tsd-kind-index-signature tsd-parent-kind-class"><span class="tsd-kind-icon">Index signature</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-constructor tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited constructor</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited method</span></li>
+				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited accessor</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected method</span></li>
+				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected accessor</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private method</span></li>
+				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private accessor</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-static"><span class="tsd-kind-icon">Static property</span></li>
+				<li class="tsd-kind-call-signature tsd-parent-kind-class tsd-is-static"><span class="tsd-kind-icon">Static method</span></li>
+			</ul>
+		</div>
+	</div>
+</footer>
+<div class="container tsd-generator">
+	<p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p>
+</div>
+<div class="overlay"></div>
+<script src="assets/js/main.js"></script>
+<script>if (location.protocol == 'file:') document.write('<script src="assets/js/search.js"><' + '/script>');</script>
+</body>
+</html>
