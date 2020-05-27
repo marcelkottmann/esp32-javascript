@@ -91,7 +91,7 @@ You can clean the project with
 Tested with esp-idf (master branch commit hash 2e14149b).
 
 ## API
-[API documentation](api.md)
+[API documentation](docs/README.md)
 
 ## License
 See source files.

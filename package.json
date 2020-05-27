@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "description": "",
   "scripts": {
-    "doc": "typedoc --mode modules"
+    "doc": "typedoc --mode modules --plugin typedoc-plugin-markdown --readme none"
   },
   "repository": {
     "type": "git",
@@ -16,7 +16,8 @@
   },
   "homepage": "https://github.com/marcelkottmann/esp32-javascript#readme",
   "devDependencies": {
-    "typedoc": "next",
+    "typedoc": "^0.17.0-3",
+    "typedoc-plugin-markdown": "^2.2.17",
     "typescript": "^3.8.3"
   }
 }
