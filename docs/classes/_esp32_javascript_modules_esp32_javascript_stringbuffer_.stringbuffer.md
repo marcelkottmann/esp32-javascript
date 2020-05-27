@@ -33,7 +33,7 @@
 
 \+ **new StringBuffer**(): *[StringBuffer](_esp32_javascript_modules_esp32_javascript_stringbuffer_.stringbuffer.md)*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/stringbuffer.ts:3](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/esp32-javascript/modules/esp32-javascript/stringbuffer.ts#L3)*
+*Defined in [esp32-javascript/modules/esp32-javascript/stringbuffer.ts:3](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/esp32-javascript/modules/esp32-javascript/stringbuffer.ts#L3)*
 
 **Returns:** *[StringBuffer](_esp32_javascript_modules_esp32_javascript_stringbuffer_.stringbuffer.md)*
 
@@ -43,7 +43,7 @@
 
 • **content**: *string[]*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/stringbuffer.ts:2](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/esp32-javascript/modules/esp32-javascript/stringbuffer.ts#L2)*
+*Defined in [esp32-javascript/modules/esp32-javascript/stringbuffer.ts:2](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/esp32-javascript/modules/esp32-javascript/stringbuffer.ts#L2)*
 
 ___
 
@@ -51,7 +51,7 @@ ___
 
 • **length**: *number*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/stringbuffer.ts:3](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/esp32-javascript/modules/esp32-javascript/stringbuffer.ts#L3)*
+*Defined in [esp32-javascript/modules/esp32-javascript/stringbuffer.ts:3](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/esp32-javascript/modules/esp32-javascript/stringbuffer.ts#L3)*
 
 ## Methods
 
@@ -59,7 +59,7 @@ ___
 
 ▸ **append**(`s`: [StringBuffer](_esp32_javascript_modules_esp32_javascript_stringbuffer_.stringbuffer.md) | string): *this*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/stringbuffer.ts:31](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/esp32-javascript/modules/esp32-javascript/stringbuffer.ts#L31)*
+*Defined in [esp32-javascript/modules/esp32-javascript/stringbuffer.ts:31](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/esp32-javascript/modules/esp32-javascript/stringbuffer.ts#L31)*
 
 **Parameters:**
 
@@ -75,7 +75,7 @@ ___
 
 ▸ **indexOf**(`searchString`: string, `position?`: undefined | number): *number*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/stringbuffer.ts:10](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/esp32-javascript/modules/esp32-javascript/stringbuffer.ts#L10)*
+*Defined in [esp32-javascript/modules/esp32-javascript/stringbuffer.ts:10](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/esp32-javascript/modules/esp32-javascript/stringbuffer.ts#L10)*
 
 **Parameters:**
 
@@ -92,7 +92,7 @@ ___
 
 ▸ **substr**(`s`: number, `l`: number): *[StringBuffer](_esp32_javascript_modules_esp32_javascript_stringbuffer_.stringbuffer.md)‹›*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/stringbuffer.ts:93](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/esp32-javascript/modules/esp32-javascript/stringbuffer.ts#L93)*
+*Defined in [esp32-javascript/modules/esp32-javascript/stringbuffer.ts:93](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/esp32-javascript/modules/esp32-javascript/stringbuffer.ts#L93)*
 
 **Parameters:**
 
@@ -109,7 +109,7 @@ ___
 
 ▸ **substring**(`s`: number, `e?`: undefined | number): *[StringBuffer](_esp32_javascript_modules_esp32_javascript_stringbuffer_.stringbuffer.md)‹›*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/stringbuffer.ts:38](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/esp32-javascript/modules/esp32-javascript/stringbuffer.ts#L38)*
+*Defined in [esp32-javascript/modules/esp32-javascript/stringbuffer.ts:38](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/esp32-javascript/modules/esp32-javascript/stringbuffer.ts#L38)*
 
 **Parameters:**
 
@@ -126,7 +126,7 @@ ___
 
 ▸ **toLowerCase**(): *string*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/stringbuffer.ts:14](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/esp32-javascript/modules/esp32-javascript/stringbuffer.ts#L14)*
+*Defined in [esp32-javascript/modules/esp32-javascript/stringbuffer.ts:14](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/esp32-javascript/modules/esp32-javascript/stringbuffer.ts#L14)*
 
 **Returns:** *string*
 
@@ -136,7 +136,7 @@ ___
 
 ▸ **toString**(): *string*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/stringbuffer.ts:22](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/esp32-javascript/modules/esp32-javascript/stringbuffer.ts#L22)*
+*Defined in [esp32-javascript/modules/esp32-javascript/stringbuffer.ts:22](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/esp32-javascript/modules/esp32-javascript/stringbuffer.ts#L22)*
 
 **Returns:** *string*
 
@@ -146,6 +146,6 @@ ___
 
 ▸ **toUpperCase**(): *string*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/stringbuffer.ts:18](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/esp32-javascript/modules/esp32-javascript/stringbuffer.ts#L18)*
+*Defined in [esp32-javascript/modules/esp32-javascript/stringbuffer.ts:18](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/esp32-javascript/modules/esp32-javascript/stringbuffer.ts#L18)*
 
 **Returns:** *string*

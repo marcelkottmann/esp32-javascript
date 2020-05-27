@@ -21,7 +21,7 @@
 
 • **cb**? : *undefined | function*
 
-*Defined in [socket-events/modules/socket-events/index.ts:87](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/socket-events/modules/socket-events/index.ts#L87)*
+*Defined in [socket-events/modules/socket-events/index.ts:87](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/socket-events/modules/socket-events/index.ts#L87)*
 
 ___
 
@@ -29,7 +29,7 @@ ___
 
 • **data**: *Uint8Array*
 
-*Defined in [socket-events/modules/socket-events/index.ts:85](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/socket-events/modules/socket-events/index.ts#L85)*
+*Defined in [socket-events/modules/socket-events/index.ts:85](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/socket-events/modules/socket-events/index.ts#L85)*
 
 ___
 
@@ -37,7 +37,7 @@ ___
 
 • **len**: *number*
 
-*Defined in [socket-events/modules/socket-events/index.ts:86](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/socket-events/modules/socket-events/index.ts#L86)*
+*Defined in [socket-events/modules/socket-events/index.ts:86](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/socket-events/modules/socket-events/index.ts#L86)*
 
 ___
 
@@ -45,4 +45,4 @@ ___
 
 • **written**: *number*
 
-*Defined in [socket-events/modules/socket-events/index.ts:84](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/socket-events/modules/socket-events/index.ts#L84)*
+*Defined in [socket-events/modules/socket-events/index.ts:84](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/socket-events/modules/socket-events/index.ts#L84)*

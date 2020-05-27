@@ -22,7 +22,7 @@ An array which holds all active sockets.
 
 ▸ **find**(`predicate`: function): *[Socket](../classes/_socket_events_modules_socket_events_index_.socket.md)*
 
-*Defined in [socket-events/modules/socket-events/index.ts:67](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/socket-events/modules/socket-events/index.ts#L67)*
+*Defined in [socket-events/modules/socket-events/index.ts:67](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/socket-events/modules/socket-events/index.ts#L67)*
 
 **Parameters:**
 

@@ -26,7 +26,7 @@
 
 • **wifi**: *[Esp32JsWifi](../interfaces/_wifi_events_modules_wifi_events_index_.esp32jswifi.md) | undefined* = undefined
 
-*Defined in [wifi-events/modules/wifi-events/index.ts:14](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/wifi-events/modules/wifi-events/index.ts#L14)*
+*Defined in [wifi-events/modules/wifi-events/index.ts:14](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/wifi-events/modules/wifi-events/index.ts#L14)*
 
 ## Functions
 
@@ -34,7 +34,7 @@
 
 ▸ **afterSuspend**(`evt`: Esp32JsEventloopEvent, `collected`: Function[]): *boolean*
 
-*Defined in [wifi-events/modules/wifi-events/index.ts:72](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/wifi-events/modules/wifi-events/index.ts#L72)*
+*Defined in [wifi-events/modules/wifi-events/index.ts:72](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/wifi-events/modules/wifi-events/index.ts#L72)*
 
 **Parameters:**
 
@@ -51,7 +51,7 @@ ___
 
 ▸ **connectWifi**(`ssid`: string, `password`: string, `callback`: function): *void*
 
-*Defined in [wifi-events/modules/wifi-events/index.ts:31](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/wifi-events/modules/wifi-events/index.ts#L31)*
+*Defined in [wifi-events/modules/wifi-events/index.ts:31](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/wifi-events/modules/wifi-events/index.ts#L31)*
 
 Connect to AP with given ssid and password.
 
@@ -85,7 +85,7 @@ ___
 
 ▸ **createSoftAp**(`ssid`: string, `password`: string, `callback`: function): *void*
 
-*Defined in [wifi-events/modules/wifi-events/index.ts:49](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/wifi-events/modules/wifi-events/index.ts#L49)*
+*Defined in [wifi-events/modules/wifi-events/index.ts:49](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/wifi-events/modules/wifi-events/index.ts#L49)*
 
 Create soft AP with given ssid and password.
 
@@ -119,7 +119,7 @@ ___
 
 ▸ **getBssid**(): *string*
 
-*Defined in [wifi-events/modules/wifi-events/index.ts:64](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/wifi-events/modules/wifi-events/index.ts#L64)*
+*Defined in [wifi-events/modules/wifi-events/index.ts:64](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/wifi-events/modules/wifi-events/index.ts#L64)*
 
 Get the bssid of the current connected wifi AP as formatted as hex string.
 

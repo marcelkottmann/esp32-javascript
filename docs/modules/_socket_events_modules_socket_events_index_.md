@@ -45,7 +45,7 @@
 
 Ƭ **OnAcceptCB**: *function*
 
-*Defined in [socket-events/modules/socket-events/index.ts:10](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/socket-events/modules/socket-events/index.ts#L10)*
+*Defined in [socket-events/modules/socket-events/index.ts:10](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/socket-events/modules/socket-events/index.ts#L10)*
 
 #### Type declaration:
 
@@ -57,7 +57,7 @@ ___
 
 Ƭ **OnCloseCB**: *function*
 
-*Defined in [socket-events/modules/socket-events/index.ts:9](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/socket-events/modules/socket-events/index.ts#L9)*
+*Defined in [socket-events/modules/socket-events/index.ts:9](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/socket-events/modules/socket-events/index.ts#L9)*
 
 #### Type declaration:
 
@@ -75,7 +75,7 @@ ___
 
 Ƭ **OnConnectCB**: *function*
 
-*Defined in [socket-events/modules/socket-events/index.ts:7](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/socket-events/modules/socket-events/index.ts#L7)*
+*Defined in [socket-events/modules/socket-events/index.ts:7](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/socket-events/modules/socket-events/index.ts#L7)*
 
 #### Type declaration:
 
@@ -93,7 +93,7 @@ ___
 
 Ƭ **OnDataCB**: *function*
 
-*Defined in [socket-events/modules/socket-events/index.ts:6](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/socket-events/modules/socket-events/index.ts#L6)*
+*Defined in [socket-events/modules/socket-events/index.ts:6](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/socket-events/modules/socket-events/index.ts#L6)*
 
 #### Type declaration:
 
@@ -113,7 +113,7 @@ ___
 
 Ƭ **OnErrorCB**: *function*
 
-*Defined in [socket-events/modules/socket-events/index.ts:8](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/socket-events/modules/socket-events/index.ts#L8)*
+*Defined in [socket-events/modules/socket-events/index.ts:8](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/socket-events/modules/socket-events/index.ts#L8)*
 
 #### Type declaration:
 
@@ -131,7 +131,7 @@ ___
 
 Ƭ **OnWritableCB**: *function*
 
-*Defined in [socket-events/modules/socket-events/index.ts:11](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/socket-events/modules/socket-events/index.ts#L11)*
+*Defined in [socket-events/modules/socket-events/index.ts:11](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/socket-events/modules/socket-events/index.ts#L11)*
 
 #### Type declaration:
 
@@ -149,7 +149,7 @@ Name | Type |
 
 • **sockets**: *[Socket](../classes/_socket_events_modules_socket_events_index_.socket.md)[] & [SocketArrayFind](../interfaces/_socket_events_modules_socket_events_index_.socketarrayfind.md)* = [] as any
 
-*Defined in [socket-events/modules/socket-events/index.ts:69](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/socket-events/modules/socket-events/index.ts#L69)*
+*Defined in [socket-events/modules/socket-events/index.ts:69](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/socket-events/modules/socket-events/index.ts#L69)*
 
 ___
 
@@ -157,7 +157,7 @@ ___
 
 • **sslClientCtx**: *any*
 
-*Defined in [socket-events/modules/socket-events/index.ts:27](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/socket-events/modules/socket-events/index.ts#L27)*
+*Defined in [socket-events/modules/socket-events/index.ts:27](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/socket-events/modules/socket-events/index.ts#L27)*
 
 ## Functions
 
@@ -165,7 +165,7 @@ ___
 
 ▸ **afterSuspend**(`evt`: Esp32JsEventloopEvent, `collected`: Function[]): *boolean*
 
-*Defined in [socket-events/modules/socket-events/index.ts:450](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/socket-events/modules/socket-events/index.ts#L450)*
+*Defined in [socket-events/modules/socket-events/index.ts:450](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/socket-events/modules/socket-events/index.ts#L450)*
 
 **Parameters:**
 
@@ -182,7 +182,7 @@ ___
 
 ▸ **beforeSuspend**(): *void*
 
-*Defined in [socket-events/modules/socket-events/index.ts:416](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/socket-events/modules/socket-events/index.ts#L416)*
+*Defined in [socket-events/modules/socket-events/index.ts:416](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/socket-events/modules/socket-events/index.ts#L416)*
 
 **Returns:** *void*
 
@@ -192,7 +192,7 @@ ___
 
 ▸ **closeSocket**(`socketOrSockfd`: [Esp32JsSocket](../interfaces/_socket_events_modules_socket_events_index_.esp32jssocket.md) | number): *void*
 
-*Defined in [socket-events/modules/socket-events/index.ts:241](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/socket-events/modules/socket-events/index.ts#L241)*
+*Defined in [socket-events/modules/socket-events/index.ts:241](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/socket-events/modules/socket-events/index.ts#L241)*
 
 Flushes buffered writes, shutdowns SSL (if it is a secure socket),
 close the socket, performs the close callback function, removes
@@ -212,7 +212,7 @@ ___
 
 ▸ **getOrCreateNewSocket**(): *[Socket](../classes/_socket_events_modules_socket_events_index_.socket.md)‹›*
 
-*Defined in [socket-events/modules/socket-events/index.ts:223](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/socket-events/modules/socket-events/index.ts#L223)*
+*Defined in [socket-events/modules/socket-events/index.ts:223](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/socket-events/modules/socket-events/index.ts#L223)*
 
 **Returns:** *[Socket](../classes/_socket_events_modules_socket_events_index_.socket.md)‹›*
 
@@ -222,7 +222,7 @@ ___
 
 ▸ **performOnClose**(`socket`: [Esp32JsSocket](../interfaces/_socket_events_modules_socket_events_index_.esp32jssocket.md)): *void*
 
-*Defined in [socket-events/modules/socket-events/index.ts:227](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/socket-events/modules/socket-events/index.ts#L227)*
+*Defined in [socket-events/modules/socket-events/index.ts:227](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/socket-events/modules/socket-events/index.ts#L227)*
 
 **Parameters:**
 
@@ -238,7 +238,7 @@ ___
 
 ▸ **resetSocket**(`socket`: [Socket](../classes/_socket_events_modules_socket_events_index_.socket.md)): *void*
 
-*Defined in [socket-events/modules/socket-events/index.ts:408](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/socket-events/modules/socket-events/index.ts#L408)*
+*Defined in [socket-events/modules/socket-events/index.ts:408](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/socket-events/modules/socket-events/index.ts#L408)*
 
 **Parameters:**
 
@@ -254,7 +254,7 @@ ___
 
 ▸ **sockConnect**(`ssl`: boolean, `host`: string, `port`: string, `onConnect`: [OnConnectCB](_socket_events_modules_socket_events_index_.md#onconnectcb), `onData`: function, `onError`: function, `onClose`: function): *[Esp32JsSocket](../interfaces/_socket_events_modules_socket_events_index_.esp32jssocket.md)*
 
-*Defined in [socket-events/modules/socket-events/index.ts:283](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/socket-events/modules/socket-events/index.ts#L283)*
+*Defined in [socket-events/modules/socket-events/index.ts:283](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/socket-events/modules/socket-events/index.ts#L283)*
 
 Connects to specified host and port.
 
@@ -318,7 +318,7 @@ ___
 
 ▸ **sockListen**(`port`: string | number, `onAccept`: function, `onError`: function, `onClose`: function, `isSSL`: boolean): *[Esp32JsSocket](../interfaces/_socket_events_modules_socket_events_index_.esp32jssocket.md) | null*
 
-*Defined in [socket-events/modules/socket-events/index.ts:333](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/socket-events/modules/socket-events/index.ts#L333)*
+*Defined in [socket-events/modules/socket-events/index.ts:333](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/socket-events/modules/socket-events/index.ts#L333)*
 
 **Parameters:**
 

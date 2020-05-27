@@ -21,7 +21,7 @@
 
 • **end**: *function*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:14](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/esp32-javascript/modules/esp32-javascript/http.ts#L14)*
+*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:14](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/esp32-javascript/modules/esp32-javascript/http.ts#L14)*
 
 #### Type declaration:
 
@@ -40,7 +40,7 @@ ___
 
 • **flush**: *function*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:12](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/esp32-javascript/modules/esp32-javascript/http.ts#L12)*
+*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:12](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/esp32-javascript/modules/esp32-javascript/http.ts#L12)*
 
 #### Type declaration:
 
@@ -59,7 +59,7 @@ ___
 
 • **isEnded**: *boolean*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:15](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/esp32-javascript/modules/esp32-javascript/http.ts#L15)*
+*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:15](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/esp32-javascript/modules/esp32-javascript/http.ts#L15)*
 
 ___
 
@@ -67,7 +67,7 @@ ___
 
 • **write**: *function*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:13](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/esp32-javascript/modules/esp32-javascript/http.ts#L13)*
+*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:13](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/esp32-javascript/modules/esp32-javascript/http.ts#L13)*
 
 #### Type declaration:
 

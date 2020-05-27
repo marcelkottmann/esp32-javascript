@@ -21,7 +21,7 @@
 
 • **body**: *string | null*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:8](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/esp32-javascript/modules/esp32-javascript/http.ts#L8)*
+*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:8](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/esp32-javascript/modules/esp32-javascript/http.ts#L8)*
 
 ___
 
@@ -29,7 +29,7 @@ ___
 
 • **headers**: *[Esp32JsHeaders](_esp32_javascript_modules_esp32_javascript_http_.esp32jsheaders.md)*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:6](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/esp32-javascript/modules/esp32-javascript/http.ts#L6)*
+*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:6](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/esp32-javascript/modules/esp32-javascript/http.ts#L6)*
 
 ___
 
@@ -37,7 +37,7 @@ ___
 
 • **method**: *string*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:7](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/esp32-javascript/modules/esp32-javascript/http.ts#L7)*
+*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:7](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/esp32-javascript/modules/esp32-javascript/http.ts#L7)*
 
 ___
 
@@ -45,4 +45,4 @@ ___
 
 • **path**: *string*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:5](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/esp32-javascript/modules/esp32-javascript/http.ts#L5)*
+*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:5](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/esp32-javascript/modules/esp32-javascript/http.ts#L5)*

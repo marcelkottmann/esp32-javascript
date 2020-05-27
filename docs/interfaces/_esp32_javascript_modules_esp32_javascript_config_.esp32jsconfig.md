@@ -19,7 +19,7 @@
 
 • **ota**: *object*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/config.ts:6](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/esp32-javascript/modules/esp32-javascript/config.ts#L6)*
+*Defined in [esp32-javascript/modules/esp32-javascript/config.ts:6](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/esp32-javascript/modules/esp32-javascript/config.ts#L6)*
 
 #### Type declaration:
 
@@ -33,7 +33,7 @@ ___
 
 • **wlan**: *object*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/config.ts:2](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/esp32-javascript/modules/esp32-javascript/config.ts#L2)*
+*Defined in [esp32-javascript/modules/esp32-javascript/config.ts:2](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/esp32-javascript/modules/esp32-javascript/config.ts#L2)*
 
 #### Type declaration:
 

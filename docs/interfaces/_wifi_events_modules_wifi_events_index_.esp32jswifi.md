@@ -18,7 +18,7 @@
 
 • **status**: *function*
 
-*Defined in [wifi-events/modules/wifi-events/index.ts:11](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/wifi-events/modules/wifi-events/index.ts#L11)*
+*Defined in [wifi-events/modules/wifi-events/index.ts:11](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/wifi-events/modules/wifi-events/index.ts#L11)*
 
 #### Type declaration:
 

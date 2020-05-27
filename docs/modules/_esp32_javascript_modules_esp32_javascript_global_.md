@@ -14,4 +14,4 @@
 
 • **global**: *any*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/global.ts:1](https://github.com/marcelkottmann/esp32-javascript/blob/79968c6/components/esp32-javascript/modules/esp32-javascript/global.ts#L1)*
+*Defined in [esp32-javascript/modules/esp32-javascript/global.ts:1](https://github.com/marcelkottmann/esp32-javascript/blob/2b53f2e/components/esp32-javascript/modules/esp32-javascript/global.ts#L1)*
