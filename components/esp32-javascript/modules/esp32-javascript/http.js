@@ -2,6 +2,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.XMLHttpRequest = exports.httpClient = exports.parseQueryStr = exports.decodeQueryParam = exports.httpServer = void 0;
 var socketEvents = require("socket-events");
 var stringbuffer_1 = __importDefault(require("./stringbuffer"));
 var sockListen = socketEvents.sockListen;

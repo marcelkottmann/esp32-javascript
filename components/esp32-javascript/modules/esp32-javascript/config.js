@@ -1,4 +1,5 @@
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.reloadConfig = exports.config = void 0;
 function reloadConfig() {
     exports.config = {
         wlan: {

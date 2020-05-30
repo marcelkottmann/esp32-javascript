@@ -1,4 +1,5 @@
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.sockListen = exports.sockConnect = exports.closeSocket = exports.sockets = void 0;
 var esp32_js_eventloop_1 = require("esp32-js-eventloop");
 var sslClientCtx;
 exports.sockets = [];

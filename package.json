@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "description": "",
   "scripts": {
+    "compile": "tsc",
     "doc": "typedoc --mode modules --plugin typedoc-plugin-markdown --readme none"
   },
   "repository": {
@@ -16,6 +17,7 @@
   },
   "homepage": "https://github.com/marcelkottmann/esp32-javascript#readme",
   "devDependencies": {
+    "cp2": "file:scripts/cp2",
     "typedoc": "^0.17.0-3",
     "typedoc-plugin-markdown": "^2.2.17",
     "typescript": "^3.8.3"

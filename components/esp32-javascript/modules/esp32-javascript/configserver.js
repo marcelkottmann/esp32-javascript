@@ -1,4 +1,5 @@
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.startConfigServer = exports.redirect = exports.getHeader = exports.baExceptionPathes = exports.requestHandler = void 0;
 var configManager = require("./config");
 var http_1 = require("./http");
 exports.requestHandler = [];

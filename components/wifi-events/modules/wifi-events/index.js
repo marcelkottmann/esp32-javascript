@@ -1,4 +1,5 @@
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getBssid = exports.createSoftAp = exports.connectWifi = void 0;
 var esp32_js_eventloop_1 = require("esp32-js-eventloop");
 var wifi = undefined;
 /**

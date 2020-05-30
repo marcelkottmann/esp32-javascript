@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
 
-npx typescript@3.8.2
-mkdir -p build/modules
-rsync -r  --include="*.js" --exclude="*.ts" --delete components/*/modules/* build/modules
+npm install
+npx tsc
+rm -rf build/modules
+npx cp2 --verbose 'components/**/modules/**/*.js' 'f=>f.replace(/components\/([^\/]+)/,"build")'

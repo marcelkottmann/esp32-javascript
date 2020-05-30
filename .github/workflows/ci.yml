@@ -8,4 +8,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v1
       - name: Build
-        run: docker run -v ${PWD}:/opt/esp32-javascript -w /opt/esp32-javascript -t espressif/idf idf.py build
+        run: |
+          docker build  -t esp32-javascript:latest -f tools/Dockerfile .
+          docker run -t esp32-javascript:latest bash -c '. ./tools/install-node.sh; idf.py build'
