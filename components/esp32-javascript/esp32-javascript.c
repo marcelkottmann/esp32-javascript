@@ -517,17 +517,6 @@ void loadUrlPolyfill(duk_context *ctx)
     loadJS(ctx, "urlparse.js", _start, _end);
 }
 
-duk_ret_t getFirmwareDefaults(duk_context *ctx)
-{
-    duk_idx_t obj_idx = duk_push_object(ctx);
-
-    duk_push_string(ctx, CONFIG_ESP32_JS_BASIC_AUTH_USERNAME);
-    duk_put_prop_string(ctx, obj_idx, "basicAuthUsername");
-    duk_push_string(ctx, CONFIG_ESP32_JS_BASIC_AUTH_PASSWORD);
-    duk_put_prop_string(ctx, obj_idx, "basicAuthPassword");
-    return 1;
-}
-
 duk_ret_t btoa(duk_context *ctx)
 {
     const char *str = duk_to_string(ctx, 0);
@@ -703,9 +692,6 @@ void duktape_task(void *ignore)
 
     duk_push_c_function(ctx, setDateTimeZoneOffsetInHours, 1 /*nargs*/);
     duk_put_global_string(ctx, "setDateTimeZoneOffsetInHours");
-
-    duk_push_c_function(ctx, getFirmwareDefaults, 0 /*nargs*/);
-    duk_put_global_string(ctx, "getFirmwareDefaults");
 
     duk_push_c_function(ctx, btoa, 1 /*nargs*/);
     duk_put_global_string(ctx, "btoa");

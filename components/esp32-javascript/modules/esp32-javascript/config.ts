@@ -1,4 +1,5 @@
-interface Esp32JsConfig {
+import firmwareConfig from "./firmware-config";
+export interface Esp32JsConfig {
   access: {
     username: string;
     password: string;
@@ -22,13 +23,7 @@ export function reloadConfig(): void {
   try {
     config = JSON.parse(readFile(CONFIG_PATH));
   } catch (error) {
-    const dc = getFirmwareDefaults();
-    config = {
-      access: {
-        username: dc.basicAuthUsername,
-        password: dc.basicAuthPassword,
-      },
-    };
+    config = firmwareConfig;
     console.error(
       "An error ocurred while accessing config. Maybe it does not exist."
     );
