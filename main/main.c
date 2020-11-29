@@ -21,18 +21,17 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-
 #include "esp32-javascript.h"
 
-extern "C" int app_main()
+int app_main()
 {
     return esp32_javascript_init();
 }
 
-#if __has_include("project.cpp")
-#include "project.cpp"
+#if __has_include("project.c")
+#include "project.c"
 #else
-extern void esp32_javascript_main(duk_context *ctx)
+void esp32_javascript_main(duk_context *ctx)
 {
 }
 #endif

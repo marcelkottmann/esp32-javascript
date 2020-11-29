@@ -32,5 +32,15 @@ SOFTWARE.
 #define EL_SOCKET_STATUS_READ 1
 #define EL_SOCKET_STATUS_ERROR 2
 
-void loadSocketEvents(duk_context *ctx);
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+    void loadSocketEvents(duk_context *ctx);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

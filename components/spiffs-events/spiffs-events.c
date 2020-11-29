@@ -33,11 +33,9 @@ SOFTWARE.
 #include "esp32-js-log.h"
 #include "esp32-javascript.h"
 
-static const char *tag = "esp32-javascript";
-
 void initFilesystem(const char *label, const char *basePath)
 {
-	log(INFO, "Initializing SPIFFS");
+	jslog(INFO, "Initializing SPIFFS");
 
 	esp_vfs_spiffs_conf_t conf = {
 		.base_path = basePath,
@@ -53,15 +51,15 @@ void initFilesystem(const char *label, const char *basePath)
 	{
 		if (ret == ESP_FAIL)
 		{
-			log(ERROR, "Failed to mount or format filesystem");
+			jslog(ERROR, "Failed to mount or format filesystem");
 		}
 		else if (ret == ESP_ERR_NOT_FOUND)
 		{
-			log(ERROR, "Failed to find SPIFFS partition");
+			jslog(ERROR, "Failed to find SPIFFS partition");
 		}
 		else
 		{
-			log(ERROR, "Failed to initialize SPIFFS (%s)", esp_err_to_name(ret));
+			jslog(ERROR, "Failed to initialize SPIFFS (%s)", esp_err_to_name(ret));
 		}
 		return;
 	}
@@ -70,21 +68,21 @@ void initFilesystem(const char *label, const char *basePath)
 	ret = esp_spiffs_info(label, &total, &used);
 	if (ret != ESP_OK)
 	{
-		log(ERROR, "Failed to get SPIFFS partition information (%s)", esp_err_to_name(ret));
+		jslog(ERROR, "Failed to get SPIFFS partition information (%s)", esp_err_to_name(ret));
 	}
 	else
 	{
-		log(INFO, "Partition size: total: %x, used: %x", total, used);
+		jslog(INFO, "Partition size: total: %x, used: %x", total, used);
 	}
 }
 
 char *readFile(const char *path)
 {
-	log(INFO, "Reading file %s", path);
+	jslog(INFO, "Reading file %s", path);
 	FILE *f = fopen(path, "r");
 	if (f == NULL)
 	{
-		log(ERROR, "Failed to open file for reading");
+		jslog(ERROR, "Failed to open file for reading");
 		return NULL;
 	}
 
@@ -103,11 +101,11 @@ char *readFile(const char *path)
 
 int writeFile(const char *path, const char *content)
 {
-	log(INFO, "Writing file %s", path);
+	jslog(INFO, "Writing file %s", path);
 	FILE *f = fopen(path, "w");
 	if (f == NULL)
 	{
-		log(ERROR, "Failed to open file for writing");
+		jslog(ERROR, "Failed to open file for writing");
 		return -1;
 	}
 	int result = fputs(content, f);

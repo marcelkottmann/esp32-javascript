@@ -25,16 +25,24 @@ SOFTWARE.
 #if !defined(ESP32_JS_LOG_H_INCLUDED)
 #define ESP32_JS_LOG_H_INCLUDED
 
-typedef enum
+#ifdef __cplusplus
+extern "C"
 {
-    TRACE = 0,
-    DEBUG,
-    INFO,
-    WARN,
-    ERROR,
-    FATAL
-} log_level_t;
+#endif
+    typedef enum
+    {
+        TRACE = 0,
+        DEBUG,
+        INFO,
+        WARN,
+        ERROR,
+        FATAL
+    } log_level_t;
 
-void log(log_level_t level, const char *msg, ...);
+    extern void jslog(log_level_t level, const char *msg, ...);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

@@ -31,6 +31,15 @@ SOFTWARE.
 #define EL_WIFI_STATUS_CONNECTED 1
 #define EL_WIFI_STATUS_CONNECTING 2
 
-void loadWifiEvents(duk_context *ctx);
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+    void loadWifiEvents(duk_context *ctx);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -19,16 +19,22 @@ var StringBuffer = /** @class */ (function () {
     };
     StringBuffer.prototype.toString = function () {
         if (this.content.length === 1) {
-            return this.content[0];
+            return this.content[0].toString();
         }
         var s = this.content.join("");
         this.content = [s];
         return s;
     };
-    StringBuffer.prototype.append = function (s) {
-        var str = s.toString();
-        this.length += str.length;
-        this.content.push(s.toString());
+    StringBuffer.prototype.append = function () {
+        var _this = this;
+        var s = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            s[_i] = arguments[_i];
+        }
+        s.forEach(function (str) {
+            _this.length += str.length;
+            _this.content.push(str);
+        });
         return this;
     };
     StringBuffer.prototype.substring = function (s, e) {

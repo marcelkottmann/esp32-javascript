@@ -29,12 +29,21 @@ SOFTWARE.
 #include <sys/socket.h>
 #include "openssl/ssl.h"
 
-int createNonBlockingSocket(int domain, int type, int protocol, bool nonblocking);
-int connectNonBlocking(int sockfd, const char *hostname, int portno);
-int bindAndListen(int sockfd, int portno);
-int acceptIncoming(int sockfd);
-int readSocket(int sockfd, char *msg, int len);
-int writeSocket(int sockfd, const char *msg, int len, SSL* ssl);
-void closeSocket(int sockfd);
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+    int createNonBlockingSocket(int domain, int type, int protocol, bool nonblocking);
+    int connectNonBlocking(int sockfd, const char *hostname, int portno);
+    int bindAndListen(int sockfd, int portno);
+    int acceptIncoming(int sockfd);
+    int readSocket(int sockfd, char *msg, int len);
+    int writeSocket(int sockfd, const char *msg, int len, SSL *ssl);
+    void closeSocket(int sockfd);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

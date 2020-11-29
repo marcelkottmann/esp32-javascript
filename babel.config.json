@@ -1,0 +1,4 @@
+{
+  "presets": ["minify"],
+  "plugins": ["transform-remove-console"]
+}
