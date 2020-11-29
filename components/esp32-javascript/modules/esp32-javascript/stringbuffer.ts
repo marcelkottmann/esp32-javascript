@@ -1,5 +1,5 @@
 export class StringBuffer {
-  private content: string[];
+  private content: (string | StringBuffer)[];
   public length: number;
 
   constructor(s?: string) {
@@ -25,17 +25,18 @@ export class StringBuffer {
 
   public toString(): string {
     if (this.content.length === 1) {
-      return this.content[0];
+      return this.content[0].toString();
     }
     const s = this.content.join("");
     this.content = [s];
     return s;
   }
 
-  public append(s: StringBuffer | string): StringBuffer {
-    const str = s.toString();
-    this.length += str.length;
-    this.content.push(s.toString());
+  public append(...s: (StringBuffer | string)[]): StringBuffer {
+    s.forEach((str) => {
+      this.length += str.length;
+      this.content.push(str);
+    });
     return this;
   }
 

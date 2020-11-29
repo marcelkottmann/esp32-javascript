@@ -168,7 +168,7 @@ function connectToWifi() {
               if (dateString) {
                 const now = parseDate(dateString);
                 setDateTimeInMillis(now.getTime());
-                setDateTimeZoneOffsetInHours(2);
+                setDateTimeZoneOffsetInHours(1);
                 setBootTime(new Date());
                 console.debug(`Setting boot time to ${getBootTime()}`);
               }

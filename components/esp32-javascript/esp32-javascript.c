@@ -32,7 +32,7 @@ SOFTWARE.
 #include <duktape.h>
 #include "esp_event.h"
 #include "esp_system.h"
-#include "esp_spiram.h"
+#include "esp32/spiram.h"
 #include "esp_log.h"
 #include "esp_newlib.h"
 #include "nvs_flash.h"
@@ -44,11 +44,8 @@ SOFTWARE.
 #include "duk_module_node.h"
 #include "esp32-javascript.h"
 #include "esp32-js-log.h"
-extern "C"
-{
 #include "libb64/cdecode.h"
 #include "libb64/cencode.h"
-}
 
 static const char *tag = "esp32-javascript";
 
@@ -63,7 +60,7 @@ duk_context *ctx = NULL;
 // only for debug purposes
 bool DISABLE_EVENTS = false;
 
-void log(log_level_t level, const char *msg, ...)
+void jslog(log_level_t level, const char *msg, ...)
 {
     char *my_string;
     va_list argp;
@@ -143,7 +140,7 @@ void IRAM_ATTR el_add_event(js_eventlist_t *events, js_event_t *event)
 {
     if (events->events_len >= MAX_EVENTS)
     {
-        log(ERROR, "Event queue full. Max event number: %d => aborting.\n", MAX_EVENTS);
+        jslog(ERROR, "Event queue full. Max event number: %d => aborting.\n", MAX_EVENTS);
         abort();
     }
     events->events[events->events_len] = *event;
@@ -154,17 +151,17 @@ void IRAM_ATTR el_fire_events(js_eventlist_t *events)
 {
     if (DISABLE_EVENTS)
     {
-        log(WARN, "Events are disabled. They will never be fired.\n");
+        jslog(WARN, "Events are disabled. They will never be fired.\n");
     }
     else
     {
         if (events->events_len > 0)
         {
-            log(DEBUG, "Send %d events to queue...\n", events->events_len);
+            jslog(DEBUG, "Send %d events to queue...\n", events->events_len);
             int ret = xQueueSendFromISR(el_event_queue, events, NULL);
             if (ret != pdTRUE)
             {
-                log(ERROR, "Event queue is full... is something blocking the event loop?...aborting.\n");
+                jslog(ERROR, "Event queue is full... is something blocking the event loop?...aborting.\n");
                 abort();
             }
         }
@@ -206,7 +203,7 @@ int createTimer(int timer_period_us)
     {
         if (xTimerStart(tmr, portMAX_DELAY) != pdPASS)
         {
-            log(ERROR, "Timer start error");
+            jslog(ERROR, "Timer start error");
         }
     }
     return (int)tmr;
@@ -228,7 +225,7 @@ static duk_ret_t el_load(duk_context *ctx)
     }
     else if (err != ESP_OK)
     {
-        log(ERROR, "Error (%d) opening NVS!\n", err);
+        jslog(ERROR, "Error (%d) opening NVS!\n", err);
         return -1;
     }
 
@@ -241,7 +238,7 @@ static duk_ret_t el_load(duk_context *ctx)
     }
     else if (err != ESP_OK)
     {
-        log(ERROR, "Cannot get key %s from storage, err=%d\n", key, err);
+        jslog(ERROR, "Cannot get key %s from storage, err=%d\n", key, err);
         ret = -1;
     }
     else
@@ -250,7 +247,7 @@ static duk_ret_t el_load(duk_context *ctx)
         err = nvs_get_blob(my_handle, key, value, &string_size);
         if (err != ESP_OK)
         {
-            log(ERROR, "Cannot get key %s from storage, err=%d\n", key, err);
+            jslog(ERROR, "Cannot get key %s from storage, err=%d\n", key, err);
             ret = -1;
         }
         else
@@ -272,7 +269,7 @@ static duk_ret_t el_store(duk_context *ctx)
     const char *key = duk_to_string(ctx, 0);
     if (strlen(key) > 15)
     {
-        log(ERROR, "Keys may not be longer than 15 chars. Key '%s' is longer.\n", key);
+        jslog(ERROR, "Keys may not be longer than 15 chars. Key '%s' is longer.\n", key);
         return -1;
     }
 
@@ -280,30 +277,30 @@ static duk_ret_t el_store(duk_context *ctx)
     int len = strlen(value);
     if (len > (1984 - 1))
     {
-        log(ERROR, "Values may not be longer than 1984 chars (including zero-termination). Current string length is %d\n", len);
+        jslog(ERROR, "Values may not be longer than 1984 chars (including zero-termination). Current string length is %d\n", len);
         return -1;
     }
 
-    log(DEBUG, "Opening Non-Volatile Storage (NVS) ... ");
+    jslog(DEBUG, "Opening Non-Volatile Storage (NVS) ... ");
     nvs_handle my_handle;
     err = nvs_open("esp32js2", NVS_READWRITE, &my_handle);
     if (err != ESP_OK)
     {
-        log(ERROR, "Error (%d) opening NVS!\n", err);
+        jslog(ERROR, "Error (%d) opening NVS!\n", err);
         return -1;
     }
 
     err = nvs_set_blob(my_handle, key, (void *)value, len + 1);
     if (err != ESP_OK)
     {
-        log(ERROR, "Cannot set key %s and value %s from storage, err=%d\n", key, value, err);
+        jslog(ERROR, "Cannot set key %s and value %s from storage, err=%d\n", key, value, err);
         ret = -1;
     }
 
     err = nvs_commit(my_handle);
     if (err != ESP_OK)
     {
-        log(ERROR, "Cannot commit changes, err=%d\n", err);
+        jslog(ERROR, "Cannot commit changes, err=%d\n", err);
         ret = -1;
     }
     nvs_close(my_handle);
@@ -313,7 +310,7 @@ static duk_ret_t el_store(duk_context *ctx)
 static duk_ret_t native_delay(duk_context *ctx)
 {
     int delay = duk_to_int32(ctx, 0);
-    log(DEBUG, "Waiting %dms...\n", delay);
+    jslog(DEBUG, "Waiting %dms...\n", delay);
     if (delay < 0)
     {
         delay = 0;
@@ -329,7 +326,7 @@ static duk_ret_t el_createTimer(duk_context *ctx)
     {
         delay = 0;
     }
-    log(DEBUG, "Install timer to notify in  %dms.\n", delay);
+    jslog(DEBUG, "Install timer to notify in  %dms.\n", delay);
     int handle = createTimer(delay);
     duk_push_int(ctx, handle);
     return 1;
@@ -367,16 +364,16 @@ static duk_ret_t el_suspend(duk_context *ctx)
     duk_gc(ctx, 0);
     duk_gc(ctx, 0);
     // feed watchdog
-    vTaskDelay(1);
+    //vTaskDelay(1);
 
-    // log(INFO, "Free memory: %d bytes", esp_get_free_heap_size());
+    // jslog(INFO, "Free memory: %d bytes", esp_get_free_heap_size());
     js_eventlist_t events;
 
-    log(DEBUG, "Waiting for events...\n");
+    jslog(DEBUG, "Waiting for events...\n");
 
     xQueueReceive(el_event_queue, &events, portMAX_DELAY);
 
-    log(DEBUG, "Receiving %d events.\n", events.events_len);
+    jslog(DEBUG, "Receiving %d events.\n", events.events_len);
 
     int arr_idx = duk_push_array(ctx);
     for (int i = 0; i < events.events_len; i++)
@@ -401,7 +398,7 @@ static duk_ret_t el_pinMode(duk_context *ctx)
     int pin = duk_to_int(ctx, 0);
     int dir = duk_to_int(ctx, 1);
 
-    log(DEBUG, "el_pinMode pin=%d dir=%d\n", pin, dir);
+    jslog(DEBUG, "el_pinMode pin=%d dir=%d\n", pin, dir);
 
     pinMode(pin, dir);
     return 0;
@@ -412,7 +409,7 @@ static duk_ret_t el_digitalWrite(duk_context *ctx)
     int pin = duk_to_int(ctx, 0);
     int level = duk_to_int(ctx, 1);
 
-    log(DEBUG, "el_digitalWrite pin=%d level=%d\n", pin, level);
+    jslog(DEBUG, "el_digitalWrite pin=%d level=%d\n", pin, level);
 
     digitalWrite(pin, level);
     return 0;
@@ -422,7 +419,7 @@ static duk_ret_t el_digitalRead(duk_context *ctx)
 {
     int pin = duk_to_int(ctx, 0);
 
-    log(DEBUG, "el_digitalRead pin=%d\n", pin);
+    jslog(DEBUG, "el_digitalRead pin=%d\n", pin);
 
     int val = digitalRead(pin);
     duk_push_int(ctx, val);
@@ -435,7 +432,7 @@ static duk_ret_t el_ledcSetup(duk_context *ctx)
     int freq = duk_to_int(ctx, 1);
     int resolution = duk_to_int(ctx, 2);
 
-    log(DEBUG, "el_ledcSetup channel=%d freq=%d resolution=%d \n", channel, freq, resolution);
+    jslog(DEBUG, "el_ledcSetup channel=%d freq=%d resolution=%d \n", channel, freq, resolution);
 
     ledcSetup(channel, freq, resolution);
     return 0;
@@ -446,7 +443,7 @@ static duk_ret_t el_ledcAttachPin(duk_context *ctx)
     int pin = duk_to_int(ctx, 0);
     int channel = duk_to_int(ctx, 1);
 
-    log(DEBUG, "el_ledcAttachPin pin=%d channel=%d\n", pin, channel);
+    jslog(DEBUG, "el_ledcAttachPin pin=%d channel=%d\n", pin, channel);
 
     ledcAttachPin(pin, channel);
     return 0;
@@ -457,7 +454,7 @@ static duk_ret_t el_ledcWrite(duk_context *ctx)
     int channel = duk_to_int(ctx, 0);
     int dutyCycle = duk_to_int(ctx, 1);
 
-    log(DEBUG, "el_ledcWrite channel=%d dutyCycle=%d \n", channel, dutyCycle);
+    jslog(DEBUG, "el_ledcWrite channel=%d dutyCycle=%d \n", channel, dutyCycle);
 
     ledcWrite(channel, dutyCycle);
     return 0;
@@ -468,8 +465,8 @@ static duk_ret_t info(duk_context *ctx)
     size_t internal = heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
     size_t external = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
 
-    log(INFO, "INTERNAL MEMORY HEAP INFO FREE: %d", internal);
-    log(INFO, "EXTERNAL MEMORY HEAP INFO FREE: %d", external);
+    jslog(INFO, "INTERNAL MEMORY HEAP INFO FREE: %d", internal);
+    jslog(INFO, "EXTERNAL MEMORY HEAP INFO FREE: %d", external);
 
     return 0;
 }
@@ -485,7 +482,7 @@ static void my_fatal(void *udata, const char *msg)
     (void)udata; /* ignored in this case, silence warning */
 
     /* Note that 'msg' may be NULL. */
-    log(ERROR, "*** FATAL ERROR: %s\n", (msg ? msg : "no message"));
+    jslog(ERROR, "*** FATAL ERROR: %s\n", (msg ? msg : "no message"));
     abort();
 }
 
@@ -509,7 +506,7 @@ static duk_ret_t setDateTimeZoneOffsetInHours(duk_context *ctx)
 void loadJS(duk_context *ctx, const char *name, char *start, char *end)
 {
     const unsigned int length = end - start - 1;
-    log(INFO, "Loading %s ...\n", name);
+    jslog(INFO, "Loading %s ...\n", name);
     duk_eval_lstring_noresult(ctx, start, length);
 }
 
@@ -548,7 +545,7 @@ duk_ret_t btoa(duk_context *ctx)
         free(buffer);
         return 1;
     }
-    log(ERROR, "malloc returned NULL\n");
+    jslog(ERROR, "malloc returned NULL\n");
     return -1;
 }
 
@@ -567,11 +564,11 @@ duk_ret_t atob(duk_context *ctx)
         duk_push_lstring(ctx, buffer, size);
         return 1;
     }
-    log(ERROR, "malloc returned NULL\n");
+    jslog(ERROR, "malloc returned NULL\n");
     return -1;
 }
 
-IRAM_ATTR void *spiram_malloc(void *udata, size_t size)
+IRAM_ATTR void *duk_spiram_malloc(void *udata, size_t size)
 {
     if (spiramAvailable)
     {
@@ -584,10 +581,10 @@ IRAM_ATTR void *spiram_malloc(void *udata, size_t size)
 }
 IRAM_ATTR void *spiram_malloc(size_t size)
 {
-    return spiram_malloc(NULL, size);
+    return duk_spiram_malloc(NULL, size);
 }
 
-IRAM_ATTR void *spiram_realloc(void *udata, void *ptr, size_t size)
+IRAM_ATTR void *duk_spiram_realloc(void *udata, void *ptr, size_t size)
 {
     if (spiramAvailable)
     {
@@ -600,10 +597,10 @@ IRAM_ATTR void *spiram_realloc(void *udata, void *ptr, size_t size)
 }
 IRAM_ATTR void *spiram_realloc(void *ptr, size_t size)
 {
-    return spiram_realloc(NULL, ptr, size);
+    return duk_spiram_realloc(NULL, ptr, size);
 }
 
-IRAM_ATTR void spiram_free(void *udata, void *ptr)
+IRAM_ATTR void duk_spiram_free(void *udata, void *ptr)
 {
     if (spiramAvailable)
     {
@@ -616,7 +613,7 @@ IRAM_ATTR void spiram_free(void *udata, void *ptr)
 }
 IRAM_ATTR void spiram_free(void *ptr)
 {
-    spiram_free(NULL, ptr);
+    duk_spiram_free(NULL, ptr);
 }
 
 bool spiramAvail()
@@ -633,14 +630,14 @@ bool spiramAvail()
 void duktape_task(void *ignore)
 {
     spiramAvailable = spiramAvail();
-    ctx = duk_create_heap(spiram_malloc, spiram_realloc, spiram_free, NULL, my_fatal);
+    ctx = duk_create_heap(duk_spiram_malloc, duk_spiram_realloc, duk_spiram_free, NULL, my_fatal);
 
     createConsole(ctx);
 
     duk_push_c_function(ctx, console_info_binding, 1 /*nargs*/);
     duk_put_global_string(ctx, "print");
 
-    log(INFO, "Free memory: %d bytes", esp_get_free_heap_size());
+    jslog(INFO, "Free memory: %d bytes", esp_get_free_heap_size());
 
     duk_push_int(ctx, INPUT);
     duk_put_global_string(ctx, "INPUT");
@@ -728,7 +725,7 @@ void duktape_task(void *ignore)
 #include "esp32-javascript-config.h"
 #undef ESP32_JAVASCRIPT_EXTERN
 
-    log(INFO, "Reaching end of event loop.\n");
+    jslog(INFO, "Reaching end of event loop.\n");
 
     //Return from task is not allowed
     vTaskDelete(NULL);
@@ -745,7 +742,7 @@ int esp32_javascript_init()
     tcpip_adapter_init();
 
     el_event_queue = xQueueCreate(256, sizeof(js_eventlist_t));
-    log(INFO, "Free memory: %d bytes", esp_get_free_heap_size());
+    jslog(INFO, "Free memory: %d bytes", esp_get_free_heap_size());
 
     xTaskCreatePinnedToCore(&duktape_task, "duktape_task", 24 * 1024, NULL, 5, &task, 0);
     return 0;

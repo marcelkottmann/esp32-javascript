@@ -25,41 +25,51 @@ SOFTWARE.
 #if !defined(ESP32_JAVASCRIPT_H_INCLUDED)
 #define ESP32_JAVASCRIPT_H_INCLUDED
 
+#include <stdbool.h>
 #include <esp_attr.h>
 #include <duktape.h>
 #include "esp32-javascript-config.h"
 
-extern bool DISABLE_EVENTS;
-
-typedef struct
+#ifdef __cplusplus
+extern "C"
 {
-    int type;
-    int status;
-    void *fd;
-} js_event_t;
+#endif
 
-const uint8_t MAX_EVENTS = 4;
-typedef struct
-{
-    js_event_t events[MAX_EVENTS];
-    int events_len;
-} js_eventlist_t;
+    extern bool DISABLE_EVENTS;
 
-void IRAM_ATTR el_add_event(js_eventlist_t *events, js_event_t *event);
+    typedef struct
+    {
+        int type;
+        int status;
+        void *fd;
+    } js_event_t;
 
-void IRAM_ATTR el_fire_events(js_eventlist_t *events);
+#define MAX_EVENTS 4
+    typedef struct
+    {
+        js_event_t events[MAX_EVENTS];
+        int events_len;
+    } js_eventlist_t;
 
-void IRAM_ATTR el_create_event(js_event_t *event, int type, int status, void *fd);
+    void IRAM_ATTR el_add_event(js_eventlist_t *events, js_event_t *event);
 
-IRAM_ATTR void *spiram_malloc(size_t size);
-IRAM_ATTR void spiram_free(void *ptr);
+    void IRAM_ATTR el_fire_events(js_eventlist_t *events);
+
+    void IRAM_ATTR el_create_event(js_event_t *event, int type, int status, void *fd);
+
+    IRAM_ATTR void *spiram_malloc(size_t size);
+    IRAM_ATTR void spiram_free(void *ptr);
 
 #define ESP32_JAVASCRIPT_EXTERN ESP32_JAVASCRIPT_EXTERN_INCLUDE
 #include "esp32-javascript-config.h"
 #undef ESP32_JAVASCRIPT_EXTERN
 
-void loadJS(duk_context *ctx, const char *name, char *start, char *end);
+    void loadJS(duk_context *ctx, const char *name, char *start, char *end);
 
-int esp32_javascript_init();
+    int esp32_javascript_init();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

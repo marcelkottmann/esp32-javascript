@@ -23,7 +23,6 @@ SOFTWARE.
 */
 
 #include "socket-events.h"
-
 #include <openssl/ssl.h>
 #include <mbedtls/ssl.h>
 #include <mbedtls/compat-1.3.h>
@@ -35,8 +34,6 @@ SOFTWARE.
 #include "tcp.h"
 #include "esp32-javascript.h"
 #include "esp32-js-log.h"
-
-static const char *tag = "esp32-javascript";
 
 TaskHandle_t stask;
 int notConnectedSockets_len = 0;
@@ -51,19 +48,17 @@ SemaphoreHandle_t xSemaphore;
 bool needsUnblock = false;
 struct sockaddr_in target;
 
-extern const unsigned char cacert_pem_start[] asm("_binary_cacert_pem_start");
-extern const unsigned char cacert_pem_end[] asm("_binary_cacert_pem_end");
-const unsigned int cacert_pem_bytes = cacert_pem_end - cacert_pem_start;
+extern const uint8_t cacert_pem_start[] asm("_binary_cacert_pem_start");
+extern const uint8_t cacert_pem_end[] asm("_binary_cacert_pem_end");
 
-extern const unsigned char prvtkey_pem_start[] asm("_binary_prvtkey_pem_start");
-extern const unsigned char prvtkey_pem_end[] asm("_binary_prvtkey_pem_end");
-const unsigned int prvtkey_pem_bytes = prvtkey_pem_end - prvtkey_pem_start;
+extern const uint8_t prvtkey_pem_start[] asm("_binary_prvtkey_pem_start");
+extern const uint8_t prvtkey_pem_end[] asm("_binary_prvtkey_pem_end");
 
 int createSocketPair()
 {
     struct sockaddr_in server;
 
-    log(DEBUG, "Start creating socket paair\n");
+    jslog(DEBUG, "Start creating socket paair\n");
     /*int bits = xEventGroupGetBits(wifi_event_group);
     int connected = CONNECTED_BIT & bits;
 */
@@ -80,17 +75,17 @@ int createSocketPair()
             server.sin_port = htons(port);
             server.sin_len = sizeof(server);
 
-            log(DEBUG, "Trying to bind socket %d...\n", sd);
+            jslog(DEBUG, "Trying to bind socket %d...\n", sd);
 
             if (bind(sd, (struct sockaddr *)&server, sizeof(server)) >= 0)
             {
-                log(DEBUG, "Trying to create client socket...\n");
+                jslog(DEBUG, "Trying to create client socket...\n");
 
                 int sc = createNonBlockingSocket(AF_INET, SOCK_DGRAM, 0, true);
 
-                log(DEBUG, "Created socket pair: %d<-->%d\n", sd, sc);
+                jslog(DEBUG, "Created socket pair: %d<-->%d\n", sd, sc);
 
-                log(DEBUG, "Send test data...\n");
+                jslog(DEBUG, "Send test data...\n");
 
                 memset((char *)&target, 0, sizeof(target));
                 target.sin_family = AF_INET;
@@ -98,13 +93,13 @@ int createSocketPair()
                 target.sin_len = sizeof(target);
                 inet_pton(AF_INET, "127.0.0.1", &(target.sin_addr));
 
-                if (sendto(sc, "", 1, 0, (const sockaddr *)&target, sizeof(target)) < 0)
+                if (sendto(sc, "", 1, 0, (struct sockaddr *)&target, sizeof(target)) < 0)
                 {
-                    log(ERROR, "Error sending test data to self-socket: %d\n", errno);
+                    jslog(ERROR, "Error sending test data to self-socket: %d\n", errno);
                 }
                 else
                 {
-                    log(DEBUG, "Trying to receive test data...\n");
+                    jslog(DEBUG, "Trying to receive test data...\n");
                     char msg[2] = "A";
                     struct sockaddr_in remaddr;
                     socklen_t addrlen = sizeof(remaddr);
@@ -116,44 +111,44 @@ int createSocketPair()
 
                     while (result < 0)
                     {
-                        log(ERROR, "Error receiving test data from self-socket: %d\n", errno);
+                        jslog(ERROR, "Error receiving test data from self-socket: %d\n", errno);
                     }
-                    log(DEBUG, "Finished reading.\n");
+                    jslog(DEBUG, "Finished reading.\n");
 
                     if (strcmp(msg, "") == 0)
                     {
-                        log(INFO, "Self-Socket Test successful!\n");
+                        jslog(INFO, "Self-Socket Test successful!\n");
 
                         selectClientSocket = sc;
                         selectServerSocket = sd;
-                        log(DEBUG, "Successfully created socket pair: %d<-->%d\n", selectServerSocket, selectClientSocket);
+                        jslog(DEBUG, "Successfully created socket pair: %d<-->%d\n", selectServerSocket, selectClientSocket);
                         return 0;
                     }
                     else
                     {
-                        log(ERROR, "Self-socket test NOT successful: %s\n", msg);
+                        jslog(ERROR, "Self-socket test NOT successful: %s\n", msg);
                     }
                 }
                 close(sc);
             }
             else
             {
-                log(ERROR, "Binding self-socket was unsuccessful: %d\n", errno);
+                jslog(ERROR, "Binding self-socket was unsuccessful: %d\n", errno);
             }
 
             close(sd);
         }
         else
         {
-            log(ERROR, "Self-socket could not be created: %d", errno);
+            jslog(ERROR, "Self-socket could not be created: %d", errno);
         }
     }
     else
     {
-        log(DEBUG, "Skip until wifi connected: %d\n", errno);
+        jslog(DEBUG, "Skip until wifi connected: %d\n", errno);
     }
 
-    log(DEBUG, "Could not create socket pair... no wifi?\n");
+    jslog(DEBUG, "Could not create socket pair... no wifi?\n");
     return -1;
 }
 
@@ -217,9 +212,9 @@ void select_task_it()
         int dataAvailable;
         if (lwip_ioctl(selectServerSocket, FIONREAD, &dataAvailable) < 0)
         {
-            log(ERROR, "Error getting data available from self-socket: %d.", errno);
+            jslog(ERROR, "Error getting data available from self-socket: %d.", errno);
         }
-        log(DEBUG, "DATA AVAILABLE %d.\n", dataAvailable);
+        jslog(DEBUG, "DATA AVAILABLE %d.\n", dataAvailable);
         //read self-socket if flag is set
         if (dataAvailable > 0)
         {
@@ -228,11 +223,11 @@ void select_task_it()
             socklen_t addrlen = sizeof(remaddr);
             if (recvfrom(selectServerSocket, msg, dataAvailable, 0, (struct sockaddr *)&remaddr, &addrlen) < 0)
             {
-                log(ERROR, "READ self-socket FAILED: %d\n", errno);
+                jslog(ERROR, "READ self-socket FAILED: %d\n", errno);
             }
             else
             {
-                log(DEBUG, "READ of self-socket.\n");
+                jslog(DEBUG, "READ of self-socket.\n");
             }
         }
 
@@ -244,7 +239,7 @@ void select_task_it()
         // self socket end
         int ret = select(sockfd_max + 1, &readset, &writeset, &errset, NULL);
         needsUnblock = true;
-        log(DEBUG, "Select return %d.\n", ret);
+        jslog(DEBUG, "Select return %d.\n", ret);
         if (ret >= 0)
         {
             if (ret > 0)
@@ -293,23 +288,23 @@ void select_task_it()
 
                 if (events.events_len > 0)
                 {
-                    log(DEBUG, "Fire all %d socket events!\n", events.events_len);
+                    jslog(DEBUG, "Fire all %d socket events!\n", events.events_len);
                     el_fire_events(&events);
                 }
                 else
                 {
-                    log(DEBUG, "No socket events to fire!\n");
+                    jslog(DEBUG, "No socket events to fire!\n");
                 }
             }
         }
         else
         {
-            log(ERROR, "select returns ERROR: %d\n", errno);
+            jslog(ERROR, "select returns ERROR: %d\n", errno);
         }
     }
     //wait for next loop
     needsUnblock = true;
-    log(DEBUG, "Select loop finished and now waits for next iteration.\n");
+    jslog(DEBUG, "Select loop finished and now waits for next iteration.\n");
     xSemaphoreTake(xSemaphore, portMAX_DELAY);
     needsUnblock = false;
 }
@@ -439,19 +434,19 @@ static duk_ret_t el_registerSocketEvents(duk_context *ctx)
 
     if (changes)
     {
-        log(DEBUG, "Trying to trigger the next select iteration... ");
+        jslog(DEBUG, "Trying to trigger the next select iteration... ");
         if (selectClientSocket >= 0)
         {
             //interrupt select through self-socket
-            log(DEBUG, "Sending . to self-socket.");
+            jslog(DEBUG, "Sending . to self-socket.");
             needsUnblock = true;
-            if (sendto(selectClientSocket, ".", 1, 0, (const sockaddr *)&target, sizeof(target)) < 0)
+            if (sendto(selectClientSocket, ".", 1, 0, (struct sockaddr *)&target, sizeof(target)) < 0)
             {
-                log(ERROR, "Self-socket sending was NOT successful: %d\n", errno);
+                jslog(ERROR, "Self-socket sending was NOT successful: %d\n", errno);
             }
             else
             {
-                log(DEBUG, "Self-socket sending was successful.\n");
+                jslog(DEBUG, "Self-socket sending was successful.\n");
             }
         }
     }
@@ -503,13 +498,13 @@ static duk_ret_t el_acceptIncoming(duk_context *ctx)
     {
         if (errno == EAGAIN)
         {
-            log(INFO, "accept returned EAGAIN\n");
+            jslog(INFO, "accept returned EAGAIN\n");
             //return undefined
             return 0;
         }
         else
         {
-            log(ERROR, "accept returned errno:%d on socket %d\n", errno, sockfd);
+            jslog(ERROR, "accept returned errno:%d on socket %d\n", errno, sockfd);
         }
     }
 
@@ -535,18 +530,18 @@ static duk_ret_t acceptSSL(duk_context *ctx)
 {
     SSL *ssl = (SSL *)duk_to_int(ctx, 0);
     int sockfd = duk_to_int(ctx, 1);
-    log(INFO, "SSL server accept client ......");
+    jslog(INFO, "SSL server accept client ......");
     SSL_set_fd(ssl, sockfd);
-    log(INFO, "SSL_accept ......");
+    jslog(INFO, "SSL_accept ......");
     errno = 0;
     int ret = SSL_accept(ssl);
     if (ret <= 0)
     {
-        log(INFO, "SSL_accept failed; return value %d and error %d and errno %d", ret, SSL_get_error(ssl, ret), errno);
+        jslog(INFO, "SSL_accept failed; return value %d and error %d and errno %d", ret, SSL_get_error(ssl, ret), errno);
     }
     else
     {
-        log(INFO, "OK");
+        jslog(INFO, "OK");
     }
     duk_push_int(ctx, ret);
     return 1;
@@ -557,7 +552,7 @@ static duk_ret_t connectSSL(duk_context *ctx)
     int before = errno;
     SSL *ssl = (SSL *)duk_to_int(ctx, 0);
     int sockfd = duk_to_int(ctx, 1);
-    log(INFO, "SSL server connect server ......");
+    jslog(INFO, "SSL server connect server ......");
     if (SSL_get_fd(ssl) < 0)
     {
         SSL_set_fd(ssl, sockfd);
@@ -567,7 +562,7 @@ static duk_ret_t connectSSL(duk_context *ctx)
     if (ret <= 0)
     {
         int err = SSL_get_error(ssl, ret);
-        log(ERROR, "SSL_connect failed, return value was %d; SOCKET %d SSL error code %d and errno %d and before errno was %d", ret, sockfd, err, errno, before);
+        jslog(ERROR, "SSL_connect failed, return value was %d; SOCKET %d SSL error code %d and errno %d and before errno was %d", ret, sockfd, err, errno, before);
         error = -1; //means "error"
     }
 
@@ -578,7 +573,7 @@ static duk_ret_t connectSSL(duk_context *ctx)
     int verifyResult = SSL_get_verify_result(ssl);
     if (verifyResult != X509_V_OK)
     {
-        log(ERROR,"SSL Certificate is invalid: %d\n", verifyResult);
+        jslog(ERROR,"SSL Certificate is invalid: %d\n", verifyResult);
         error = -1; //means "error"
     }
 */
@@ -707,14 +702,14 @@ static duk_ret_t el_readSocket(duk_context *ctx)
     }
     else if ((ssl == NULL && error == EAGAIN) || (ssl != NULL && error == SSL_ERROR_WANT_READ))
     {
-        log(DEBUG, "*** EAGAIN OR SSL_ERROR_WANT_READ RETURNED!!!\n");
+        jslog(DEBUG, "*** EAGAIN OR SSL_ERROR_WANT_READ RETURNED!!!\n");
 
         //eagain
         duk_push_undefined(ctx);
     }
     else
     {
-        log(ERROR, "READ ERROR return value %d and error code %d\n", ret, error);
+        jslog(ERROR, "READ ERROR return value %d and error code %d\n", ret, error);
         //error
         duk_push_null(ctx);
     }
@@ -723,71 +718,74 @@ static duk_ret_t el_readSocket(duk_context *ctx)
 
 void select_task(void *ignore)
 {
-    log(DEBUG, "Starting select task...\n");
+    jslog(DEBUG, "Starting select task...\n");
 
     while (true)
     {
-        log(DEBUG, "Starting next select loop.\n");
+        jslog(DEBUG, "Starting next select loop.\n");
         select_task_it();
     }
 }
 
 SSL_CTX *createSSLServerContext()
 {
-    log(INFO, "SSL server context create ......");
+    const unsigned int cacert_pem_bytes = cacert_pem_end - cacert_pem_start;
+    const unsigned int prvtkey_pem_bytes = prvtkey_pem_end - prvtkey_pem_start;
+
+    jslog(INFO, "SSL server context create ......");
     SSL_CTX *ctx = SSL_CTX_new(TLS_server_method());
     if (!ctx)
     {
         abort();
     }
-    log(INFO, "OK");
+    jslog(INFO, "OK");
 
-    log(INFO, "SSL server context set own certification......");
+    jslog(INFO, "SSL server context set own certification......");
     int ret = SSL_CTX_use_certificate_ASN1(ctx, cacert_pem_bytes, cacert_pem_start);
     if (!ret)
     {
-        log(INFO, "failed");
+        jslog(INFO, "failed");
         abort();
     }
-    log(INFO, "OK");
+    jslog(INFO, "OK");
 
-    log(INFO, "SSL server context set private key......");
+    jslog(INFO, "SSL server context set private key......");
     ret = SSL_CTX_use_PrivateKey_ASN1(0, ctx, prvtkey_pem_start, prvtkey_pem_bytes);
     if (!ret)
     {
-        log(INFO, "failed");
+        jslog(INFO, "failed");
         abort();
     }
-    log(INFO, "OK");
+    jslog(INFO, "OK");
     return ctx;
 }
 
 SSL_CTX *createSSLClientContext()
 {
-    log(INFO, "SSL client context create ......");
+    jslog(INFO, "SSL client context create ......");
     SSL_CTX *ctx = SSL_CTX_new(TLSv1_2_client_method());
     SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
     if (!ctx)
     {
         abort();
     }
-    log(INFO, "OK");
+    jslog(INFO, "OK");
     return ctx;
 }
 
 SSL *createSSL(SSL_CTX *ctx)
 {
-    log(INFO, "Create new SSL connection......");
+    jslog(INFO, "Create new SSL connection......");
     SSL *ssl = SSL_new(ctx);
     if (!ssl)
     {
-        log(INFO, "failed");
+        jslog(INFO, "failed");
         abort();
     }
 
     //ssl_set_client_transport_id((mbedtls_ssl_context *)ssl, (unsigned char*)"test", 4);
 
-    log(INFO, "OK");
+    jslog(INFO, "OK");
     return ssl;
 }
 
