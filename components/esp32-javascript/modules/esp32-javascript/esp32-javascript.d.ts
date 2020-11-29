@@ -22,7 +22,6 @@ interface Esp32JsFirmwareDefaults {
   basicAuthPassword: string;
 }
 
-declare function getFirmwareDefaults(): Esp32JsFirmwareDefaults;
 declare function restart(): void;
 
 interface Esp32JsEventloopEvent {
