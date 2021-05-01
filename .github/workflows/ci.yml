@@ -11,35 +11,37 @@ jobs:
         run: |
           docker build  -t esp32-javascript:latest -f tools/Dockerfile .
           docker run --name esp32-javascript-build -t esp32-javascript:latest bash -c './tools/build.sh'
-          docker cp 'esp32-javascript-build:/opt/esp32-javascript/build.tar.gz' .
-          docker cp 'esp32-javascript-build:/opt/esp32-javascript/self-test-build.tar.gz' .
-      - name: Extract self test build output
-        run: tar xvzf self-test-build.tar.gz
-      - name: Create Session
-        run: echo SESSION=$(curl --silent -X POST https://api.e2e.kottmann.rocks/session | jq -r .id) >> $GITHUB_ENV
-      - name: Flash artifacts to test device
-        run: curl --silent -F session=${{ env.SESSION }} -F follow=true -F offset=0x1000 -F bin=@build/bootloader/bootloader.bin -F offset=0x8000 -F bin=@build/partition_table/partition-table.bin -F offset=0x10000 -F bin=@build/esp32-javascript.bin -F offset=0x3c0000 -F bin=@build/modules.bin https://api.e2e.kottmann.rocks/flash
-      - name: Wait for startup
-        run: curl --silent -F session=${{ env.SESSION }} -F 'find=Self test initialized.' https://api.e2e.kottmann.rocks/monitor | jq -e .match
-      - name: Check Setup page
-        run: curl --silent https://esp32:esp32@${{ env.SESSION }}.e2e.kottmann.rocks/setup | grep '<h1>Setup</h1>'
-      - name: Self Test Pins
-        run: |
-          curl https://esp32:esp32@${{ env.SESSION }}.e2e.kottmann.rocks/selftest/pins/18/0
-          curl --silent -X POST -F session=${{ env.SESSION }} https://api.e2e.kottmann.rocks/snapshot | jq -e '.GPIO18 == false'
-          curl https://esp32:esp32@${{ env.SESSION }}.e2e.kottmann.rocks/selftest/pins/18/1
-          curl --silent -X POST -F session=${{ env.SESSION }} https://api.e2e.kottmann.rocks/snapshot | jq -e '.GPIO18'
-          curl https://esp32:esp32@${{ env.SESSION }}.e2e.kottmann.rocks/selftest/pins/19/0
-          curl --silent -X POST -F session=${{ env.SESSION }} https://api.e2e.kottmann.rocks/snapshot | jq -e '.GPIO19 == false'
-          curl https://esp32:esp32@${{ env.SESSION }}.e2e.kottmann.rocks/selftest/pins/19/1
-          curl --silent -X POST -F session=${{ env.SESSION }} https://api.e2e.kottmann.rocks/snapshot | jq -e '.GPIO19'
-          curl https://esp32:esp32@${{ env.SESSION }}.e2e.kottmann.rocks/selftest/pins/21/0
-          curl --silent -X POST -F session=${{ env.SESSION }} https://api.e2e.kottmann.rocks/snapshot | jq -e '.GPIO21 == false'
-          curl https://esp32:esp32@${{ env.SESSION }}.e2e.kottmann.rocks/selftest/pins/21/1
-          curl --silent -X POST -F session=${{ env.SESSION }} https://api.e2e.kottmann.rocks/snapshot | jq -e '.GPIO21'
-          curl https://esp32:esp32@${{ env.SESSION }}.e2e.kottmann.rocks/selftest/pins/22/0
-          curl --silent -X POST -F session=${{ env.SESSION }} https://api.e2e.kottmann.rocks/snapshot | jq -e '.GPIO22 == false'
-          curl https://esp32:esp32@${{ env.SESSION }}.e2e.kottmann.rocks/selftest/pins/22/1
-          curl --silent -X POST -F session=${{ env.SESSION }} https://api.e2e.kottmann.rocks/snapshot | jq -e '.GPIO22'
-      - name: Cleanup
-        run: curl --silent -F session=${{ env.SESSION }} https://api.e2e.kottmann.rocks/release
+
+#### Commented out due to unavailability of e2e api
+#          docker cp 'esp32-javascript-build:/opt/esp32-javascript/build.tar.gz' .
+#          docker cp 'esp32-javascript-build:/opt/esp32-javascript/self-test-build.tar.gz' .
+#      - name: Extract self test build output
+#        run: tar xvzf self-test-build.tar.gz
+#      - name: Create Session
+#        run: echo SESSION=$(curl --silent -X POST https://api.e2e.kottmann.rocks/session | jq -r .id) >> $GITHUB_ENV
+#      - name: Flash artifacts to test device
+#        run: curl --silent -F session=${{ env.SESSION }} -F follow=true -F offset=0x1000 -F bin=@build/bootloader/bootloader.bin -F offset=0x8000 -F bin=@build/partition_table/partition-table.bin -F offset=0x10000 -F bin=@build/esp32-javascript.bin -F offset=0x3c0000 -F bin=@build/modules.bin https://api.e2e.kottmann.rocks/flash
+#      - name: Wait for startup
+#        run: curl --silent -F session=${{ env.SESSION }} -F 'find=Self test initialized.' https://api.e2e.kottmann.rocks/monitor | jq -e .match
+#      - name: Check Setup page
+#        run: curl --silent https://esp32:esp32@${{ env.SESSION }}.e2e.kottmann.rocks/setup | grep '<h1>Setup</h1>'
+#      - name: Self Test Pins
+#        run: |
+#          curl https://esp32:esp32@${{ env.SESSION }}.e2e.kottmann.rocks/selftest/pins/18/0
+#          curl --silent -X POST -F session=${{ env.SESSION }} https://api.e2e.kottmann.rocks/snapshot | jq -e '.GPIO18 == false'
+#          curl https://esp32:esp32@${{ env.SESSION }}.e2e.kottmann.rocks/selftest/pins/18/1
+#          curl --silent -X POST -F session=${{ env.SESSION }} https://api.e2e.kottmann.rocks/snapshot | jq -e '.GPIO18'
+#          curl https://esp32:esp32@${{ env.SESSION }}.e2e.kottmann.rocks/selftest/pins/19/0
+#          curl --silent -X POST -F session=${{ env.SESSION }} https://api.e2e.kottmann.rocks/snapshot | jq -e '.GPIO19 == false'
+#          curl https://esp32:esp32@${{ env.SESSION }}.e2e.kottmann.rocks/selftest/pins/19/1
+#          curl --silent -X POST -F session=${{ env.SESSION }} https://api.e2e.kottmann.rocks/snapshot | jq -e '.GPIO19'
+#          curl https://esp32:esp32@${{ env.SESSION }}.e2e.kottmann.rocks/selftest/pins/21/0
+#          curl --silent -X POST -F session=${{ env.SESSION }} https://api.e2e.kottmann.rocks/snapshot | jq -e '.GPIO21 == false'
+#          curl https://esp32:esp32@${{ env.SESSION }}.e2e.kottmann.rocks/selftest/pins/21/1
+#          curl --silent -X POST -F session=${{ env.SESSION }} https://api.e2e.kottmann.rocks/snapshot | jq -e '.GPIO21'
+#          curl https://esp32:esp32@${{ env.SESSION }}.e2e.kottmann.rocks/selftest/pins/22/0
+#          curl --silent -X POST -F session=${{ env.SESSION }} https://api.e2e.kottmann.rocks/snapshot | jq -e '.GPIO22 == false'
+#          curl https://esp32:esp32@${{ env.SESSION }}.e2e.kottmann.rocks/selftest/pins/22/1
+#          curl --silent -X POST -F session=${{ env.SESSION }} https://api.e2e.kottmann.rocks/snapshot | jq -e '.GPIO22'
+#      - name: Cleanup
+#        run: curl --silent -F session=${{ env.SESSION }} https://api.e2e.kottmann.rocks/release
