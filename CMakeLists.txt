@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.5)
 # set BOARD_VARIANT to define your ESP32 board. Valid values
 # are the directory names below ./components/arduino-esp32/include/variants/
 # or esp32-javascript/include/variants/
-set(ENV{BOARD_VARIANT} "../esp32-javascript/include/variants/my")
+set(ENV{BOARD_VARIANT} "../arduino-esp32/include/variants/esp32s2")
 
 # set ESP32_JS_PROJECT_NAME to define your project component name. 
 # Place your component below ./components directory. Set to ""
@@ -14,6 +14,7 @@ set(ENV{ESP32_JS_PROJECT_NAME} "")
 #################################################
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
+add_compile_options(-Wp,-w)
 project(esp32-javascript)
 
 add_custom_target(cp_modules ALL

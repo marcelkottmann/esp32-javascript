@@ -1,6 +1,7 @@
 idf_component_register(SRC_DIRS "."
-                    INCLUDE_DIRS "include"
+                    INCLUDE_DIRS "../components/arduino-esp32/include/" "include"
                     REQUIRES 
+                    "arduino-esp32"
                     "duk-module-node"
                     "spiffs-events"
                     "socket-events"
