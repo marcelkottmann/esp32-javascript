@@ -1,1 +1,1 @@
-idf_component_register(INCLUDE_DIRS "include")
+idf_component_register(INCLUDE_DIRS "../../components/arduino-esp32/include/" "include")

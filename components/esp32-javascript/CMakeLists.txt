@@ -1,4 +1,4 @@
 idf_component_register(SRC_DIRS "."
-                    INCLUDE_DIRS "include"
+                    INCLUDE_DIRS "../../components/arduino-esp32/include/" "include"
                     REQUIRES "duk-module-node" "nvs_flash" "arduino-esp32" "esp32-js-log" "main"
                     EMBED_TXTFILES "urlparse.js")

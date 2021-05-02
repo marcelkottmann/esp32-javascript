@@ -1,4 +1,4 @@
 idf_component_register(SRC_DIRS "."
-                    INCLUDE_DIRS "include"
+                    INCLUDE_DIRS "../../components/arduino-esp32/include/" "include"
                     REQUIRES "esp32-javascript" "openssl"
                     EMBED_TXTFILES "cacert.pem" "prvtkey.pem")
