@@ -18,11 +18,13 @@ let configServerStarted = false;
 let programLoaded = false;
 
 function blink() {
-  let blinkState = 0;
-  return setInterval(function () {
-    digitalWrite(LED_BUILTIN, blinkState);
-    blinkState = blinkState === 0 ? 1 : 0;
-  }, 333);
+  if (typeof LED_BUILTIN !== "undefined") {
+    let blinkState = 0;
+    return setInterval(function () {
+      digitalWrite(LED_BUILTIN, blinkState);
+      blinkState = blinkState === 0 ? 1 : 0;
+    }, 333);
+  }
 }
 
 let bootTime: Date = new Date();
@@ -95,7 +97,9 @@ function parseDate(d: string) {
 
 function evalScript(content: string, headers?: Headers) {
   console.debug("==> Start evaluation:");
-  digitalWrite(LED_BUILTIN, 0);
+  if (typeof LED_BUILTIN !== "undefined") {
+    digitalWrite(LED_BUILTIN, 0);
+  }
   eval(content); // this uses headers implicitly (TODO CHECK)
 }
 
@@ -109,7 +113,9 @@ function loadOfflineScript() {
 }
 
 function connectToWifi() {
-  digitalWrite(LED_BUILTIN, 1);
+  if (typeof LED_BUILTIN !== "undefined") {
+    digitalWrite(LED_BUILTIN, 1);
+  }
 
   if (!config?.wifi?.ssid || !config?.wifi?.password) {
     console.error(

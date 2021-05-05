@@ -37,11 +37,19 @@ Change into ~/esp/esp32-javascript.
 
 Maybe you want to change the BOARD_VARIANT in the ./CMakeLists.txt file.
 
+
 First build the project with
 
 ```shell
+    #for ESP32
     idf.py build
+
+    #for ESP32-S2
+    idf.py -DIDF_TARGET=esp32s2 build
 ```
+
+If you have an ESP32-S2 device build it like this:
+
 
 Connect your ESP32 Dev Board via USB and run
 
@@ -95,6 +103,7 @@ You can clean the project by executing
     idf.py fullclean
 ```
 
+If you want to use all the esp32-javascript defaults for your sdkconfig. Remove `./sdkconfig` file. This file will be recreated the next build with all the defaults. 
 ### Factory reset
 
 You can erase the persistent flash memory, which will be equivalent to a factory reset, by executing
@@ -105,8 +114,10 @@ You can erase the persistent flash memory, which will be equivalent to a factory
 
 ## Compatibility
 
+### Devices
+Tested with ESP32 WROVER and ESP-S2 WROVER devices.
+### ESP-IDF
 Tested with esp-idf [release/v4.2](https://github.com/espressif/esp-idf/tree/release/v4.2)
-
 ## API
 
 [API documentation](docs/README.md)

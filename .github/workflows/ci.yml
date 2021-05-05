@@ -10,7 +10,8 @@ jobs:
       - name: Build
         run: |
           docker build  -t esp32-javascript:latest -f tools/Dockerfile .
-          docker run --name esp32-javascript-build -t esp32-javascript:latest bash -c './tools/build.sh'
+          docker run --name esp32-javascript-build-esp32 -t esp32-javascript:latest bash -c './tools/build.sh'
+          docker run --name esp32-javascript-build-esp32s2 --env IDF_TARGET=esp32s2 -t esp32-javascript:latest bash -c './tools/build.sh'
 
 #### Commented out due to unavailability of e2e api
 #          docker cp 'esp32-javascript-build:/opt/esp32-javascript/build.tar.gz' .

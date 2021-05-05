@@ -32,7 +32,11 @@ SOFTWARE.
 #include <duktape.h>
 #include "esp_event.h"
 #include "esp_system.h"
+#if CONFIG_IDF_TARGET_ESP32S2
 #include "esp32s2/spiram.h"
+#else
+#include "esp32/spiram.h"
+#endif
 #include "esp_log.h"
 #include "esp_newlib.h"
 #include "nvs_flash.h"
@@ -636,13 +640,17 @@ void duktape_task(void *ignore)
 
 #ifdef KEY_BUILTIN
     duk_push_int(ctx, KEY_BUILTIN);
-    duk_put_global_string(ctx, "KEY_BUILTIN");
+#else
+    duk_push_undefined(ctx);
 #endif
+    duk_put_global_string(ctx, "KEY_BUILTIN");
 
 #ifdef LED_BUILTIN
     duk_push_int(ctx, LED_BUILTIN);
-    duk_put_global_string(ctx, "LED_BUILTIN");
+#else
+    duk_push_undefined(ctx);
 #endif
+    duk_put_global_string(ctx, "LED_BUILTIN");
 
     duk_push_c_function(ctx, el_pinMode, 2 /*nargs*/);
     duk_put_global_string(ctx, "pinMode");
