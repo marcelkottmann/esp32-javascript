@@ -16,11 +16,13 @@ if (typeof LED_BUILTIN !== "undefined") {
 var configServerStarted = false;
 var programLoaded = false;
 function blink() {
-    var blinkState = 0;
-    return setInterval(function () {
-        digitalWrite(LED_BUILTIN, blinkState);
-        blinkState = blinkState === 0 ? 1 : 0;
-    }, 333);
+    if (typeof LED_BUILTIN !== "undefined") {
+        var blinkState_1 = 0;
+        return setInterval(function () {
+            digitalWrite(LED_BUILTIN, blinkState_1);
+            blinkState_1 = blinkState_1 === 0 ? 1 : 0;
+        }, 333);
+    }
 }
 var bootTime = new Date();
 function setBootTime(date) {
@@ -88,7 +90,9 @@ function parseDate(d) {
 }
 function evalScript(content, headers) {
     console.debug("==> Start evaluation:");
-    digitalWrite(LED_BUILTIN, 0);
+    if (typeof LED_BUILTIN !== "undefined") {
+        digitalWrite(LED_BUILTIN, 0);
+    }
     eval(content); // this uses headers implicitly (TODO CHECK)
 }
 function loadOfflineScript() {
@@ -102,7 +106,9 @@ function loadOfflineScript() {
 }
 function connectToWifi() {
     var _a, _b;
-    digitalWrite(LED_BUILTIN, 1);
+    if (typeof LED_BUILTIN !== "undefined") {
+        digitalWrite(LED_BUILTIN, 1);
+    }
     if (!((_a = config_1.config === null || config_1.config === void 0 ? void 0 : config_1.config.wifi) === null || _a === void 0 ? void 0 : _a.ssid) || !((_b = config_1.config === null || config_1.config === void 0 ? void 0 : config_1.config.wifi) === null || _b === void 0 ? void 0 : _b.password)) {
         console.error("No ssid and/or password was configured. Cannot connect to wifi: ");
         return;

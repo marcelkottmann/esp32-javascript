@@ -1,5 +1,5 @@
-declare const KEY_BUILTIN: number;
-declare const LED_BUILTIN: number;
+declare const KEY_BUILTIN: number | undefined;
+declare const LED_BUILTIN: number | undefined;
 
 declare const INPUT: number;
 declare const OUTPUT: number;
