@@ -89,7 +89,7 @@ var urlparse = function (absoluteUrl) {
                     anchorElement._protocol = result[2];
                     anchorElement._hostname = result[3];
                     anchorElement._port = result[5];
-                    anchorElement._pathname = result[6];
+                    anchorElement._pathname = result[6] || "/";
                     anchorElement._search = result[7];
                     anchorElement._hash = result[8];
                 }

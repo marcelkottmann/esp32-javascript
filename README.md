@@ -4,7 +4,7 @@
 
 "Lightweight" JS interpreter for ESP32. Provides JS-based eventloop implementation
 and native asynchronous network and timer functions.
-Because of the limited memory on ESP32-WROOM modules, the full functionality is currently only realizable on ESP32-WROVER modules, that include additional 4MB of SPIRAM memory.
+Because of the limited memory on ESP32-WROOM modules, the full functionality is currently only realizable on ESP32-WROVER and ESP32-S2-WROVER modules, that came with at least 2MB integrated SPIRAM.
 
 ## Content
 
@@ -29,27 +29,24 @@ Clone esp32-javascript inside your esp directory (normally ~/esp):
     git clone https://github.com/pepe79/esp32-javascript.git
 ```
 
-Change into ~/esp/esp32-javascript.
+Change into ~/esp/esp32-javascript
 
 ```shell
     cd ~/esp/esp32-javascript
 ```
 
-Maybe you want to change the BOARD_VARIANT in the ./CMakeLists.txt file.
-
+Maybe you want to change the BOARD_VARIANT in the ./CMakeLists.txt file 
+for the integrated arduino-esp32 bindings.
 
 First build the project with
 
 ```shell
-    #for ESP32
+    #for ESP32 devices
     idf.py build
 
-    #for ESP32-S2
+    #for ESP32-S2 devices
     idf.py -DIDF_TARGET=esp32s2 build
 ```
-
-If you have an ESP32-S2 device build it like this:
-
 
 Connect your ESP32 Dev Board via USB and run
 
@@ -62,7 +59,7 @@ Use the keyboard shortcut `AltGr + ]` to leave serial monitor.
 Now you have installed the pre-configured boot script.
 
 If this is your first install, your onboard LED should blink now. Blinking signals that your board has started a soft ap with the ssid "esp32". With your mobile or desktop connect to the WLAN SSID "esp32" and open http://192.168.4.1/setup (if you have not changed the default credentials your username / password is esp32 / esp32 ). You can change the default password in
-[firmware-config.ts](./components/esp32-javascript/modules/esp32-javascript/firmware-config.ts) by changing the value of key`password`.
+[firmware-config.ts](./components/esp32-javascript/modules/esp32-javascript/firmware-config.ts) by changing the value of key `password`.
 
 On the Setup page you can configure your WLAN settings and an URL to download your JS main script from.
 
@@ -114,10 +111,21 @@ You can erase the persistent flash memory, which will be equivalent to a factory
 
 ## Compatibility
 
-### Devices
-Tested with ESP32 WROVER and ESP-S2 WROVER devices.
+### Device Requirements
+* Supported chips ESP32 and ESP32-S2
+* 2 MB Minimum Flash Size
+* 2 MB Minimum external SPI RAM (WROVER)
+
 ### ESP-IDF
-Tested with esp-idf [release/v4.2](https://github.com/espressif/esp-idf/tree/release/v4.2)
+
+| Version                                                           |       Compatible       |
+| ----------------------------------------------------------------- | :--------------------: |
+| [4.2](https://github.com/espressif/esp-idf/releases/tag/v4.2)     | :heavy_check_mark:[^1] |
+| [4.2.1](https://github.com/espressif/esp-idf/releases/tag/v4.2.1) | :heavy_check_mark:[^1] |
+
+[^1]: SSL client connections currently not working properly for ESP32-S2 devices due to esp-idf bug in 4.2.x:
+https://github.com/espressif/esp-idf/pull/6998 , but can be fixed manually (see changes in PR).
+
 ## API
 
 [API documentation](docs/README.md)

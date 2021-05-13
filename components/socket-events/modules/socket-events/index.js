@@ -374,22 +374,18 @@ function afterSuspend(evt, collected) {
             if (evt.status === 0) {
                 //writable
                 if (!socket_1.isConnected && socket_1.onConnect) {
-                    collected.push((function (socket) {
-                        return function () {
-                            var retry = socket.onConnect(socket);
-                            socket.isConnected = !retry;
-                        };
-                    })(socket_1));
+                    collected.push(function () {
+                        var retry = socket_1.onConnect(socket_1);
+                        socket_1.isConnected = !retry;
+                    });
                 }
                 else if (!socket_1.isConnected) {
                     socket_1.isConnected = true;
                 }
                 if (socket_1.isConnected && socket_1.onWritable) {
-                    collected.push((function (socket) {
-                        return function () {
-                            socket.onWritable(socket);
-                        };
-                    })(socket_1));
+                    collected.push(function () {
+                        socket_1.onWritable(socket_1);
+                    });
                 }
             }
             else if (evt.status === 1) {
@@ -411,11 +407,9 @@ function afterSuspend(evt, collected) {
                     else {
                         if (socket_1.onData) {
                             socket_1.extendReadTimeout();
-                            collected.push((function (data, fd, length) {
-                                return function () {
-                                    socket_1.onData(data, fd, length);
-                                };
-                            })(result.data, socket_1.sockfd, result.length));
+                            collected.push((function (data, fd, length) { return function () {
+                                socket_1.onData(data, fd, length);
+                            }; })(result.data, socket_1.sockfd, result.length));
                         }
                     }
                 }
@@ -424,11 +418,9 @@ function afterSuspend(evt, collected) {
                 //error
                 socket_1.isError = true;
                 if (socket_1.onError) {
-                    collected.push((function (sockfd) {
-                        return function () {
-                            socket_1.onError(sockfd);
-                        };
-                    })(socket_1.sockfd));
+                    collected.push((function (sockfd) { return function () {
+                        socket_1.onError(sockfd);
+                    }; })(socket_1.sockfd));
                 }
             }
             else {

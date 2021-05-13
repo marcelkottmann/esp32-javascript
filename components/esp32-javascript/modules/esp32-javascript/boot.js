@@ -114,7 +114,7 @@ function connectToWifi() {
         return;
     }
     var retries = 0;
-    wifi.connectWifi(config_1.config.wifi.ssid, config_1.config.wifi.password, function (evt) {
+    wifi.connectWifi(config_1.config.wifi.ssid, config_1.config.wifi.password, function (evt, ip) {
         var _a, _b;
         if (evt.status === 0) {
             console.info("WIFI: DISCONNECTED");
@@ -135,7 +135,7 @@ function connectToWifi() {
         }
         else if (evt.status === 1) {
             if (!programLoaded) {
-                console.info("WIFI: CONNECTED");
+                console.info("WIFI: CONNECTED [" + ip + "]");
                 if (!configServerStarted) {
                     configServer.startConfigServer();
                     configServerStarted = true;

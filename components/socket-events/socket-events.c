@@ -35,6 +35,23 @@ SOFTWARE.
 #include "esp32-javascript.h"
 #include "esp32-js-log.h"
 
+#include "mbedtls/platform.h"
+#include "mbedtls/net_sockets.h"
+#include "mbedtls/debug.h"
+#include "mbedtls/entropy.h"
+#include "mbedtls/ctr_drbg.h"
+#include "mbedtls/error.h"
+#include "mbedtls/certs.h"
+struct ssl_pm
+{
+    mbedtls_net_context fd;
+    mbedtls_net_context cl_fd;
+    mbedtls_ssl_config conf;
+    mbedtls_ctr_drbg_context ctr_drbg;
+    mbedtls_ssl_context ssl;
+    mbedtls_entropy_context entropy;
+};
+
 TaskHandle_t stask;
 int notConnectedSockets_len = 0;
 int *notConnectedSockets = NULL;
@@ -557,26 +574,25 @@ static duk_ret_t connectSSL(duk_context *ctx)
     {
         SSL_set_fd(ssl, sockfd);
     }
+    struct ssl_pm *ssl_pm = ssl->ssl_pm;
+    esp_crt_bundle_attach(&(ssl_pm->conf));
+
     int ret = SSL_connect(ssl);
     int error = 1; // means "no error"
     if (ret <= 0)
     {
         int err = SSL_get_error(ssl, ret);
         jslog(ERROR, "SSL_connect failed, return value was %d; SOCKET %d SSL error code %d and errno %d and before errno was %d", ret, sockfd, err, errno, before);
-        error = -1; //means "error"
-    }
 
-    /*
-    Verification fails always, because no trusted CAs are configured.
-    Return value of verifyResult is incorrect. Turning on OpenSSL debug mode
-    shows the correct internal return values from mbedtls. 
-    int verifyResult = SSL_get_verify_result(ssl);
-    if (verifyResult != X509_V_OK)
-    {
-        jslog(ERROR,"SSL Certificate is invalid: %d\n", verifyResult);
-        error = -1; //means "error"
+        if (err == 5 && errno == 11) //EAGAIN
+        {
+            error = 0; //retry
+        }
+        else
+        {
+            error = -1; //means "error"
+        }
     }
-*/
 
     if (error < 0)
     {
@@ -764,7 +780,9 @@ SSL_CTX *createSSLClientContext()
 {
     jslog(INFO, "SSL client context create ......");
     SSL_CTX *ctx = SSL_CTX_new(TLSv1_2_client_method());
+
     SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
+
     if (!ctx)
     {
         abort();
