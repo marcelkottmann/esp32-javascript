@@ -8,17 +8,21 @@ interface Esp32JsWifiEvent {
 }
 
 interface Esp32JsWifi {
-  status: (event: Esp32JsWifiEvent) => void;
+  status: (event: Esp32JsWifiEvent, ip: string | undefined) => void;
+  ip: string | undefined;
 }
 
 let wifi: Esp32JsWifi | undefined = undefined;
 
-/**
- * Callback for wifi status.
- *
- * @callback wifiStatusCallback
- * @param  status - The connection status.
- */
+function resetWifiStatus(
+  callback: (event: Esp32JsWifiEvent, ip: string | undefined) => void
+) {
+  wifi = {
+    status: callback,
+    ip: undefined,
+  };
+  return wifi;
+}
 
 /**
  * Connect to AP with given ssid and password.
@@ -27,15 +31,12 @@ let wifi: Esp32JsWifi | undefined = undefined;
  * @param password The password of the wifi network.
  * @param {wifiStatusCallback} callback A cb which gets the connect status updates.
  */
-
 export function connectWifi(
   ssid: string,
   password: string,
-  callback: (event: Esp32JsWifiEvent) => void
+  callback: (event: Esp32JsWifiEvent, ip: string | undefined) => void
 ): void {
-  wifi = {
-    status: callback,
-  };
+  resetWifiStatus(callback);
   el_connectWifi(ssid, password);
 }
 
@@ -51,9 +52,7 @@ export function createSoftAp(
   password: string,
   callback: (event: Esp32JsWifiEvent) => void
 ): void {
-  wifi = {
-    status: callback,
-  };
+  resetWifiStatus(callback);
   el_createSoftAp(ssid, password);
 }
 
@@ -63,24 +62,48 @@ export function createSoftAp(
  */
 export function getBssid(): string {
   return getWifiConfig()
-    .bssid.map(function (n) {
+    .bssid.map((n) => {
       return n.toString(16);
     })
     .join(":");
 }
 
+/**
+ * Convert 32 bit number to ip address string.
+ * @returns The ip address as string representation.
+ */
+function convertIPAddress(ip: number): string | undefined {
+  if (ip > 0) {
+    return (
+      (ip & 0xff) +
+      "." +
+      ((ip >>> 8) & 0xff) +
+      "." +
+      ((ip >>> 16) & 0xff) +
+      "." +
+      ((ip >>> 24) & 0xff)
+    );
+  }
+}
+
+/**
+ * Get the ip address.
+ * @returns The ip address or undefined..
+ */
+export function getIPAddress(): string | undefined {
+  return wifi?.ip;
+}
+
 // eslint-disable-next-line @typescript-eslint/ban-types
 function afterSuspend(evt: Esp32JsEventloopEvent, collected: Function[]) {
   if (evt.type === EL_WIFI_EVENT_TYPE) {
-    collected.push(
-      (function (evt) {
-        return function () {
-          if (wifi) {
-            wifi.status(evt);
-          }
-        };
-      })(evt)
-    );
+    collected.push(() => {
+      if (wifi) {
+        const ip = convertIPAddress(evt.fd);
+        wifi.ip = ip;
+        wifi.status(evt, ip);
+      }
+    });
     return true;
   }
   return false;

@@ -129,7 +129,7 @@ static IRAM_ATTR esp_err_t event_handler(void *ctx, system_event_t *sysevent)
 		break;
 	case SYSTEM_EVENT_STA_GOT_IP:
 		xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);
-		el_create_event(&event, EL_WIFI_EVENT_TYPE, EL_WIFI_STATUS_CONNECTED, 0);
+		el_create_event(&event, EL_WIFI_EVENT_TYPE, EL_WIFI_STATUS_CONNECTED, sysevent->event_info.got_ip.ip_info.ip.addr);
 		el_add_event(&events, &event);
 		break;
 	case SYSTEM_EVENT_STA_DISCONNECTED:

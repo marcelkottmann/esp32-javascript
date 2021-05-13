@@ -98,7 +98,7 @@ class Socket implements Esp32JsSocket {
   public writebuffer: BufferEntry[] = [];
   private readTimeout = -1; // infinite
   private readTimeoutHandle = -1;
-  
+
   public setReadTimeout(readTimeout: number) {
     this.readTimeout = readTimeout;
     this.extendReadTimeout();
@@ -278,7 +278,9 @@ export function closeSocket(socketOrSockfd: Esp32JsSocket | number): void {
   }
 
   if (!socket) {
-    console.debug("Socket not found for closing! Maybe already closed, doing nothing.");
+    console.debug(
+      "Socket not found for closing! Maybe already closed, doing nothing."
+    );
     return;
   }
 
@@ -482,7 +484,7 @@ function beforeSuspend() {
 // eslint-disable-next-line @typescript-eslint/ban-types
 function afterSuspend(evt: Esp32JsEventloopEvent, collected: Function[]) {
   if (evt.type === EL_SOCKET_EVENT_TYPE) {
-    const findSocket = sockets.filter(function (s) {
+    const findSocket = sockets.filter((s) => {
       return s.sockfd === evt.fd;
     });
     const socket = findSocket[0];
@@ -490,25 +492,17 @@ function afterSuspend(evt: Esp32JsEventloopEvent, collected: Function[]) {
       if (evt.status === 0) {
         //writable
         if (!socket.isConnected && socket.onConnect) {
-          collected.push(
-            (function (socket) {
-              return function () {
-                const retry = (socket.onConnect as OnConnectCB)(socket);
-                socket.isConnected = !retry;
-              };
-            })(socket)
-          );
+          collected.push(() => {
+            const retry = (socket.onConnect as OnConnectCB)(socket);
+            socket.isConnected = !retry;
+          });
         } else if (!socket.isConnected) {
           socket.isConnected = true;
         }
         if (socket.isConnected && socket.onWritable) {
-          collected.push(
-            (function (socket) {
-              return function () {
-                (socket.onWritable as OnWritableCB)(socket);
-              };
-            })(socket)
-          );
+          collected.push(() => {
+            (socket.onWritable as OnWritableCB)(socket);
+          });
         }
       } else if (evt.status === 1) {
         //readable
@@ -529,10 +523,8 @@ function afterSuspend(evt: Esp32JsEventloopEvent, collected: Function[]) {
             if (socket.onData) {
               socket.extendReadTimeout();
               collected.push(
-                (function (data, fd, length) {
-                  return function () {
-                    (socket.onData as OnDataCB)(data, fd, length);
-                  };
+                ((data, fd, length) => () => {
+                  (socket.onData as OnDataCB)(data, fd, length);
                 })(result.data, socket.sockfd, result.length)
               );
             }
@@ -543,10 +535,8 @@ function afterSuspend(evt: Esp32JsEventloopEvent, collected: Function[]) {
         socket.isError = true;
         if (socket.onError) {
           collected.push(
-            (function (sockfd) {
-              return function () {
-                (socket.onError as OnErrorCB)(sockfd);
-              };
+            ((sockfd) => () => {
+              (socket.onError as OnErrorCB)(sockfd);
             })(socket.sockfd)
           );
         }
