@@ -1,16 +1,16 @@
 {
-    "name": "cp2",
-    "version": "1.0.0",
-    "description": "",
-    "main": "cp2.js",
-    "bin": "./cp2.js",
-    "scripts": {
-        "start": "node cp2.js"
-    },
-    "author": "Marcel Kottmann",
-    "license": "MIT",
-    "dependencies": {
-        "glob": "^7.1.6",
-        "meow": "^7.0.1"
-    }
+  "name": "cp2",
+  "version": "1.0.0",
+  "description": "",
+  "main": "cp2.js",
+  "bin": "./cp2.js",
+  "scripts": {
+    "start": "node cp2.js"
+  },
+  "author": "Marcel Kottmann",
+  "license": "MIT",
+  "dependencies": {
+    "glob": "^7.1.6",
+    "meow": "^7.0.1"
+  }
 }
