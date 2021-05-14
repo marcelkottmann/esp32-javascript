@@ -20,4 +20,4 @@
 
 • **status**: *number*
 
-*Defined in [wifi-events/modules/wifi-events/index.ts:7](https://github.com/marcelkottmann/esp32-javascript/blob/e6e5921/components/wifi-events/modules/wifi-events/index.ts#L7)*
+*Defined in [wifi-events/modules/wifi-events/index.ts:7](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/wifi-events/modules/wifi-events/index.ts#L7)*

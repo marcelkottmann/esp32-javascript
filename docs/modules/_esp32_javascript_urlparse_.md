@@ -18,7 +18,7 @@
 
 ▸ **urlparse**(`absoluteUrl`: string): *[AnchorElement](../interfaces/_esp32_javascript_urlparse_.anchorelement.md)*
 
-*Defined in [esp32-javascript/urlparse.ts:22](https://github.com/marcelkottmann/esp32-javascript/blob/e6e5921/components/esp32-javascript/urlparse.ts#L22)*
+*Defined in [esp32-javascript/urlparse.ts:22](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/urlparse.ts#L22)*
 
 **Parameters:**
 
