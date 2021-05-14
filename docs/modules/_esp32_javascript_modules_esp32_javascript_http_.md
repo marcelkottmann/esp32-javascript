@@ -35,7 +35,7 @@
 
 • **closeSocket**: *[closeSocket](_socket_events_modules_socket_events_index_.md#closesocket)* = socketEvents.closeSocket
 
-*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:26](https://github.com/marcelkottmann/esp32-javascript/blob/e6e5921/components/esp32-javascript/modules/esp32-javascript/http.ts#L26)*
+*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:26](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/http.ts#L26)*
 
 ___
 
@@ -43,7 +43,7 @@ ___
 
 • **sockConnect**: *[sockConnect](_socket_events_modules_socket_events_index_.md#sockconnect)* = socketEvents.sockConnect
 
-*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:25](https://github.com/marcelkottmann/esp32-javascript/blob/e6e5921/components/esp32-javascript/modules/esp32-javascript/http.ts#L25)*
+*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:25](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/http.ts#L25)*
 
 ___
 
@@ -51,7 +51,7 @@ ___
 
 • **sockListen**: *[sockListen](_socket_events_modules_socket_events_index_.md#socklisten)* = socketEvents.sockListen
 
-*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:24](https://github.com/marcelkottmann/esp32-javascript/blob/e6e5921/components/esp32-javascript/modules/esp32-javascript/http.ts#L24)*
+*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:24](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/http.ts#L24)*
 
 ___
 
@@ -59,7 +59,7 @@ ___
 
 • **socketEvents**: *["socket-events/modules/socket-events/index"](_socket_events_modules_socket_events_index_.md)*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:1](https://github.com/marcelkottmann/esp32-javascript/blob/e6e5921/components/esp32-javascript/modules/esp32-javascript/http.ts#L1)*
+*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:1](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/http.ts#L1)*
 
 ## Functions
 
@@ -67,7 +67,7 @@ ___
 
 ▸ **decodeQueryParam**(`value`: string): *string*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:355](https://github.com/marcelkottmann/esp32-javascript/blob/e6e5921/components/esp32-javascript/modules/esp32-javascript/http.ts#L355)*
+*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:355](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/http.ts#L355)*
 
 **Parameters:**
 
@@ -83,7 +83,7 @@ ___
 
 ▸ **httpClient**(`ssl`: boolean, `host`: string, `port`: string, `path`: string, `method`: string, `requestHeaders?`: undefined | string, `body?`: undefined | object, `successCB?`: undefined | function, `errorCB?`: undefined | function, `finishCB?`: undefined | function): *void*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:372](https://github.com/marcelkottmann/esp32-javascript/blob/e6e5921/components/esp32-javascript/modules/esp32-javascript/http.ts#L372)*
+*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:372](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/http.ts#L372)*
 
 **Parameters:**
 
@@ -108,7 +108,7 @@ ___
 
 ▸ **httpServer**(`port`: string | number, `isSSL`: boolean, `cb`: function): *void*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:63](https://github.com/marcelkottmann/esp32-javascript/blob/e6e5921/components/esp32-javascript/modules/esp32-javascript/http.ts#L63)*
+*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:63](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/http.ts#L63)*
 
 **Parameters:**
 
@@ -135,7 +135,7 @@ ___
 
 ▸ **parseHeaders**(`complete`: [StringBuffer](../classes/_esp32_javascript_modules_esp32_javascript_stringbuffer_.stringbuffer.md), `endOfHeaders`: number): *object*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:28](https://github.com/marcelkottmann/esp32-javascript/blob/e6e5921/components/esp32-javascript/modules/esp32-javascript/http.ts#L28)*
+*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:28](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/http.ts#L28)*
 
 **Parameters:**
 
@@ -156,7 +156,7 @@ ___
 
 ▸ **parseQueryStr**(`query`: string | null): *object*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:359](https://github.com/marcelkottmann/esp32-javascript/blob/e6e5921/components/esp32-javascript/modules/esp32-javascript/http.ts#L359)*
+*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:359](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/http.ts#L359)*
 
 **Parameters:**
 

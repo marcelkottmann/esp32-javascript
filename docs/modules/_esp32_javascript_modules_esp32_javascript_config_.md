@@ -24,7 +24,7 @@
 
 • **CONFIG_PATH**: *"/data/config.js"* = "/data/config.js"
 
-*Defined in [esp32-javascript/modules/esp32-javascript/config.ts:17](https://github.com/marcelkottmann/esp32-javascript/blob/e6e5921/components/esp32-javascript/modules/esp32-javascript/config.ts#L17)*
+*Defined in [esp32-javascript/modules/esp32-javascript/config.ts:18](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/config.ts#L18)*
 
 ___
 
@@ -32,7 +32,7 @@ ___
 
 • **config**: *[Esp32JsConfig](../interfaces/_esp32_javascript_modules_esp32_javascript_config_.esp32jsconfig.md)*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/config.ts:19](https://github.com/marcelkottmann/esp32-javascript/blob/e6e5921/components/esp32-javascript/modules/esp32-javascript/config.ts#L19)*
+*Defined in [esp32-javascript/modules/esp32-javascript/config.ts:20](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/config.ts#L20)*
 
 ## Functions
 
@@ -40,7 +40,7 @@ ___
 
 ▸ **reloadConfig**(): *void*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/config.ts:21](https://github.com/marcelkottmann/esp32-javascript/blob/e6e5921/components/esp32-javascript/modules/esp32-javascript/config.ts#L21)*
+*Defined in [esp32-javascript/modules/esp32-javascript/config.ts:22](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/config.ts#L22)*
 
 **Returns:** *void*
 
@@ -50,7 +50,7 @@ ___
 
 ▸ **saveConfig**(`config`: [Esp32JsConfig](../interfaces/_esp32_javascript_modules_esp32_javascript_config_.esp32jsconfig.md)): *void*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/config.ts:38](https://github.com/marcelkottmann/esp32-javascript/blob/e6e5921/components/esp32-javascript/modules/esp32-javascript/config.ts#L38)*
+*Defined in [esp32-javascript/modules/esp32-javascript/config.ts:33](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/config.ts#L33)*
 
 **Parameters:**
 

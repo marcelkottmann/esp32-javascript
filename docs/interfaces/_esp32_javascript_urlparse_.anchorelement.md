@@ -37,7 +37,7 @@
 
 • **_hash**: *string | undefined*
 
-*Defined in [esp32-javascript/urlparse.ts:19](https://github.com/marcelkottmann/esp32-javascript/blob/e6e5921/components/esp32-javascript/urlparse.ts#L19)*
+*Defined in [esp32-javascript/urlparse.ts:19](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/urlparse.ts#L19)*
 
 ___
 
@@ -45,7 +45,7 @@ ___
 
 • **_host**: *string | undefined*
 
-*Defined in [esp32-javascript/urlparse.ts:15](https://github.com/marcelkottmann/esp32-javascript/blob/e6e5921/components/esp32-javascript/urlparse.ts#L15)*
+*Defined in [esp32-javascript/urlparse.ts:15](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/urlparse.ts#L15)*
 
 ___
 
@@ -53,7 +53,7 @@ ___
 
 • **_hostname**: *string | undefined*
 
-*Defined in [esp32-javascript/urlparse.ts:14](https://github.com/marcelkottmann/esp32-javascript/blob/e6e5921/components/esp32-javascript/urlparse.ts#L14)*
+*Defined in [esp32-javascript/urlparse.ts:14](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/urlparse.ts#L14)*
 
 ___
 
@@ -61,7 +61,7 @@ ___
 
 • **_pathname**: *string | undefined*
 
-*Defined in [esp32-javascript/urlparse.ts:17](https://github.com/marcelkottmann/esp32-javascript/blob/e6e5921/components/esp32-javascript/urlparse.ts#L17)*
+*Defined in [esp32-javascript/urlparse.ts:17](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/urlparse.ts#L17)*
 
 ___
 
@@ -69,7 +69,7 @@ ___
 
 • **_port**: *string | undefined*
 
-*Defined in [esp32-javascript/urlparse.ts:16](https://github.com/marcelkottmann/esp32-javascript/blob/e6e5921/components/esp32-javascript/urlparse.ts#L16)*
+*Defined in [esp32-javascript/urlparse.ts:16](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/urlparse.ts#L16)*
 
 ___
 
@@ -77,7 +77,7 @@ ___
 
 • **_protocol**: *string | undefined*
 
-*Defined in [esp32-javascript/urlparse.ts:13](https://github.com/marcelkottmann/esp32-javascript/blob/e6e5921/components/esp32-javascript/urlparse.ts#L13)*
+*Defined in [esp32-javascript/urlparse.ts:13](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/urlparse.ts#L13)*
 
 ___
 
@@ -85,7 +85,7 @@ ___
 
 • **_search**: *string | undefined*
 
-*Defined in [esp32-javascript/urlparse.ts:18](https://github.com/marcelkottmann/esp32-javascript/blob/e6e5921/components/esp32-javascript/urlparse.ts#L18)*
+*Defined in [esp32-javascript/urlparse.ts:18](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/urlparse.ts#L18)*
 
 ___
 
@@ -93,7 +93,7 @@ ___
 
 • **hash**: *string*
 
-*Defined in [esp32-javascript/urlparse.ts:5](https://github.com/marcelkottmann/esp32-javascript/blob/e6e5921/components/esp32-javascript/urlparse.ts#L5)*
+*Defined in [esp32-javascript/urlparse.ts:5](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/urlparse.ts#L5)*
 
 ___
 
@@ -101,7 +101,7 @@ ___
 
 • **host**: *string*
 
-*Defined in [esp32-javascript/urlparse.ts:9](https://github.com/marcelkottmann/esp32-javascript/blob/e6e5921/components/esp32-javascript/urlparse.ts#L9)*
+*Defined in [esp32-javascript/urlparse.ts:9](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/urlparse.ts#L9)*
 
 ___
 
@@ -109,7 +109,7 @@ ___
 
 • **hostname**: *string*
 
-*Defined in [esp32-javascript/urlparse.ts:8](https://github.com/marcelkottmann/esp32-javascript/blob/e6e5921/components/esp32-javascript/urlparse.ts#L8)*
+*Defined in [esp32-javascript/urlparse.ts:8](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/urlparse.ts#L8)*
 
 ___
 
@@ -117,7 +117,7 @@ ___
 
 • **href**: *string*
 
-*Defined in [esp32-javascript/urlparse.ts:2](https://github.com/marcelkottmann/esp32-javascript/blob/e6e5921/components/esp32-javascript/urlparse.ts#L2)*
+*Defined in [esp32-javascript/urlparse.ts:2](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/urlparse.ts#L2)*
 
 ___
 
@@ -125,7 +125,7 @@ ___
 
 • **origin**: *string*
 
-*Defined in [esp32-javascript/urlparse.ts:6](https://github.com/marcelkottmann/esp32-javascript/blob/e6e5921/components/esp32-javascript/urlparse.ts#L6)*
+*Defined in [esp32-javascript/urlparse.ts:6](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/urlparse.ts#L6)*
 
 ___
 
@@ -133,7 +133,7 @@ ___
 
 • **pathname**: *string*
 
-*Defined in [esp32-javascript/urlparse.ts:3](https://github.com/marcelkottmann/esp32-javascript/blob/e6e5921/components/esp32-javascript/urlparse.ts#L3)*
+*Defined in [esp32-javascript/urlparse.ts:3](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/urlparse.ts#L3)*
 
 ___
 
@@ -141,7 +141,7 @@ ___
 
 • **port**: *string*
 
-*Defined in [esp32-javascript/urlparse.ts:10](https://github.com/marcelkottmann/esp32-javascript/blob/e6e5921/components/esp32-javascript/urlparse.ts#L10)*
+*Defined in [esp32-javascript/urlparse.ts:10](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/urlparse.ts#L10)*
 
 ___
 
@@ -149,7 +149,7 @@ ___
 
 • **protocol**: *string*
 
-*Defined in [esp32-javascript/urlparse.ts:7](https://github.com/marcelkottmann/esp32-javascript/blob/e6e5921/components/esp32-javascript/urlparse.ts#L7)*
+*Defined in [esp32-javascript/urlparse.ts:7](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/urlparse.ts#L7)*
 
 ___
 
@@ -157,7 +157,7 @@ ___
 
 • **search**: *string*
 
-*Defined in [esp32-javascript/urlparse.ts:4](https://github.com/marcelkottmann/esp32-javascript/blob/e6e5921/components/esp32-javascript/urlparse.ts#L4)*
+*Defined in [esp32-javascript/urlparse.ts:4](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/urlparse.ts#L4)*
 
 ## Methods
 
@@ -165,7 +165,7 @@ ___
 
 ▸ **resolve**(`rel`: string): *[AnchorElement](_esp32_javascript_urlparse_.anchorelement.md)*
 
-*Defined in [esp32-javascript/urlparse.ts:11](https://github.com/marcelkottmann/esp32-javascript/blob/e6e5921/components/esp32-javascript/urlparse.ts#L11)*
+*Defined in [esp32-javascript/urlparse.ts:11](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/urlparse.ts#L11)*
 
 **Parameters:**
 

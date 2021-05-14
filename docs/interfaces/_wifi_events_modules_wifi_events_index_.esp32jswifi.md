@@ -10,22 +10,32 @@
 
 ### Properties
 
+* [ip](_wifi_events_modules_wifi_events_index_.esp32jswifi.md#ip)
 * [status](_wifi_events_modules_wifi_events_index_.esp32jswifi.md#status)
 
 ## Properties
+
+###  ip
+
+• **ip**: *string | undefined*
+
+*Defined in [wifi-events/modules/wifi-events/index.ts:12](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/wifi-events/modules/wifi-events/index.ts#L12)*
+
+___
 
 ###  status
 
 • **status**: *function*
 
-*Defined in [wifi-events/modules/wifi-events/index.ts:11](https://github.com/marcelkottmann/esp32-javascript/blob/e6e5921/components/wifi-events/modules/wifi-events/index.ts#L11)*
+*Defined in [wifi-events/modules/wifi-events/index.ts:11](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/wifi-events/modules/wifi-events/index.ts#L11)*
 
 #### Type declaration:
 
-▸ (`event`: [Esp32JsWifiEvent](_wifi_events_modules_wifi_events_index_.esp32jswifievent.md)): *void*
+▸ (`event`: [Esp32JsWifiEvent](_wifi_events_modules_wifi_events_index_.esp32jswifievent.md), `ip`: string | undefined): *void*
 
 **Parameters:**
 
 Name | Type |
 ------ | ------ |
 `event` | [Esp32JsWifiEvent](_wifi_events_modules_wifi_events_index_.esp32jswifievent.md) |
+`ip` | string &#124; undefined |
