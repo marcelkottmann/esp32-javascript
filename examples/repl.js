@@ -1,21 +1,22 @@
 /**
- * 
+ *
  * A network based REPL (Read–eval–print loop).
- * 
+ *
  * Usage:
  *     netcat [IP-ADDRESS] 1234
- * 
+ *
  * After successful connection a prompt appears: '>'
  * Then type [USER]:[PASS] (the defaults are esp32:esp32)
  * After successful authentication you will see "====> authorized."
- * 
- * After that you can type every JS expression, which then gets 
- * evaluated in esp32-javascript and the result is printed.     
- * 
+ *
+ * After that you can type every JS expression, which then gets
+ * evaluated in esp32-javascript and the result is printed.
+ *
  */
 var configManager = require("esp32-javascript/config");
 
 var PROMPT = "> ";
+var textDecoder = new TextDecoder();
 
 function writeOutput(socket, result) {
   socket.write(result);
@@ -27,7 +28,8 @@ require("socket-events").sockListen(
   function (socket) {
     var authorized = false;
     var _ = undefined;
-    socket.onData = function (data) {
+    socket.onData = function (buffer) {
+      var data = textDecoder.decode(buffer);
       var result = null;
       if (!authorized) {
         var accessConfig = configManager.config.access;
