@@ -152,6 +152,8 @@ function page(
   res.end("</div></div></div></body></html>\r\n\r\n");
 }
 
+let successMessage = "";
+let errorMessage = "";
 export function startConfigServer(): void {
   console.info("Starting config server.");
   const authString =
@@ -180,9 +182,6 @@ export function startConfigServer(): void {
         }
       );
     } else if (req.path === "/setup" || req.path === "/restart") {
-      let saved = false;
-      let error = undefined;
-
       if (req.path === "/setup" && req.method === "POST") {
         try {
           const storedConfig = configManager.config;
@@ -201,22 +200,29 @@ export function startConfigServer(): void {
           storedConfig.ota.script = config.script;
 
           configManager.saveConfig(storedConfig);
-          saved = true;
+          successMessage = "Saved. Some settings require a restart.";
         } catch (err) {
-          error = err;
+          errorMessage = err;
         }
       }
       const config = configManager.config;
+
+      let logFileSize: number | undefined;
+      try {
+        logFileSize = fileSize("/data/logs.txt");
+      } catch (_) {
+        // ignore
+      }
       page(
         res,
         "Setup",
         `${
-          saved
-            ? '<div class="formpad green">Saved. Some settings require a restart.</div>'
+          successMessage
+            ? `<div class="formpad green">${successMessage}</div>`
             : ""
         }${
-          error
-            ? `<div class="formpad red">Saving failed. Error message: ${error}</div>`
+          errorMessage
+            ? `<div class="formpad red">Saving failed. Error message: ${errorMessage}</div>`
             : ""
         }<form action="/setup" method="post">
         <div class="formpad"><label for="ssid" class="formlabel">SSID</label><input type="text" name="ssid" class="fill input" value="${
@@ -235,6 +241,12 @@ export function startConfigServer(): void {
           config.ota?.script || ""
         }</textarea></div>
         <div class="formpad"><input type="submit" value="Save" class="formpad input"/></div></form>
+        <h1>Logs</h1>
+        <div class="formpad">
+          Log size: ${logFileSize ? Math.floor(logFileSize / 1024) : "?"} kB
+        </div>
+        <form action="/logs" method="get"><div class="formpad"><input type="submit" value="Show Logs" class="formpad input"/></div></form>
+        <form action="/deletelogs" method="get"><div class="formpad"><input type="submit" value="Delete Logs" class="formpad input"/></div></form>
         <h1>Request restart</h1>
         <form action="/restart" method="post"><div class="formpad"><input type="submit" value="Restart" class="formpad input"/></div></form>
         <h1>Uptime</h1>
@@ -251,6 +263,8 @@ export function startConfigServer(): void {
           Boot time is only available if a valid 'JS file url' is configured, otherwise it starts at unix epoch (1970).
         </div>`
       );
+      successMessage = "";
+      errorMessage = "";
     } else {
       let handled = false;
       for (let i = 0; i < requestHandler.length; i++) {
@@ -415,6 +429,23 @@ export function startConfigServer(): void {
           res.end("Internal server error while saving configuration.");
         }
       }
+    }
+  });
+
+  requestHandler.push((req, res) => {
+    if (/\/logs(|\?.*)/.exec(req.path)) {
+      res.setStatus(200);
+      res.headers.set("Content-type", "text/plain");
+      global.el_flushLogBuffer();
+      res.end(readFile("/data/logs.txt"));
+    }
+  });
+
+  requestHandler.push((req, res) => {
+    if (/\/deletelogs(|\?.*)/.exec(req.path)) {
+      removeFile("/data/logs.txt");
+      successMessage = "Logs were deleted successfully.";
+      redirect(res, "/setup");
     }
   });
 }

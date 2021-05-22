@@ -1,4 +1,8 @@
 import socketEvents = require("socket-events");
+import {
+  ChunkedEncodingConsumer,
+  createChunkedEncodingConsumer,
+} from "./chunked";
 import { StringBuffer } from "./stringbuffer";
 
 export interface Esp32JsRequest {
@@ -78,8 +82,10 @@ export function httpServer(
       let gotten = 0;
       const active: { req: Esp32JsRequest; res: Esp32JsResponse }[] = [];
 
-      socket.onData = function (data: string, _: number, length: number) {
-        complete = complete ? complete.append(data) : new StringBuffer(data);
+      socket.onData = function (data: Uint8Array, _: number, length: number) {
+        complete = complete
+          ? complete.append(textDecoder.decode(data))
+          : new StringBuffer(textDecoder.decode(data));
         gotten += length;
 
         const endOfHeaders = complete.indexOf("\r\n\r\n");
@@ -333,7 +339,7 @@ export function httpServer(
             }
 
             if (gotten > 0 && socket.onData) {
-              socket.onData("", _, 0);
+              socket.onData(new Uint8Array(0), _, 0);
             }
           }
         }
@@ -369,7 +375,7 @@ export function parseQueryStr(query: string | null): { [key: string]: string } {
   return parsed;
 }
 
-export function httpClient(
+/*export function httpClient(
   ssl: boolean,
   host: string,
   port: string,
@@ -379,7 +385,8 @@ export function httpClient(
   body?: { toString: () => string },
   successCB?: (content: string, headers: string) => void,
   errorCB?: (message: string) => void,
-  finishCB?: () => void
+  finishCB?: () => void,
+  dataCB?: (data: Uint8Array) => void
 ): void {
   const complete: StringBuffer = new StringBuffer();
   let completeLength = 0;
@@ -391,6 +398,8 @@ export function httpClient(
   if (!errorCB) {
     errorCB = print;
   }
+
+  const textDecoder = new TextDecoder();
 
   sockConnect(
     ssl,
@@ -407,7 +416,9 @@ export function httpClient(
       socket.flush();
     },
     function (data, sockfd, length) {
-      complete.append(data);
+      dataCB && dataCB(data);
+    
+      complete.append(textDecoder.decode(data));
       completeLength = completeLength + length;
 
       if (!headerRead && (headerEnd = complete.indexOf("\r\n\r\n")) >= 0) {
@@ -478,16 +489,170 @@ export function httpClient(
     }
   );
 }
+*/
 
+export function httpClient(
+  ssl: boolean,
+  host: string,
+  port: string,
+  path: string,
+  method: string,
+  requestHeaders?: string,
+  body?: { toString: () => string },
+  successCB?: undefined, // this is removed in favor of the new data and head callback (dataCB, headCB)
+  errorCB?: (message: string) => void,
+  finishCB?: () => void,
+  dataCB?: (data: Uint8Array) => void,
+  headCB?: (head: StringBuffer) => void
+): { cancel: () => void; cancelled: boolean } {
+  if (successCB) {
+    throw Error("The successCB is not supported anymore.");
+  }
+
+  let complete: StringBuffer | undefined = new StringBuffer();
+
+  let completeLength = 0;
+  let chunked = false;
+  let headerRead = false;
+  let headerEnd = -1;
+  let contentLength = -1;
+  requestHeaders = requestHeaders || "";
+  let headers: StringBuffer;
+  let chunkedConsumer: ChunkedEncodingConsumer | undefined;
+
+  if (!errorCB) {
+    errorCB = print;
+  }
+
+  const textDecoder = new TextDecoder();
+
+  const socket = sockConnect(
+    ssl,
+    host,
+    port,
+    function (socket) {
+      const bodyStr = body ? body.toString() : null;
+
+      const requestLines = `${method} ${path} HTTP/1.1\r\nHost: ${host}\r\n${
+        bodyStr ? `Content-length: ${bodyStr.length}\r\n` : ""
+      }${requestHeaders}\r\n${bodyStr ? bodyStr + "\r\n" : ""}`;
+
+      socket.write(requestLines);
+      socket.flush();
+    },
+    function (data, sockfd, length) {
+      try {
+        complete?.append(textDecoder.decode(data));
+        completeLength = completeLength + length;
+
+        if (
+          !headerRead &&
+          complete &&
+          (headerEnd = complete.indexOf("\r\n\r\n")) >= 0
+        ) {
+          headerRead = true;
+          chunked =
+            complete.toLowerCase().indexOf("transfer-encoding: chunked") >= 0;
+          const clIndex = complete.toLowerCase().indexOf("content-length: ");
+          if (clIndex >= 0) {
+            const endOfContentLength = complete.indexOf("\r\n", clIndex);
+            contentLength = parseInt(
+              complete.substring(clIndex + 15, endOfContentLength).toString()
+            );
+          }
+          headerEnd += 4;
+          headers = complete.substring(0, headerEnd);
+          complete = undefined;
+          if (headCB) {
+            headCB(headers);
+          }
+
+          if (chunked) {
+            chunkedConsumer = createChunkedEncodingConsumer(dataCB);
+          }
+
+          // the rest of the data is considered data and has to be consumed by the data consumers.
+          data = data.subarray(headerEnd, data.length);
+        }
+
+        if (chunkedConsumer) {
+          // handle chunked data
+          const eof = chunkedConsumer(data);
+          if (eof) {
+            closeSocket(sockfd);
+          }
+        } else if (dataCB) {
+          // handle non chunked data
+          dataCB(data);
+        }
+
+        if (contentLength >= 0) {
+          if (completeLength - headerEnd == contentLength) {
+            closeSocket(sockfd);
+          }
+        }
+      } catch (error) {
+        if (errorCB) {
+          errorCB(error);
+        }
+        closeSocket(sockfd);
+      }
+    },
+    function () {
+      if (errorCB) {
+        errorCB(
+          `Could not load ${ssl ? "https" : "http"}://${host}:${port}${path}`
+        );
+      }
+    },
+    function () {
+      if (finishCB) {
+        finishCB();
+      }
+    }
+  );
+
+  const client = {
+    cancelled: false,
+    cancel: () => {
+      if (!client.cancelled) {
+        client.cancelled = true;
+        if (errorCB) {
+          errorCB("Request was cancelled.");
+        }
+        closeSocket(socket);
+      }
+    },
+  };
+  return client;
+}
+
+// get default port
+export function getDefaultPort(url: {
+  port: string;
+  protocol: string;
+}): number {
+  let port = parseInt(url.port, 10);
+  if (isNaN(port)) {
+    if (url.protocol === "https:") {
+      port = 443;
+    } else if (url.protocol === "http:") {
+      port = 80;
+    } else {
+      throw Error(`Cannot determine default port for protocol ${url.protocol}`);
+    }
+  }
+  return port;
+}
 export class XMLHttpRequest {
   private url?: AnchorElement;
   private method = "GET";
   private reponseHeaders?: string;
   private requestHeaders?: StringBuffer;
-  private status?: number;
-  private statusText?: string;
-  private responseURL?: string;
-  private responseText?: string;
+  public status?: number;
+  public statusText?: string;
+  public responseURL?: string;
+  public responseText?: string;
 
   public onerror?: (error: string) => void;
   public onload?: () => void;
@@ -495,7 +660,12 @@ export class XMLHttpRequest {
   public send(body: string): void {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this;
+
     if (this.url) {
+      let data: StringBuffer | undefined = undefined;
+      let responseHeaders: StringBuffer | undefined = undefined;
+      const textDecoder: TextDecoder = new TextDecoder();
+
       httpClient(
         this.url.protocol === "https:",
         this.url.hostname,
@@ -504,14 +674,25 @@ export class XMLHttpRequest {
         this.method,
         this.requestHeaders ? this.requestHeaders.toString() : undefined,
         body,
-        function (data: string, responseHeaders: string) {
-          const r = responseHeaders.match(/^HTTP\/[0-9.]+ ([0-9]+) (.*)/);
+        undefined,
+        function (error: string) {
+          console.error(error);
+          if (self.onerror) {
+            self.onerror(error);
+          }
+        },
+        function () {
+          const r =
+            responseHeaders &&
+            responseHeaders.toString().match(/^HTTP\/[0-9.]+ ([0-9]+) (.*)/);
           if (r) {
             self.status = parseInt(r[1], 10);
             self.statusText = r[2];
             self.responseURL = "";
-            self.responseText = data;
-            self.reponseHeaders = responseHeaders.substring(r[0].length + 2);
+            self.responseText = data && data.toString();
+            self.reponseHeaders =
+              responseHeaders &&
+              responseHeaders.substring(r[0].length + 2).toString();
             if (self.onload) {
               self.onload();
             }
@@ -520,12 +701,18 @@ export class XMLHttpRequest {
               self.onerror("Bad http status line.");
             }
           }
+          data = undefined;
+          responseHeaders = undefined;
         },
-        function (error: string) {
-          console.error(error);
-          if (self.onerror) {
-            self.onerror(error);
+        function (dataIn) {
+          if (data) {
+            data.append(textDecoder.decode(dataIn));
+          } else {
+            data = new StringBuffer(textDecoder.decode(dataIn));
           }
+        },
+        function (head) {
+          responseHeaders = head;
         }
       );
     } else {
@@ -550,19 +737,7 @@ export class XMLHttpRequest {
       );
     }
 
-    // get default port
-    let port = parseInt(this.url.port, 10);
-    if (isNaN(port)) {
-      if (this.url.protocol === "https:") {
-        port = 443;
-      } else if (this.url.protocol === "http:") {
-        port = 80;
-      } else {
-        throw Error(
-          `Cannot determine default port for protocol ${this.url.protocol}`
-        );
-      }
-    }
+    const port = getDefaultPort(this.url);
     this.url.port = "" + port;
   }
 

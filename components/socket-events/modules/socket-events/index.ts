@@ -3,7 +3,11 @@ import {
   afterSuspendHandlers,
 } from "esp32-js-eventloop";
 
-export type OnDataCB = (data: string, sockfd: number, length: number) => void;
+export type OnDataCB = (
+  data: Uint8Array,
+  sockfd: number,
+  length: number
+) => void;
 export type OnConnectCB = (socket: Esp32JsSocket) => boolean | void;
 export type OnErrorCB = (sockfd: number) => void;
 export type OnCloseCB = (sockfd: number) => void;
@@ -317,13 +321,13 @@ export function sockConnect(
   host: string,
   port: string,
   onConnect: OnConnectCB,
-  onData: (data: string, sockfd: number, length: number) => void,
+  onData: (data: Uint8Array, sockfd: number, length: number) => void,
   onError: (sockfd: number) => void,
   onClose: () => void
 ): Esp32JsSocket {
   const sockfd = el_createNonBlockingSocket();
   el_connectNonBlocking(sockfd, host, parseInt(port, 10));
-
+  
   const socket = getOrCreateNewSocket();
   socket.sockfd = sockfd;
   socket.onData = onData;
@@ -514,7 +518,10 @@ function afterSuspend(evt: Esp32JsEventloopEvent, collected: Function[]) {
           console.debug("after eventloop read socket");
           if (
             result === null ||
-            (result && typeof result.data === "string" && result.length == 0)
+            (result &&
+              Object.prototype.toString.call(result.data) ===
+                "[object Uint8Array]" &&
+              result.length == 0)
           ) {
             closeSocket(socket.sockfd);
           } else if (!result) {
