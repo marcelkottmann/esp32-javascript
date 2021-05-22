@@ -44,7 +44,7 @@ void startScan()
 	int ret = esp_wifi_scan_start(&scanConf, false);
 	if (ret > 0)
 	{
-		jslog(WARN, "SCAN RETURNED %d\n", ret);
+		jslog(WARN, "SCAN RETURNED %d", ret);
 	}
 	else
 	{
@@ -61,7 +61,7 @@ static IRAM_ATTR esp_err_t event_handler(void *ctx, system_event_t *sysevent)
 	js_event_t event2;
 	wifi_mode_t mode;
 
-	jslog(DEBUG, "WIFI EVENT %d\n", sysevent->event_id);
+	jslog(DEBUG, "WIFI EVENT %d", sysevent->event_id);
 	switch (sysevent->event_id)
 	{
 	case SYSTEM_EVENT_SCAN_DONE:
@@ -71,7 +71,7 @@ static IRAM_ATTR esp_err_t event_handler(void *ctx, system_event_t *sysevent)
 
 		uint16_t apCount = 0;
 		esp_wifi_scan_get_ap_num(&apCount);
-		jslog(DEBUG, "Number of access points found: %d\n", sysevent->event_info.scan_done.number);
+		jslog(DEBUG, "Number of access points found: %d", sysevent->event_info.scan_done.number);
 		uint8_t *bssid = NULL;
 		int8_t rssi = -127;
 		wifi_ap_record_t *list = NULL;
@@ -97,7 +97,7 @@ static IRAM_ATTR esp_err_t event_handler(void *ctx, system_event_t *sysevent)
 		xEventGroupClearBits(wifi_event_group, SCANNING_BIT);
 		if (bssid != NULL)
 		{
-			jslog(INFO, "SSID %s found, best rssi %d, bssid=%02x:%02x:%02x:%02x:%02x:%02x\n", wifi_config.sta.ssid, rssi,
+			jslog(INFO, "SSID %s found, best rssi %d, bssid=%02x:%02x:%02x:%02x:%02x:%02x", wifi_config.sta.ssid, rssi,
 				bssid[0], bssid[1], bssid[2], bssid[3], bssid[4], bssid[5]);
 			memcpy(wifi_config.sta.bssid, bssid, 6 * sizeof(uint8_t));
 			ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
@@ -105,7 +105,7 @@ static IRAM_ATTR esp_err_t event_handler(void *ctx, system_event_t *sysevent)
 		}
 		else
 		{
-			jslog(ERROR, "SSID not found %s\n", wifi_config.sta.ssid);
+			jslog(ERROR, "SSID not found %s", wifi_config.sta.ssid);
 
 			xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);
 			el_create_event(&event, EL_WIFI_EVENT_TYPE, EL_WIFI_STATUS_DISCONNECTED, 0);
@@ -155,7 +155,7 @@ static IRAM_ATTR esp_err_t event_handler(void *ctx, system_event_t *sysevent)
 		el_add_event(&events, &event);
 		break;
 	default:
-		jslog(ERROR, "UNKNOWN WIFI EVENT %d\n", sysevent->event_id);
+		jslog(ERROR, "UNKNOWN WIFI EVENT %d", sysevent->event_id);
 		break;
 	}
 
@@ -251,7 +251,7 @@ static duk_ret_t setupWifi(duk_context *ctx, bool softap)
 		wifi_config.sta.scan_method = WIFI_ALL_CHANNEL_SCAN;
 		wifi_config.sta.bssid_set = true;
 
-		jslog(DEBUG, "Setting WiFi configuration SSID %s and PASS %s ...", wifi_config.sta.ssid, wifi_config.sta.password);
+		jslog(DEBUG, "Setting WiFi configuration SSID %s and PASS **** ...", wifi_config.sta.ssid);
 		ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
 		ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
 		ESP_ERROR_CHECK(esp_wifi_start());

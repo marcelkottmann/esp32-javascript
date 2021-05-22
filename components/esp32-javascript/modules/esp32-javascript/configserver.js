@@ -110,6 +110,8 @@ function page(res, headline, text, cb) {
     }
     res.end("</div></div></div></body></html>\r\n\r\n");
 }
+var successMessage = "";
+var errorMessage = "";
 function startConfigServer() {
     console.info("Starting config server.");
     var authString = "Basic " +
@@ -131,8 +133,6 @@ function startConfigServer() {
             });
         }
         else if (req.path === "/setup" || req.path === "/restart") {
-            var saved = false;
-            var error = undefined;
             if (req.path === "/setup" && req.method === "POST") {
                 try {
                     var storedConfig = configManager.config;
@@ -149,19 +149,28 @@ function startConfigServer() {
                     storedConfig.ota.offline = config_1.offline === "true";
                     storedConfig.ota.script = config_1.script;
                     configManager.saveConfig(storedConfig);
-                    saved = true;
+                    successMessage = "Saved. Some settings require a restart.";
                 }
                 catch (err) {
-                    error = err;
+                    errorMessage = err;
                 }
             }
             var config = configManager.config;
-            page(res, "Setup", "" + (saved
-                ? '<div class="formpad green">Saved. Some settings require a restart.</div>'
-                : "") + (error
-                ? "<div class=\"formpad red\">Saving failed. Error message: " + error + "</div>"
-                : "") + "<form action=\"/setup\" method=\"post\">\n        <div class=\"formpad\"><label for=\"ssid\" class=\"formlabel\">SSID</label><input type=\"text\" name=\"ssid\" class=\"fill input\" value=\"" + (((_a = config.wifi) === null || _a === void 0 ? void 0 : _a.ssid) || "") + "\" /></div>\n        <div class=\"formpad\"><label for=\"password\" class=\"formlabel\">Password</label><input type=\"text\" name=\"password\" class=\"fill input\" value=\"" + (((_b = config.wifi) === null || _b === void 0 ? void 0 : _b.password) || "") + "\" /></div>\n        <div class=\"formpad\"><label for=\"url\" class=\"formlabel\">JS file url</label><input type=\"text\" name=\"url\" class=\"fill input\" value=\"" + (((_c = config.ota) === null || _c === void 0 ? void 0 : _c.url) || "") + "\" /></div>\n        <div class=\"formpad\"><label for=\"offline\"><input type=\"checkbox\" name=\"offline\" value=\"true\" " + (((_d = config.ota) === null || _d === void 0 ? void 0 : _d.offline) ? "checked" : "") + "/> Offline Mode</label></div>\n        <label for=\"script\" class=\"formpad\">Offline Script</label><div class=\"formpad\"><textarea name=\"script\" class=\"full input txt\">" + (((_e = config.ota) === null || _e === void 0 ? void 0 : _e.script) || "") + "</textarea></div>\n        <div class=\"formpad\"><input type=\"submit\" value=\"Save\" class=\"formpad input\"/></div></form>\n        <h1>Request restart</h1>\n        <form action=\"/restart\" method=\"post\"><div class=\"formpad\"><input type=\"submit\" value=\"Restart\" class=\"formpad input\"/></div></form>\n        <h1>Uptime</h1>\n        <div class=\"formpad\">\n          Boot time: " + boot_1.getBootTime() + "\n        </div>\n        <div class=\"formpad\">\n          Uptime (hours): " + Math.floor((Date.now() - boot_1.getBootTime().getTime()) / 10 / 60 / 60) /
+            var logFileSize = void 0;
+            try {
+                logFileSize = fileSize("/data/logs.txt");
+            }
+            catch (_) {
+                // ignore
+            }
+            page(res, "Setup", "" + (successMessage
+                ? "<div class=\"formpad green\">" + successMessage + "</div>"
+                : "") + (errorMessage
+                ? "<div class=\"formpad red\">Saving failed. Error message: " + errorMessage + "</div>"
+                : "") + "<form action=\"/setup\" method=\"post\">\n        <div class=\"formpad\"><label for=\"ssid\" class=\"formlabel\">SSID</label><input type=\"text\" name=\"ssid\" class=\"fill input\" value=\"" + (((_a = config.wifi) === null || _a === void 0 ? void 0 : _a.ssid) || "") + "\" /></div>\n        <div class=\"formpad\"><label for=\"password\" class=\"formlabel\">Password</label><input type=\"text\" name=\"password\" class=\"fill input\" value=\"" + (((_b = config.wifi) === null || _b === void 0 ? void 0 : _b.password) || "") + "\" /></div>\n        <div class=\"formpad\"><label for=\"url\" class=\"formlabel\">JS file url</label><input type=\"text\" name=\"url\" class=\"fill input\" value=\"" + (((_c = config.ota) === null || _c === void 0 ? void 0 : _c.url) || "") + "\" /></div>\n        <div class=\"formpad\"><label for=\"offline\"><input type=\"checkbox\" name=\"offline\" value=\"true\" " + (((_d = config.ota) === null || _d === void 0 ? void 0 : _d.offline) ? "checked" : "") + "/> Offline Mode</label></div>\n        <label for=\"script\" class=\"formpad\">Offline Script</label><div class=\"formpad\"><textarea name=\"script\" class=\"full input txt\">" + (((_e = config.ota) === null || _e === void 0 ? void 0 : _e.script) || "") + "</textarea></div>\n        <div class=\"formpad\"><input type=\"submit\" value=\"Save\" class=\"formpad input\"/></div></form>\n        <h1>Logs</h1>\n        <div class=\"formpad\">\n          Log size: " + (logFileSize ? Math.floor(logFileSize / 1024) : "?") + " kB\n        </div>\n        <form action=\"/logs\" method=\"get\"><div class=\"formpad\"><input type=\"submit\" value=\"Show Logs\" class=\"formpad input\"/></div></form>\n        <form action=\"/deletelogs\" method=\"get\"><div class=\"formpad\"><input type=\"submit\" value=\"Delete Logs\" class=\"formpad input\"/></div></form>\n        <h1>Request restart</h1>\n        <form action=\"/restart\" method=\"post\"><div class=\"formpad\"><input type=\"submit\" value=\"Restart\" class=\"formpad input\"/></div></form>\n        <h1>Uptime</h1>\n        <div class=\"formpad\">\n          Boot time: " + boot_1.getBootTime() + "\n        </div>\n        <div class=\"formpad\">\n          Uptime (hours): " + Math.floor((Date.now() - boot_1.getBootTime().getTime()) / 10 / 60 / 60) /
                 100 + "<br />\n        </div>\n        <div class=\"formpad\">\n          Boot time is only available if a valid 'JS file url' is configured, otherwise it starts at unix epoch (1970).\n        </div>");
+            successMessage = "";
+            errorMessage = "";
         }
         else {
             var handled = false;
@@ -172,12 +181,12 @@ function startConfigServer() {
                         handled = Boolean(handled || reqHandled);
                     }
                     catch (error) {
-                        var errorMessage = "Internal server error: " + error;
-                        console.error(errorMessage);
+                        var errorMessage_1 = "Internal server error: " + error;
+                        console.error(errorMessage_1);
                         if (!res.isEnded) {
                             res.setStatus(500);
                             res.headers.set("Content-type", "text/plain");
-                            res.end(errorMessage);
+                            res.end(errorMessage_1);
                         }
                     }
                 }
@@ -233,6 +242,21 @@ function startConfigServer() {
                     res.end("Internal server error while saving configuration.");
                 }
             }
+        }
+    });
+    exports.requestHandler.push(function (req, res) {
+        if (/\/logs(|\?.*)/.exec(req.path)) {
+            res.setStatus(200);
+            res.headers.set("Content-type", "text/plain");
+            global.el_flushLogBuffer();
+            res.end(readFile("/data/logs.txt"));
+        }
+    });
+    exports.requestHandler.push(function (req, res) {
+        if (/\/deletelogs(|\?.*)/.exec(req.path)) {
+            removeFile("/data/logs.txt");
+            successMessage = "Logs were deleted successfully.";
+            redirect(res, "/setup");
         }
     });
 }

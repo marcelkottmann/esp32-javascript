@@ -78,7 +78,24 @@ declare const EL_SOCKET_EVENT_TYPE: number;
 declare function readSocket(
   sockfd: number,
   ssl: any
-): { data: string; length: number };
+): { data: Uint8Array; length: number };
 
 declare function readFile(path: string): string;
-declare function writeFile(path: string, data: string): void;
+declare function writeFile(path: string, data: string): number;
+declare function appendFile(path: string, data: string): number;
+declare function removeFile(path: string): number;
+declare function fileSize(path: string): number;
+
+// ota
+declare function el_ota_begin(): number;
+declare function el_ota_write(handle: number, data: Uint8Array): number;
+declare function el_ota_end(handle: number): number;
+declare function el_ota_switch_boot_partition(): number;
+
+declare function el_ota_find_next_modules_partition(): number;
+declare function el_partition_erase(partition: number): void;
+declare function el_partition_write(
+  partition: number,
+  offset: number,
+  data: Uint8Array
+): void;

@@ -398,7 +398,10 @@ function afterSuspend(evt, collected) {
                     var result = readSocket(socket_1.sockfd, socket_1.ssl);
                     console.debug("after eventloop read socket");
                     if (result === null ||
-                        (result && typeof result.data === "string" && result.length == 0)) {
+                        (result &&
+                            Object.prototype.toString.call(result.data) ===
+                                "[object Uint8Array]" &&
+                            result.length == 0)) {
                         closeSocket(socket_1.sockfd);
                     }
                     else if (!result) {
