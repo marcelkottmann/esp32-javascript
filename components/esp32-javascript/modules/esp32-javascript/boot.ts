@@ -127,7 +127,7 @@ function connectToWifi() {
   let retries = 0;
   wifi.connectWifi(config.wifi.ssid, config.wifi.password, function (evt, ip) {
     if (evt.status === 0) {
-      console.info("WIFI: DISCONNECTED");
+      console.debug("WIFI: DISCONNECTED");
       if (!configServerStarted) {
         retries++;
       }
@@ -191,7 +191,7 @@ function connectToWifi() {
         }
       }
     } else if (evt.status === 2) {
-      console.info("WIFI: CONNECTING...");
+      console.debug("WIFI: CONNECTING...");
     }
   });
 }

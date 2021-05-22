@@ -118,7 +118,7 @@ class Socket implements Esp32JsSocket {
     this.clearReadTimeoutTimer();
     if (this.readTimeout > 0) {
       this.readTimeoutHandle = setTimeout(() => {
-        console.log("Close socket because of read timeout.");
+        console.debug("Close socket because of read timeout.");
         closeSocket(this);
       }, this.readTimeout);
     }
