@@ -1,3 +1,26 @@
+/*
+MIT License
+
+Copyright (c) 2021 Marcel Kottmann
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
 import socketEvents = require("socket-events");
 import {
   ChunkedEncodingConsumer,
@@ -374,122 +397,6 @@ export function parseQueryStr(query: string | null): { [key: string]: string } {
   }
   return parsed;
 }
-
-/*export function httpClient(
-  ssl: boolean,
-  host: string,
-  port: string,
-  path: string,
-  method: string,
-  requestHeaders?: string,
-  body?: { toString: () => string },
-  successCB?: (content: string, headers: string) => void,
-  errorCB?: (message: string) => void,
-  finishCB?: () => void,
-  dataCB?: (data: Uint8Array) => void
-): void {
-  const complete: StringBuffer = new StringBuffer();
-  let completeLength = 0;
-  let chunked = false;
-  let headerRead = false;
-  let headerEnd = -1;
-  let contentLength = -1;
-  requestHeaders = requestHeaders || "";
-  if (!errorCB) {
-    errorCB = print;
-  }
-
-  const textDecoder = new TextDecoder();
-
-  sockConnect(
-    ssl,
-    host,
-    port,
-    function (socket) {
-      const bodyStr = body ? body.toString() : null;
-
-      const requestLines = `${method} ${path} HTTP/1.1\r\nHost: ${host}\r\n${
-        bodyStr ? `Content-length: ${bodyStr.length}\r\n` : ""
-      }${requestHeaders}\r\n${bodyStr ? bodyStr + "\r\n" : ""}`;
-
-      socket.write(requestLines);
-      socket.flush();
-    },
-    function (data, sockfd, length) {
-      dataCB && dataCB(data);
-    
-      complete.append(textDecoder.decode(data));
-      completeLength = completeLength + length;
-
-      if (!headerRead && (headerEnd = complete.indexOf("\r\n\r\n")) >= 0) {
-        headerRead = true;
-        chunked =
-          complete.toLowerCase().indexOf("transfer-encoding: chunked") >= 0;
-        const clIndex = complete.toLowerCase().indexOf("content-length: ");
-        if (clIndex >= 0) {
-          const endOfContentLength = complete.indexOf("\r\n", clIndex);
-          contentLength = parseInt(
-            complete.substring(clIndex + 15, endOfContentLength).toString()
-          );
-        }
-        headerEnd += 4;
-      }
-
-      if (chunked) {
-        if (complete.substring(complete.length - 5).toString() == "0\r\n\r\n") {
-          closeSocket(sockfd);
-        }
-      }
-      if (contentLength >= 0) {
-        if (completeLength - headerEnd == contentLength) {
-          closeSocket(sockfd);
-        }
-      }
-    },
-    function () {
-      if (errorCB) {
-        errorCB(
-          `Could not load ${ssl ? "https" : "http"}://${host}:${port}${path}`
-        );
-      }
-    },
-    function () {
-      let startFrom = headerEnd;
-      let content = null;
-
-      if (chunked) {
-        content = new StringBuffer();
-
-        let chunkLength;
-        do {
-          const chunkLengthEnd = complete.indexOf("\r\n", startFrom);
-          const lengthStr = complete
-            .substring(startFrom, chunkLengthEnd)
-            .toString();
-          chunkLength = parseInt(lengthStr, 16);
-          const chunkEnd = chunkLengthEnd + chunkLength + 2;
-
-          content.append(complete.substring(chunkLengthEnd + 2, chunkEnd));
-          startFrom = chunkEnd + 2;
-        } while (chunkLength > 0);
-      } else {
-        content = complete.substring(startFrom);
-      }
-
-      const headers = complete.substring(0, headerEnd);
-
-      if (successCB) {
-        successCB(content.toString(), headers.toString());
-      }
-      //free complete for GC
-      content = null;
-      if (finishCB) {
-        finishCB();
-      }
-    }
-  );
-}
-*/
 
 export function httpClient(
   ssl: boolean,
