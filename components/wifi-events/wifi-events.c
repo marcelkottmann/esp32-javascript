@@ -105,7 +105,7 @@ static IRAM_ATTR esp_err_t event_handler(void *ctx, system_event_t *sysevent)
 		}
 		else
 		{
-			jslog(ERROR, "SSID not found %s", wifi_config.sta.ssid);
+			jslog(DEBUG, "SSID not found %s", wifi_config.sta.ssid);
 
 			xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);
 			el_create_event(&event, EL_WIFI_EVENT_TYPE, EL_WIFI_STATUS_DISCONNECTED, 0);

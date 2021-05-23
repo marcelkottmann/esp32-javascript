@@ -38,9 +38,9 @@ type Esp32JsEventHandler = (
 errorhandler =
   typeof errorhandler === "undefined"
     ? function (error) {
-      console.error("Uncaught error:");
-      console.error(error.stack || error);
-    }
+        console.error("Uncaught error:");
+        console.error(error.stack || error);
+      }
     : errorhandler;
 
 const timers: Esp32JsTimer[] = [];
@@ -111,7 +111,7 @@ function el_select_next() {
   for (let evid = 0; evid < events.length; evid++) {
     const evt = events[evid];
     console.debug("HANDLE EVENT: " + JSON.stringify(evt));
-    if (evt.type === 0) {
+    if (evt.type === EL_TIMER_EVENT_TYPE) {
       //TIMER EVENT
       let nextTimer = null;
       for (let timerIdx = 0; timerIdx < timers.length; timerIdx++) {
@@ -124,11 +124,32 @@ function el_select_next() {
         //throw Error('UNKNOWN TIMER HANDLE!!!');
         console.warn(
           "UNKNOWN TIMER HANDLE:" +
-          JSON.stringify(evt) +
-          ";" +
-          JSON.stringify(timers)
+            JSON.stringify(evt) +
+            ";" +
+            JSON.stringify(timers)
         );
       }
+    } else if (evt.type === EL_LOG_EVENT_TYPE) {
+      //LOG EVENT
+      const logevent = evt;
+      collected.push(() => {
+        let logfunction = console.log;
+        switch (logevent.status) {
+          case 1:
+            logfunction = console.debug;
+            break;
+          case 2:
+            logfunction = console.info;
+            break;
+          case 3:
+            logfunction = console.warn;
+            break;
+          case 4:
+            logfunction = console.error;
+            break;
+        }
+        logfunction(el_readAndFreeString(logevent.fd));
+      });
     } else {
       let eventHandled = false;
       if (afterSuspendHandlers) {
@@ -152,7 +173,7 @@ function el_select_next() {
 export function start(): void {
   // eslint-disable-next-line @typescript-eslint/ban-types
   let nextfuncs: Function[] = [main];
-  for (; ;) {
+  for (;;) {
     if (Array.isArray(nextfuncs)) {
       nextfuncs.forEach(function (nf) {
         if (typeof nf === "function") {

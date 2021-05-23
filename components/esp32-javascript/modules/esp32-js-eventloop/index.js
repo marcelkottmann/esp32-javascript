@@ -67,7 +67,7 @@ function el_select_next() {
     var _loop_1 = function (evid) {
         var evt = events[evid];
         console.debug("HANDLE EVENT: " + JSON.stringify(evt));
-        if (evt.type === 0) {
+        if (evt.type === EL_TIMER_EVENT_TYPE) {
             //TIMER EVENT
             var nextTimer = null;
             for (var timerIdx = 0; timerIdx < timers.length; timerIdx++) {
@@ -83,6 +83,28 @@ function el_select_next() {
                     ";" +
                     JSON.stringify(timers));
             }
+        }
+        else if (evt.type === EL_LOG_EVENT_TYPE) {
+            //LOG EVENT
+            var logevent_1 = evt;
+            collected.push(function () {
+                var logfunction = console.log;
+                switch (logevent_1.status) {
+                    case 1:
+                        logfunction = console.debug;
+                        break;
+                    case 2:
+                        logfunction = console.info;
+                        break;
+                    case 3:
+                        logfunction = console.warn;
+                        break;
+                    case 4:
+                        logfunction = console.error;
+                        break;
+                }
+                logfunction(el_readAndFreeString(logevent_1.fd));
+            });
         }
         else {
             var eventHandled_1 = false;
