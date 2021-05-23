@@ -44,7 +44,7 @@ extern "C"
         void *fd;
     } js_event_t;
 
-#define MAX_EVENTS 4
+#define MAX_EVENTS 8
     typedef struct
     {
         js_event_t events[MAX_EVENTS];

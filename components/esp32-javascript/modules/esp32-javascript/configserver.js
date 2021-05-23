@@ -36,7 +36,9 @@ SOFTWARE.
 */
 var configManager = require("./config");
 var boot_1 = require("./boot");
+var native_ota_1 = require("./native-ota");
 var http_1 = require("./http");
+var filelogging_1 = require("./filelogging");
 var schema = {
     access: {
         type: "object",
@@ -117,14 +119,14 @@ function redirect(res, location) {
     res.end();
 }
 exports.redirect = redirect;
-function page(res, headline, text, cb) {
+function page(res, headline, text, cb, additionalHeadTags) {
     if (cb) {
         // register callback
         res.on("end", cb);
     }
     res.setStatus(200);
     res.headers.set("content-type", "text/html");
-    res.write("<!doctype html><html><head><title>esp32-javascript</title>\n      <meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\">\n      <style>\n      body {\n        font-family: monospace;\n        font-size: 13pt;\n      }\n      .input {\n        font-family: monospace;\n        font-size: 13pt;\n      }\n      .fill {\n        width: calc(100% - 146px);\n      }\n      .full {\n        width: calc(100% - 16px);\n      }\n      .txt {\n        height: 100px;\n      }\n      .formlabel {\n        display: inline-block;\n        width: 130px;\n      }\n      .formpad {\n        padding: 8px;\n      }\n      .green {\n        color: green;\n      }\n      .red {\n        color: red;\n      }\n      </style>\n      \n      </head>\n      <body><div><div><div><h1>" + headline + "</h1>");
+    res.write("<!doctype html><html><head><title>esp32-javascript</title>\n      <meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\">\n      <style>\n      body {\n        font-family: monospace;\n        font-size: 13pt;\n      }\n      .input {\n        font-family: monospace;\n        font-size: 13pt;\n      }\n      .fill {\n        width: calc(100% - 146px);\n      }\n      .full {\n        width: calc(100% - 16px);\n      }\n      .txt {\n        height: 100px;\n      }\n      .formlabel {\n        display: inline-block;\n        width: 130px;\n      }\n      .formpad {\n        padding: 8px;\n      }\n      .green {\n        color: green;\n      }\n      .red {\n        color: red;\n      }\n      .inline-form {\n        display: inline;\n      }\n      .blink {\n        animation: blinkanimation 1s linear infinite;\n      }\n      @keyframes blinkanimation {\n        50% {\n          opacity: 0;\n        }\n      }\n      </style>\n      " + (additionalHeadTags ? additionalHeadTags : "") + "\n      </head>\n      <body><div><div><div><h1>" + headline + "</h1>");
     if (Array.isArray(text)) {
         res.write(text.join(""));
     }
@@ -133,6 +135,32 @@ function page(res, headline, text, cb) {
     }
     res.end("</div></div></div></body></html>\r\n\r\n");
 }
+function getLogFileList() {
+    global.el_flushLogBuffer();
+    var logFileList = [];
+    try {
+        var list = listDir(filelogging_1.FILE_LOGGING_DIRECTORY).sort();
+        list.forEach(function (f) {
+            try {
+                logFileList.push({
+                    filename: f,
+                    size: fileSize(filelogging_1.FILE_LOGGING_DIRECTORY + "/" + f),
+                });
+            }
+            catch (error) {
+                console.error(error);
+            }
+        });
+    }
+    catch (_) {
+        // ignore
+    }
+    return logFileList;
+}
+var upgradeStatus = {
+    status: "idle",
+    message: "",
+};
 var successMessage = "";
 var errorMessage = "";
 function startConfigServer() {
@@ -168,6 +196,8 @@ function startConfigServer() {
                     var config_1 = http_1.parseQueryStr(req.body);
                     storedConfig.wifi.ssid = config_1.ssid;
                     storedConfig.wifi.password = config_1.password;
+                    storedConfig.access.username = config_1.username;
+                    storedConfig.access.password = config_1.userpass;
                     storedConfig.ota.url = config_1.url;
                     storedConfig.ota.offline = config_1.offline === "true";
                     storedConfig.ota.script = config_1.script;
@@ -179,18 +209,15 @@ function startConfigServer() {
                 }
             }
             var config = configManager.config;
-            var logFileSize = void 0;
-            try {
-                logFileSize = fileSize("/data/logs.txt");
-            }
-            catch (_) {
-                // ignore
-            }
             page(res, "Setup", "" + (successMessage
                 ? "<div class=\"formpad green\">" + successMessage + "</div>"
-                : "") + (errorMessage
-                ? "<div class=\"formpad red\">Saving failed. Error message: " + errorMessage + "</div>"
-                : "") + "<form action=\"/setup\" method=\"post\">\n        <div class=\"formpad\"><label for=\"ssid\" class=\"formlabel\">SSID</label><input type=\"text\" name=\"ssid\" class=\"fill input\" value=\"" + (((_a = config.wifi) === null || _a === void 0 ? void 0 : _a.ssid) || "") + "\" /></div>\n        <div class=\"formpad\"><label for=\"password\" class=\"formlabel\">Password</label><input type=\"text\" name=\"password\" class=\"fill input\" value=\"" + (((_b = config.wifi) === null || _b === void 0 ? void 0 : _b.password) || "") + "\" /></div>\n        <div class=\"formpad\"><label for=\"url\" class=\"formlabel\">JS file url</label><input type=\"text\" name=\"url\" class=\"fill input\" value=\"" + (((_c = config.ota) === null || _c === void 0 ? void 0 : _c.url) || "") + "\" /></div>\n        <div class=\"formpad\"><label for=\"offline\"><input type=\"checkbox\" name=\"offline\" value=\"true\" " + (((_d = config.ota) === null || _d === void 0 ? void 0 : _d.offline) ? "checked" : "") + "/> Offline Mode</label></div>\n        <label for=\"script\" class=\"formpad\">Offline Script</label><div class=\"formpad\"><textarea name=\"script\" class=\"full input txt\">" + (((_e = config.ota) === null || _e === void 0 ? void 0 : _e.script) || "") + "</textarea></div>\n        <div class=\"formpad\"><input type=\"submit\" value=\"Save\" class=\"formpad input\"/></div></form>\n        <h1>Logs</h1>\n        <div class=\"formpad\">\n          Log size: " + (logFileSize ? Math.floor(logFileSize / 1024) : "?") + " kB\n        </div>\n        <form action=\"/logs\" method=\"get\"><div class=\"formpad\"><input type=\"submit\" value=\"Show Logs\" class=\"formpad input\"/></div></form>\n        <form action=\"/deletelogs\" method=\"get\"><div class=\"formpad\"><input type=\"submit\" value=\"Delete Logs\" class=\"formpad input\"/></div></form>\n        <h1>Request restart</h1>\n        <form action=\"/restart\" method=\"post\"><div class=\"formpad\"><input type=\"submit\" value=\"Restart\" class=\"formpad input\"/></div></form>\n        <h1>Uptime</h1>\n        <div class=\"formpad\">\n          Boot time: " + boot_1.getBootTime() + "\n        </div>\n        <div class=\"formpad\">\n          Uptime (hours): " + Math.floor((Date.now() - boot_1.getBootTime().getTime()) / 10 / 60 / 60) /
+                : "") + (errorMessage ? "<div class=\"formpad red\">" + errorMessage + "</div>" : "") + "<h2>Configuration</h2><h3>Wifi</h3><form action=\"/setup\" method=\"post\">\n        <div class=\"formpad\"><label for=\"ssid\" class=\"formlabel\">SSID</label><input type=\"text\" name=\"ssid\" class=\"fill input\" value=\"" + (((_a = config.wifi) === null || _a === void 0 ? void 0 : _a.ssid) || "") + "\" /></div>\n        <div class=\"formpad\"><label for=\"password\" class=\"formlabel\">Password</label><input type=\"text\" name=\"password\" class=\"fill input\" value=\"" + (((_b = config.wifi) === null || _b === void 0 ? void 0 : _b.password) || "") + "\" /></div>\n        <h3>Basic authentication</h3>\n        <div class=\"formpad\"><label for=\"username\" class=\"formlabel\">Username</label><input type=\"text\" name=\"username\" class=\"fill input\" value=\"" + config.access.username + "\" /></div>\n        <div class=\"formpad\"><label for=\"userpass\" class=\"formlabel\">Password</label><input type=\"text\" name=\"userpass\" class=\"fill input\" value=\"" + config.access.password + "\" /></div>\n        <h3>JavaScript OTA</h3><div class=\"formpad\"><label for=\"url\" class=\"formlabel\">JS file url</label><input type=\"text\" name=\"url\" class=\"fill input\" value=\"" + (((_c = config.ota) === null || _c === void 0 ? void 0 : _c.url) || "") + "\" /></div>\n        <div class=\"formpad\"><label for=\"offline\"><input type=\"checkbox\" name=\"offline\" value=\"true\" " + (((_d = config.ota) === null || _d === void 0 ? void 0 : _d.offline) ? "checked" : "") + "/> Offline Mode</label></div>\n        <label for=\"script\" class=\"formpad\">Offline Script</label><div class=\"formpad\"><textarea name=\"script\" class=\"full input txt\">" + (((_e = config.ota) === null || _e === void 0 ? void 0 : _e.script) || "") + "</textarea></div>\n        <div class=\"formpad\"><input type=\"submit\" value=\"Save\" class=\"formpad input\"/></div></form>\n        <h2>Logs</h2>\n        <div class=\"formpad\">\n          <p>\n            Showing last " + filelogging_1.LOG_FILE_NUM_LIMIT + " log files, with each having maximum of " + filelogging_1.LOG_FILE_SIZE_LIMIT / 1024 + " kB data.<br/>\n          </p>\n          " + getLogFileList()
+                .map(function (e) {
+                return e.filename + " (" + (e.size === undefined ? "?" : Math.floor(e.size / 1024)) + " kB) <form action=\"/viewlog\" method=\"post\" class=\"inline-form\"><button class=\"input\" type=\"submit\" name=\"file\" value=\"" + filelogging_1.FILE_LOGGING_DIRECTORY + "/" + e.filename + "\">View</button></form> <form action=\"/deletelog\" method=\"post\" class=\"inline-form\"><button class=\"input\" type=\"submit\" name=\"file\" value=\"" + filelogging_1.FILE_LOGGING_DIRECTORY + "/" + e.filename + "\">Delete</button></form><br />";
+            })
+                .join("") + "\n          </form>\n        </div>\n        \n        <h2>Native OTA Upgrade</h2>\n        <form action=\"/native-ota\" method=\"post\" class=\"formpad\">\n          <div class=\"formpad\"><label for=\"appbin\" class=\"formlabel\">URL to app binary</label><input type=\"text\" name=\"appbin\" class=\"fill input\" value=\"\" /></div>\n          <div class=\"formpad\"><label for=\"modulesbin\" class=\"formlabel\">URL to modules binary</label><input type=\"text\" name=\"modulesbin\" class=\"fill input\" value=\"\" /></div>\n          <div class=\"formpad\"><input type=\"submit\" value=\"Upgrade\" class=\"formpad input\" " + (upgradeStatus.status === "inprogress" ? "disabled" : "") + "/> " + (upgradeStatus.status !== "idle"
+                ? '<a href="/native-ota">Upgrade status</a>'
+                : "") + "</div>\n        </form>\n\n        <h2>Request restart</h2>\n        <form action=\"/restart\" method=\"post\"><div class=\"formpad\"><input type=\"submit\" value=\"Restart\" class=\"formpad input\"/></div></form>\n        <h2>Uptime</h2>\n        <div class=\"formpad\">\n          Boot time: " + boot_1.getBootTime() + "\n        </div>\n        <div class=\"formpad\">\n          Uptime (hours): " + Math.floor((Date.now() - boot_1.getBootTime().getTime()) / 10 / 60 / 60) /
                 100 + "<br />\n        </div>\n        <div class=\"formpad\">\n          Boot time is only available if a valid 'JS file url' is configured, otherwise it starts at unix epoch (1970).\n        </div>");
             successMessage = "";
             errorMessage = "";
@@ -268,18 +295,76 @@ function startConfigServer() {
         }
     });
     exports.requestHandler.push(function (req, res) {
-        if (/\/logs(|\?.*)/.exec(req.path)) {
-            res.setStatus(200);
-            res.headers.set("Content-type", "text/plain");
-            global.el_flushLogBuffer();
-            res.end(readFile("/data/logs.txt"));
+        if (/\/viewlog/.exec(req.path)) {
+            var parsed = http_1.parseQueryStr(req.body);
+            if (parsed.file.indexOf(filelogging_1.FILE_LOGGING_DIRECTORY) !== 0) {
+                res.setStatus(400, "Invalid supplied filename.");
+                res.end();
+                return;
+            }
+            try {
+                var content = readFile(parsed.file);
+                res.setStatus(200);
+                res.headers.set("Content-type", "text/plain");
+                global.el_flushLogBuffer();
+                res.write(content);
+            }
+            catch (_a) {
+                res.setStatus(404, "Not found");
+            }
+            finally {
+                res.end();
+            }
         }
     });
     exports.requestHandler.push(function (req, res) {
-        if (/\/deletelogs(|\?.*)/.exec(req.path)) {
-            removeFile("/data/logs.txt");
-            successMessage = "Logs were deleted successfully.";
+        if (/\/deletelog/.exec(req.path)) {
+            var parsed = http_1.parseQueryStr(req.body);
+            if (parsed.file.indexOf(filelogging_1.FILE_LOGGING_DIRECTORY) !== 0) {
+                res.setStatus(400, "Invalid supplied filename.");
+                res.end();
+                return;
+            }
+            if (removeFile(parsed.file) >= 0) {
+                successMessage = "Log file deleted successfully.";
+            }
+            else {
+                errorMessage = "Log file not found.";
+            }
             redirect(res, "/setup");
+        }
+    });
+    exports.requestHandler.push(function (req, res) {
+        if (/\/native-ota/.exec(req.path)) {
+            if (req.method === "POST") {
+                var parsed_1 = http_1.parseQueryStr(req.body);
+                if (parsed_1.appbin && parsed_1.modulesbin) {
+                    if (upgradeStatus.status !== "inprogress") {
+                        upgradeStatus.status = "inprogress";
+                        upgradeStatus.message = "";
+                        setTimeout(function () {
+                            native_ota_1.upgrade(parsed_1.appbin, parsed_1.modulesbin, function (error) {
+                                upgradeStatus.status = "error";
+                                upgradeStatus.message = error;
+                            }, function () {
+                                upgradeStatus.status = "success";
+                                upgradeStatus.message = "";
+                            });
+                        }, 2000);
+                    }
+                    redirect(res, "/native-ota");
+                }
+            }
+            else {
+                page(res, "Upgrade", "" + ((upgradeStatus.status === "error" &&
+                    "<div class=\"formpad red\">An error occured while upgrading: " + upgradeStatus.message + "</div>") ||
+                    (upgradeStatus.status === "success" &&
+                        "<div class=\"formpad green\">Upgrade was successful. Please restart to start upgraded firmware.</div>\n              <form action=\"/restart\" method=\"post\"><div class=\"formpad\"><input type=\"submit\" value=\"Restart\" class=\"formpad input\"/></div></form>") ||
+                    (upgradeStatus.status === "inprogress" &&
+                        "<div class=\"formpad\">Upgrade in progress<span class=\"blink\">...</span><br/>Page refreshes automatically.</div>") ||
+                    (upgradeStatus.status === "idle" &&
+                        "<div class=\"formpad red\">No upgrade started.</div>")), undefined, '<meta http-equiv="refresh" content="20">');
+            }
         }
     });
 }

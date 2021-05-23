@@ -85,6 +85,11 @@ void fileLog(duk_context *ctx, log_level_t level, char *message)
 
 void jslog(log_level_t level, const char *msg, ...)
 {
+    if (level < (5 - LOG_LOCAL_LEVEL))
+    {
+        return;
+    }
+
     char *my_string;
     va_list argp;
 
@@ -115,25 +120,21 @@ void jslog(log_level_t level, const char *msg, ...)
         duk_eval(ctx); /* -> [ ... func ] */
         duk_push_string(ctx, my_string);
         duk_call(ctx, 1);
+        //clear stack
+        duk_pop(ctx);
     }
     else
     {
-        if (level == DEBUG)
-        {
-            ESP_LOGD(tag, "No ctx present: %s", my_string);
-        }
-        else if (level == INFO)
-        {
-            ESP_LOGI(tag, "No ctx present: %s", my_string);
-        }
-        else if (level == WARN)
-        {
-            ESP_LOGW(tag, "No ctx present: %s", my_string);
-        }
-        else
-        {
-            ESP_LOGE(tag, "No ctx present: %s", my_string);
-        }
+        char *message = malloc(strlen(my_string) + 1);
+        strcpy(message, my_string);
+
+        js_event_t event;
+        js_eventlist_t events;
+        events.events_len = 0;
+
+        el_create_event(&event, EL_LOG_EVENT_TYPE, level, message);
+        el_add_event(&events, &event);
+        el_fire_events(&events);
     }
     free(my_string);
 }
@@ -171,7 +172,7 @@ void IRAM_ATTR el_add_event(js_eventlist_t *events, js_event_t *event)
 {
     if (events->events_len >= MAX_EVENTS)
     {
-        jslog(ERROR, "Event queue full. Max event number: %d => aborting.", MAX_EVENTS);
+        ESP_LOGE(tag, "Event list is full. Max event list size: %d => aborting.", MAX_EVENTS);
         abort();
     }
     events->events[events->events_len] = *event;
@@ -182,17 +183,28 @@ void IRAM_ATTR el_fire_events(js_eventlist_t *events)
 {
     if (DISABLE_EVENTS)
     {
-        jslog(WARN, "Events are disabled. They will never be fired.");
+        ESP_LOGW(tag, "Events are disabled. They will never be fired.");
     }
     else
     {
         if (events->events_len > 0)
         {
-            jslog(DEBUG, "Send %d events to queue...", events->events_len);
+            ESP_LOGD(tag, "Send %d events to queue...", events->events_len);
             int ret = xQueueSendFromISR(el_event_queue, events, NULL);
             if (ret != pdTRUE)
             {
-                jslog(ERROR, "Event queue is full... is something blocking the event loop?...aborting.");
+                ESP_LOGE(tag, "Event queue is full... is something blocking the event loop?...aborting.");
+                js_eventlist_t devents;
+                int num = 0;
+                while (xQueueReceive(el_event_queue, &devents, 0))
+                {
+                    for (int i = 0; i < devents.events_len; i++)
+                    {
+                        ESP_LOGE(tag, "Events num %i, event idx %i, type %i, status %i", num, i, devents.events[i].type, devents.events[i].status);
+                    }
+                    num++;
+                }
+
                 abort();
             }
         }
@@ -401,25 +413,29 @@ static duk_ret_t el_suspend(duk_context *ctx)
     js_eventlist_t events;
 
     jslog(DEBUG, "Waiting for events...");
-
-    xQueueReceive(el_event_queue, &events, portMAX_DELAY);
-
-    jslog(DEBUG, "Receiving %d events.", events.events_len);
-
     int arr_idx = duk_push_array(ctx);
-    for (int i = 0; i < events.events_len; i++)
+    int arrsize = 0;
+    TickType_t timeout = portMAX_DELAY;
+    while (xQueueReceive(el_event_queue, &events, timeout) == pdTRUE)
     {
-        duk_idx_t obj_idx = duk_push_object(ctx);
+        timeout = 0; // set timeout to 0 to not wait in while loop if there are no more events available
+        for (int i = 0; i < events.events_len; i++)
+        {
+            duk_idx_t obj_idx = duk_push_object(ctx);
 
-        duk_push_int(ctx, events.events[i].type);
-        duk_put_prop_string(ctx, obj_idx, "type");
-        duk_push_int(ctx, events.events[i].status);
-        duk_put_prop_string(ctx, obj_idx, "status");
-        duk_push_int(ctx, (int)events.events[i].fd);
-        duk_put_prop_string(ctx, obj_idx, "fd");
+            duk_push_int(ctx, events.events[i].type);
+            duk_put_prop_string(ctx, obj_idx, "type");
+            duk_push_int(ctx, events.events[i].status);
+            duk_put_prop_string(ctx, obj_idx, "status");
+            duk_push_int(ctx, (int)events.events[i].fd);
+            duk_put_prop_string(ctx, obj_idx, "fd");
 
-        duk_put_prop_index(ctx, arr_idx, i);
+            duk_put_prop_index(ctx, arr_idx, arrsize);
+            arrsize++;
+        }
     }
+
+    jslog(DEBUG, "Received %d events.", arrsize);
 
     return 1;
 }
@@ -788,6 +804,14 @@ duk_ret_t el_partition_write(duk_context *ctx)
     }
 }
 
+duk_ret_t el_readAndFreeString(duk_context *ctx)
+{
+    char *str = duk_to_int(ctx, 0);
+    duk_push_string(ctx, str);
+    free(str);
+    return 1;
+}
+
 void duktape_task(void *ignore)
 {
     spiramAvailable = spiramAvail();
@@ -901,6 +925,15 @@ void duktape_task(void *ignore)
     duk_push_c_function(ctx, el_find_partition, 1 /*nargs*/);
     duk_put_global_string(ctx, "el_find_partition");
 
+    duk_push_int(ctx, EL_TIMER_EVENT_TYPE);
+    duk_put_global_string(ctx, "EL_TIMER_EVENT_TYPE");
+
+    duk_push_int(ctx, EL_LOG_EVENT_TYPE);
+    duk_put_global_string(ctx, "EL_LOG_EVENT_TYPE");
+
+    duk_push_c_function(ctx, el_readAndFreeString, 1 /*nargs*/);
+    duk_put_global_string(ctx, "el_readAndFreeString");
+
     loadUrlPolyfill(ctx);
 
 #define ESP32_JAVASCRIPT_EXTERN ESP32_JAVASCRIPT_EXTERN_REGISTER
@@ -924,7 +957,7 @@ int esp32_javascript_init()
     esp_log_level_set("*", ESP_LOG_ERROR);
     esp_log_level_set("wifi", ESP_LOG_WARN);
     esp_log_level_set("dhcpc", ESP_LOG_WARN);
-    esp_log_level_set(tag, ESP_LOG_DEBUG);
+    esp_log_level_set(tag, LOG_LOCAL_LEVEL);
 
     nvs_flash_init();
     tcpip_adapter_init();

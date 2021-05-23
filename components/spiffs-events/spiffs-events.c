@@ -23,6 +23,7 @@ SOFTWARE.
 */
 
 #include <stdio.h>
+#include <dirent.h>
 #include <string.h>
 #include <sys/unistd.h>
 #include <sys/stat.h>
@@ -34,6 +35,7 @@ SOFTWARE.
 #include "esp32-javascript.h"
 #include "esp_ota_ops.h"
 #include "esp_partition.h"
+#include <errno.h>
 
 void initFilesystem(const char *label, const char *basePath)
 {
@@ -84,7 +86,7 @@ long fileSize(const char *path)
 	FILE *f = fopen(path, "r");
 	if (f == NULL)
 	{
-		jslog(ERROR, "Failed to open file to get filesize");
+		jslog(ERROR, "Failed to open file '%s' to get filesize, errno %i", path, errno);
 		return -1;
 	}
 
@@ -130,7 +132,7 @@ int writeFile(const char *path, const char *content)
 	FILE *f = fopen(path, "w");
 	if (f == NULL)
 	{
-		jslog(ERROR, "Failed to open file for writing");
+		jslog(ERROR, "Failed to open file '%s'for writing, errno %i", path, errno);
 		return -1;
 	}
 	int result = fputs(content, f);
@@ -144,7 +146,7 @@ int appendFile(const char *path, const char *content)
 	FILE *f = fopen(path, "a");
 	if (f == NULL)
 	{
-		jslog(ERROR, "Failed to open file for appending");
+		jslog(ERROR, "Failed to open file '%s' for appending, errno %i", path, errno);
 		return -1;
 	}
 	int result = fputs(content, f);
@@ -157,6 +159,47 @@ bool fileExists(const char *path)
 	struct stat buffer;
 	return (stat(path, &buffer) == 0);
 }
+
+duk_ret_t el_listDir(duk_context *ctx)
+{
+	const char *path = duk_to_string(ctx, 0);
+
+	DIR *dp;
+	struct dirent *ep;
+	dp = opendir(path);
+
+	if (dp != NULL)
+	{
+		duk_idx_t arrayIdx = duk_push_array(ctx);
+		int i = 0;
+		while (ep = readdir(dp))
+		{
+			duk_push_string(ctx, ep->d_name);
+			duk_put_prop_index(ctx, arrayIdx, i++);
+		}
+		closedir(dp);
+		return 1;
+	}
+
+	jslog(ERROR, "Failed to list dir '%s', errno %i", path, errno);
+
+	return -1;
+}
+
+// duk_ret_t el_mkdir(duk_context *ctx)
+// {
+// 	const char *path = duk_to_string(ctx, 0);
+
+// 	int ret = mkdir(path, S_IRWXU | S_IRWXG | S_IRWXO);
+
+// 	if (ret == -1 && errno != EEXIST)
+// 	{
+// 		jslog(ERROR, "Failed to make directory %s, with errno %i", path, errno);
+// 		return -1;
+// 	}
+
+// 	return 0;
+// }
 
 duk_ret_t el_readFile(duk_context *ctx)
 {
@@ -233,6 +276,10 @@ void registerBindings(duk_context *ctx)
 	duk_put_global_string(ctx, "removeFile");
 	duk_push_c_function(ctx, el_fileSize, 1);
 	duk_put_global_string(ctx, "fileSize");
+	duk_push_c_function(ctx, el_listDir, 1);
+	duk_put_global_string(ctx, "listDir");
+	// duk_push_c_function(ctx, el_mkdir, 1);
+	// duk_put_global_string(ctx, "mkdir");
 }
 
 void initSpiffs(duk_context *ctx)

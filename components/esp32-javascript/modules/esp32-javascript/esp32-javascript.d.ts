@@ -41,6 +41,8 @@ interface Esp32JsWifiConfig {
 }
 declare function getWifiConfig(): Esp32JsWifiConfig;
 declare const EL_WIFI_EVENT_TYPE: number;
+declare const EL_TIMER_EVENT_TYPE: number;
+declare const EL_LOG_EVENT_TYPE: number;
 declare function el_connectWifi(ssid: string, password: string): void;
 declare function el_createSoftAp(ssid: string, password: string): void;
 
@@ -85,6 +87,8 @@ declare function writeFile(path: string, data: string): number;
 declare function appendFile(path: string, data: string): number;
 declare function removeFile(path: string): number;
 declare function fileSize(path: string): number;
+declare function listDir(path: string): string[];
+declare function mkdir(path: string): void;
 
 // ota
 declare function el_ota_begin(): number;
@@ -99,3 +103,8 @@ declare function el_partition_write(
   offset: number,
   data: Uint8Array
 ): void;
+declare function el_find_partition(name: string): {
+  _ref: number;
+  size: number;
+};
+declare function el_readAndFreeString(ptr: number): string;

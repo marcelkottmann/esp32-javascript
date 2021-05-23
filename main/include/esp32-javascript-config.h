@@ -29,9 +29,10 @@ SOFTWARE.
 #define EL_TIMER_EVENT_TYPE 0
 #define EL_WIFI_EVENT_TYPE 1
 #define EL_SOCKET_EVENT_TYPE 2
-#define RADIO_RECEIVE_EVENT_TYPE 3
+#define EL_LOG_EVENT_TYPE 3
+#define RADIO_RECEIVE_EVENT_TYPE 4
 // define your custom event types here
-// #define CUSTOM_XXX_EVENT_TYPE 3
+// #define CUSTOM_XXX_EVENT_TYPE 4
 
 #if ESP32_JAVASCRIPT_EXTERN == ESP32_JAVASCRIPT_EXTERN_INCLUDE
 extern void initSpiffs(duk_context *ctx);
