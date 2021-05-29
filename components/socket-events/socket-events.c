@@ -242,10 +242,6 @@ void select_task_it()
             {
                 jslog(ERROR, "READ self-socket FAILED: %d", errno);
             }
-            else
-            {
-                jslog(DEBUG, "READ of self-socket.");
-            }
         }
 
         FD_SET(selectServerSocket, &readset);
@@ -256,7 +252,6 @@ void select_task_it()
         // self socket end
         int ret = select(sockfd_max + 1, &readset, &writeset, &errset, NULL);
         needsUnblock = true;
-        jslog(DEBUG, "Select return %d.", ret);
         if (ret >= 0)
         {
             if (ret > 0)
@@ -514,7 +509,7 @@ static duk_ret_t el_acceptIncoming(duk_context *ctx)
     {
         if (errno == EAGAIN)
         {
-            jslog(INFO, "accept returned EAGAIN");
+            jslog(DEBUG, "accept returned EAGAIN");
             //return undefined
             return 0;
         }

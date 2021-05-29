@@ -16,7 +16,6 @@ declare function el_store(key: string, value: string): void;
 
 declare function setDateTimeInMillis(time: number): void;
 declare function setDateTimeZoneOffsetInHours(hours: number): void;
-
 interface Esp32JsFirmwareDefaults {
   basicAuthUsername: string;
   basicAuthPassword: string;
@@ -108,3 +107,25 @@ declare function el_find_partition(name: string): {
   size: number;
 };
 declare function el_readAndFreeString(ptr: number): string;
+
+interface Console {
+  /*
+   * Check if logger level is appropiate to print debug messsages.
+   */
+  isDebug: boolean;
+
+  /*
+   * Check if logger level is appropiate to print info messsages.
+   */
+  isInfo: boolean;
+
+  /*
+   * Check if logger level is appropiate to print warn messsages.
+   */
+  isWarn: boolean;
+
+  /*
+   * Check if logger level is appropiate to print error messsages.
+   */
+  isError: boolean;
+}

@@ -91,7 +91,6 @@ function getIPAddress() {
     return wifi === null || wifi === void 0 ? void 0 : wifi.ip;
 }
 exports.getIPAddress = getIPAddress;
-// eslint-disable-next-line @typescript-eslint/ban-types
 function afterSuspend(evt, collected) {
     if (evt.type === EL_WIFI_EVENT_TYPE) {
         collected.push(function () {

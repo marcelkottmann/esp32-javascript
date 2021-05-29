@@ -24,15 +24,13 @@ SOFTWARE.
 interface Esp32JsTimer {
   handle: number;
   timeout: number;
-  // eslint-disable-next-line @typescript-eslint/ban-types
-  fn: Function;
+  fn: () => void;
   installed: boolean;
 }
 
 type Esp32JsEventHandler = (
   event: Esp32JsEventloopEvent,
-  // eslint-disable-next-line @typescript-eslint/ban-types
-  collected: Function[]
+  collected: (() => void)[]
 ) => boolean;
 
 errorhandler =
@@ -49,8 +47,7 @@ let handles = 0;
 export const beforeSuspendHandlers: (() => void)[] = [];
 export const afterSuspendHandlers: Esp32JsEventHandler[] = [];
 
-// eslint-disable-next-line @typescript-eslint/ban-types
-function setTimeout(fn: Function, timeout: number) {
+function setTimeout(fn: () => void, timeout: number) {
   const handle = el_createTimer(timeout);
   timers.push({
     timeout: Date.now() + timeout,
@@ -79,8 +76,11 @@ function clearInterval(handle: number) {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/ban-types
-function installIntervalTimeout(handle: number, fn: Function, timeout: number) {
+function installIntervalTimeout(
+  handle: number,
+  fn: () => void,
+  timeout: number
+) {
   setTimeout(function () {
     if (intervals.indexOf(handle) >= 0) {
       fn();
@@ -89,8 +89,7 @@ function installIntervalTimeout(handle: number, fn: Function, timeout: number) {
   }, timeout);
 }
 
-// eslint-disable-next-line @typescript-eslint/ban-types
-function setInterval(fn: Function, timeout: number) {
+function setInterval(fn: () => void, timeout: number) {
   const handle = handles++;
   intervals.push(handle);
   installIntervalTimeout(handle, fn, timeout);
@@ -106,11 +105,12 @@ function el_select_next() {
 
   const events = el_suspend();
 
-  // eslint-disable-next-line @typescript-eslint/ban-types
-  const collected: Function[] = [];
+  const collected: (() => void)[] = [];
   for (let evid = 0; evid < events.length; evid++) {
     const evt = events[evid];
-    console.debug("HANDLE EVENT: " + JSON.stringify(evt));
+    if (console.isDebug) {
+      console.debug(`== HANDLE EVENT: ${JSON.stringify(evt)} ==`);
+    }
     if (evt.type === EL_TIMER_EVENT_TYPE) {
       //TIMER EVENT
       let nextTimer = null;
@@ -121,7 +121,6 @@ function el_select_next() {
         }
       }
       if (!nextTimer) {
-        //throw Error('UNKNOWN TIMER HANDLE!!!');
         console.warn(
           "UNKNOWN TIMER HANDLE:" +
             JSON.stringify(evt) +
@@ -131,25 +130,22 @@ function el_select_next() {
       }
     } else if (evt.type === EL_LOG_EVENT_TYPE) {
       //LOG EVENT
-      const logevent = evt;
-      collected.push(() => {
-        let logfunction = console.log;
-        switch (logevent.status) {
-          case 1:
-            logfunction = console.debug;
-            break;
-          case 2:
-            logfunction = console.info;
-            break;
-          case 3:
-            logfunction = console.warn;
-            break;
-          case 4:
-            logfunction = console.error;
-            break;
-        }
-        logfunction(el_readAndFreeString(logevent.fd));
-      });
+      let logfunction = console.log;
+      switch (evt.status) {
+        case 1:
+          logfunction = console.debug;
+          break;
+        case 2:
+          logfunction = console.info;
+          break;
+        case 3:
+          logfunction = console.warn;
+          break;
+        case 4:
+          logfunction = console.error;
+          break;
+      }
+      logfunction(`LE ${evt.fd}: ${el_readAndFreeString(evt.fd)}`);
     } else {
       let eventHandled = false;
       if (afterSuspendHandlers) {
@@ -171,8 +167,7 @@ function el_select_next() {
 }
 
 export function start(): void {
-  // eslint-disable-next-line @typescript-eslint/ban-types
-  let nextfuncs: Function[] = [main];
+  let nextfuncs: (() => void)[] = [main];
   for (;;) {
     if (Array.isArray(nextfuncs)) {
       nextfuncs.forEach(function (nf) {

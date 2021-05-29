@@ -169,12 +169,12 @@ int writeSocket(int sockfd, const char *msg, int len, SSL *ssl)
     {
         if (errno == EAGAIN)
         {
-            jslog(INFO, "EAGAIN in socket: %d", errno);
+            jslog(DEBUG, "EAGAIN in socket %d, errno %d", sockfd, errno);
             return 0;
         }
         else
         {
-            jslog(ERROR, "ERROR writing to socket: %d", errno);
+            jslog(ERROR, "ERROR writing to socket %d, errno %d", sockfd, errno);
             return n;
         }
     }

@@ -1,5 +1,5 @@
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sockListen = exports.sockConnect = exports.closeSocket = exports.sockets = void 0;
+exports.sockListen = exports.sockConnect = exports.closeSocket = exports.el_debug_sockets = exports.sockets = void 0;
 /*
 MIT License
 
@@ -29,14 +29,73 @@ exports.sockets = [];
 exports.sockets.pushNative = exports.sockets.push;
 exports.sockets.push = function (item) {
     exports.sockets.pushNative(item);
+    maintainSocketStatus(item.sockfd, item.isListening, item.isConnected, item.isError, item.onWritable);
 };
 exports.sockets.find = function (predicate) {
-    for (var i = 0; i < exports.sockets.length; i++) {
-        if (predicate(exports.sockets[i])) {
-            return exports.sockets[i];
+    for (var _i = 0, sockets_1 = exports.sockets; _i < sockets_1.length; _i++) {
+        var s = sockets_1[_i];
+        if (predicate(s)) {
+            return s;
         }
     }
 };
+var NumberSet = /** @class */ (function () {
+    function NumberSet() {
+        this.set = [];
+    }
+    NumberSet.prototype.add = function (n) {
+        if (this.set.indexOf(n) < 0) {
+            this.set.push(n);
+        }
+    };
+    NumberSet.prototype.remove = function (n) {
+        var i = this.set.indexOf(n);
+        if (i >= 0) {
+            this.set.splice(i, 1);
+        }
+    };
+    return NumberSet;
+}());
+// maintained socket status lists
+var sst_notConnectedSockets = new NumberSet();
+var sst_connectedSockets = new NumberSet();
+var sst_connectedWritableSockets = new NumberSet();
+exports.el_debug_sockets = {
+    sockets: exports.sockets,
+    sst_notConnectedSockets: sst_notConnectedSockets,
+    sst_connectedSockets: sst_connectedSockets,
+    sst_connectedWritableSockets: sst_connectedWritableSockets,
+};
+function maintainSocketStatus(sockfd, isListening, isConnected, isError, onWritable) {
+    // check if socket is still a valid actual socket
+    if (!exports.sockets.find(function (s) { return sockfd === s.sockfd; })) {
+        if (console.isDebug) {
+            console.debug("Invalid sockfd " + sockfd + " given to maintain.");
+        }
+        return;
+    }
+    if (console.isDebug) {
+        console.debug("Maintain socket status, sockfd: " + sockfd + ", isListening: " + isListening + ", isConnected: " + isConnected + ", isError: " + isError);
+    }
+    if (onWritable && isConnected && !isError) {
+        sst_connectedWritableSockets.add(sockfd);
+    }
+    else {
+        sst_connectedWritableSockets.remove(sockfd);
+    }
+    if (isConnected && !isError) {
+        sst_connectedSockets.add(sockfd);
+    }
+    else {
+        sst_connectedSockets.remove(sockfd);
+    }
+    if (!isConnected && !isListening && !isError) {
+        sst_notConnectedSockets.add(sockfd);
+    }
+    else {
+        sst_notConnectedSockets.remove(sockfd);
+    }
+}
 /**
  * @class
  */
@@ -63,10 +122,10 @@ var Socket = /** @class */ (function () {
         this.onConnect = null;
         this.onError = null;
         this.onClose = null;
-        this.onWritable = null;
-        this.isConnected = false;
-        this.isError = false;
-        this.isListening = false;
+        this._onWritable = null;
+        this._isConnected = false;
+        this._isError = false;
+        this._isListening = false;
         this.ssl = null;
         this.flushAlways = true;
     }
@@ -89,6 +148,53 @@ var Socket = /** @class */ (function () {
             }, this.readTimeout);
         }
     };
+    Socket.prototype.maintainSocketStatus = function () {
+        maintainSocketStatus(this.sockfd, this.isListening, this.isConnected, this.isError, this.onWritable);
+    };
+    Object.defineProperty(Socket.prototype, "isConnected", {
+        get: function () {
+            return this._isConnected;
+        },
+        set: function (isConnected) {
+            this._isConnected = isConnected;
+            this.maintainSocketStatus();
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Socket.prototype, "isListening", {
+        get: function () {
+            return this._isListening;
+        },
+        set: function (isListening) {
+            this._isListening = isListening;
+            this.maintainSocketStatus();
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Socket.prototype, "onWritable", {
+        get: function () {
+            return this._onWritable;
+        },
+        set: function (onWritable) {
+            this._onWritable = onWritable;
+            this.maintainSocketStatus();
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(Socket.prototype, "isError", {
+        get: function () {
+            return this._isError;
+        },
+        set: function (isError) {
+            this._isError = isError;
+            this.maintainSocketStatus();
+        },
+        enumerable: false,
+        configurable: true
+    });
     Socket.prototype.write = function (data) {
         if (this.dataBuffer) {
             if (typeof data === "undefined" || data === null) {
@@ -132,12 +238,18 @@ var Socket = /** @class */ (function () {
                         break;
                     }
                     else {
-                        console.debug("before write to socket");
+                        if (console.isDebug) {
+                            console.debug("before write to socket");
+                        }
                         var ret = writeSocket(socket.sockfd, data, len - written, written, socket.ssl);
-                        console.debug("after write to socket");
+                        if (console.isDebug) {
+                            console.debug("after write to socket");
+                        }
                         if (ret == 0) {
                             // eagain, return immediately and wait for futher onWritable calls
-                            console.debug("eagain in onWritable, socket " + socket.sockfd);
+                            if (console.isDebug) {
+                                console.debug("eagain in onWritable, socket " + socket.sockfd);
+                            }
                             // wait for next select when socket is writable
                             break;
                         }
@@ -146,14 +258,16 @@ var Socket = /** @class */ (function () {
                             entry.written = written;
                         }
                         else {
-                            console.error("error writing to socket:" + ret);
+                            console.error("error writing to socket " + socket.sockfd + ", return value was " + ret);
                             break;
                         }
                     }
                 }
                 if (written >= len) {
                     // remove entry because it has been written completely.
-                    console.debug("// remove entry because it has been written completely.");
+                    if (console.isDebug) {
+                        console.debug("// remove entry because it has been written completely.");
+                    }
                     socket.writebuffer.shift();
                     if (entry.cb) {
                         entry.cb();
@@ -331,7 +445,9 @@ function sockListen(port, onAccept, onError, onClose, isSSL) {
                 }
             }
             else {
-                console.debug("EAGAIN received after accept...");
+                if (console.isDebug) {
+                    console.debug("EAGAIN received after accept...");
+                }
             }
         };
         socket.onError = function (sockfd) {
@@ -351,42 +467,26 @@ function sockListen(port, onAccept, onError, onClose, isSSL) {
 }
 exports.sockListen = sockListen;
 function resetSocket(socket) {
+    if (console.isDebug) {
+        console.debug("Reset Socket called on " + socket.sockfd);
+    }
     if (socket) {
+        // free maintained socket status
+        sst_connectedSockets.remove(socket.sockfd);
+        sst_notConnectedSockets.remove(socket.sockfd);
+        sst_connectedWritableSockets.remove(socket.sockfd);
+        console.debug("CS " + sst_connectedSockets.set + " NC " + sst_notConnectedSockets.set + " CW " + sst_connectedWritableSockets.set);
         exports.sockets.splice(exports.sockets.indexOf(socket), 1);
         return;
     }
     throw Error("invalid sockfd");
 }
 function beforeSuspend() {
-    //collect sockets
-    function notConnectedFilter(s) {
-        return !s.isConnected && !s.isListening;
+    if (console.isDebug) {
+        console.debug("Socket FDs for select.\n  not connected =>" + sst_notConnectedSockets.set + "\n  connected     =>" + sst_connectedSockets.set + "\n  connected wri =>" + sst_connectedWritableSockets.set + "\n");
     }
-    function connectedFilter(s) {
-        return s.isConnected;
-    }
-    function connectedWritableFilter(s) {
-        return s.isConnected && s.onWritable;
-    }
-    function mapToSockfd(s) {
-        return s.sockfd;
-    }
-    function validSocketsFilter(s) {
-        return s.sockfd && !s.isError;
-    }
-    var validSockets = exports.sockets.filter(validSocketsFilter);
-    var notConnectedSockets = validSockets
-        .filter(notConnectedFilter)
-        .map(mapToSockfd);
-    var connectedSockets = validSockets
-        .filter(connectedFilter)
-        .map(mapToSockfd);
-    var connectedWritableSockets = validSockets
-        .filter(connectedWritableFilter)
-        .map(mapToSockfd);
-    el_registerSocketEvents(notConnectedSockets, connectedSockets, connectedWritableSockets);
+    el_registerSocketEvents(sst_notConnectedSockets.set, sst_connectedSockets.set, sst_connectedWritableSockets.set);
 }
-// eslint-disable-next-line @typescript-eslint/ban-types
 function afterSuspend(evt, collected) {
     if (evt.type === EL_SOCKET_EVENT_TYPE) {
         var findSocket = exports.sockets.filter(function (s) {
@@ -417,18 +517,27 @@ function afterSuspend(evt, collected) {
                     collected.push(socket_1.onAccept);
                 }
                 else {
-                    console.debug("before eventloop read socket");
+                    if (console.isDebug) {
+                        console.debug("before eventloop read socket");
+                    }
                     var result = readSocket(socket_1.sockfd, socket_1.ssl);
-                    console.debug("after eventloop read socket");
+                    if (console.isDebug) {
+                        console.debug("after eventloop read socket");
+                    }
                     if (result === null ||
                         (result &&
                             Object.prototype.toString.call(result.data) ===
                                 "[object Uint8Array]" &&
                             result.length == 0)) {
+                        if (console.isDebug) {
+                            console.debug("Read EOF from " + socket_1.sockfd + ". Closing...");
+                        }
                         closeSocket(socket_1.sockfd);
                     }
                     else if (!result) {
-                        console.debug("******** EAGAIN!!");
+                        if (console.isDebug) {
+                            console.debug("******** EAGAIN!!");
+                        }
                     }
                     else {
                         if (socket_1.onData) {

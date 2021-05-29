@@ -131,8 +131,9 @@ export function httpServer(
           }
 
           if (contentLength > 0) {
-            console.debug("A request body is expected.");
-
+            if (console.isDebug) {
+              console.debug("A request body is expected.");
+            }
             if (gotten >= endOfHeaders + 4 + contentLength) {
               const potentialRequestBody = textEncoder.encode(
                 complete.substring(endOfHeaders + 4).toString()
@@ -140,15 +141,15 @@ export function httpServer(
               postedData = textDecoder.decode(
                 potentialRequestBody.subarray(0, contentLength)
               );
-              console.debug("Request body is complete:");
-              console.debug(postedData);
+              if (console.isDebug) {
+                console.debug("Request body is complete:");
+                console.debug(postedData);
+              }
             } else {
               //wait for more data to come (body of  a POST request)
-              console.debug("Waiting for more data to come:");
-              console.debug(contentLength);
-              console.debug(complete.length);
-              console.debug(gotten);
-              console.debug(endOfHeaders);
+              if (console.isDebug) {
+                console.debug("Waiting for more data to come:");
+              }
               return;
             }
           }
@@ -264,7 +265,7 @@ export function httpServer(
                   }
                   if (!responseHeaders.has("connection")) {
                     responseHeaders.set("connection", "keep-alive");
-                    socket.setReadTimeout(20000);
+                    socket.setReadTimeout(22222); // set to a non-standard timeout
                   }
                   const contentType = responseHeaders.get("content-type");
                   if (typeof contentType !== "string") {
@@ -327,36 +328,45 @@ export function httpServer(
             headers = undefined;
             statusLine = undefined;
 
-            console.debug(`gotten: ${gotten}`);
-            console.debug(`complete.length: ${complete.length}`);
-
             const item = { req, res };
             const num = active.push(item);
-            console.debug(`Currently active requests: ${num}`);
+            if (console.isDebug) {
+              console.debug(`Currently active requests: ${num}`);
+            }
             res.on("end", () => {
-              console.debug("splicing req/res form active list");
+              if (console.isDebug) {
+                console.debug("splicing req/res form active list");
+              }
               active.splice(active.indexOf(item), 1);
             });
 
             const previous = num - 2;
             if (previous < 0 || active[previous].res.isEnded) {
               // active request/response is empty, perform immediately
-              console.debug(
-                "// active request/response is empty or entries are ended, perform immediately"
-              );
+              if (console.isDebug) {
+                console.debug(
+                  "// active request/response is empty or entries are ended, perform immediately"
+                );
+              }
               setTimeout(() => {
-                console.debug("perform immediate");
+                if (console.isDebug) {
+                  console.debug("perform immediate");
+                }
                 cb(req, res);
               }, 0);
             } else {
               // queue request/response callback after previous request/response
-              console.debug(
-                "// queue request/response callback after previous request/response"
-              );
-              active[previous].res.on("end", () => {
+              if (console.isDebug) {
                 console.debug(
-                  "end of previous req/res: triggering new req/res callback"
+                  "// queue request/response callback after previous request/response"
                 );
+              }
+              active[previous].res.on("end", () => {
+                if (console.isDebug) {
+                  console.debug(
+                    "end of previous req/res: triggering new req/res callback"
+                  );
+                }
                 cb(req, res);
               });
             }

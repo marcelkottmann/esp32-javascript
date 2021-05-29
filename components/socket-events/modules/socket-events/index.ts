@@ -97,17 +97,89 @@ interface SocketArrayFind {
 export const sockets: Socket[] & SocketArrayFind = [] as any;
 
 (sockets as any).pushNative = sockets.push;
-(sockets as any).push = function (item: Esp32JsSocket) {
+(sockets as any).push = function (item: Socket) {
   (sockets as any).pushNative(item);
+  maintainSocketStatus(
+    item.sockfd,
+    item.isListening,
+    item.isConnected,
+    item.isError,
+    item.onWritable
+  );
 };
 (sockets as any).find = function (predicate: (socket: Socket) => boolean) {
-  for (let i = 0; i < sockets.length; i++) {
-    if (predicate(sockets[i])) {
-      return sockets[i];
+  for (const s of sockets) {
+    if (predicate(s)) {
+      return s;
     }
   }
 };
 
+class NumberSet {
+  public set: number[] = [];
+  public add(n: number) {
+    if (this.set.indexOf(n) < 0) {
+      this.set.push(n);
+    }
+  }
+  public remove(n: number) {
+    const i = this.set.indexOf(n);
+    if (i >= 0) {
+      this.set.splice(i, 1);
+    }
+  }
+}
+// maintained socket status lists
+const sst_notConnectedSockets = new NumberSet();
+const sst_connectedSockets = new NumberSet();
+const sst_connectedWritableSockets = new NumberSet();
+
+export const el_debug_sockets = {
+  sockets,
+  sst_notConnectedSockets,
+  sst_connectedSockets,
+  sst_connectedWritableSockets,
+};
+
+function maintainSocketStatus(
+  sockfd: number,
+  isListening: boolean,
+  isConnected: boolean,
+  isError: boolean,
+  onWritable: OnWritableCB | null
+) {
+  // check if socket is still a valid actual socket
+  if (!sockets.find((s) => sockfd === s.sockfd)) {
+    if (console.isDebug) {
+      console.debug(`Invalid sockfd ${sockfd} given to maintain.`);
+    }
+    return;
+  }
+
+  if (console.isDebug) {
+    console.debug(
+      `Maintain socket status, sockfd: ${sockfd}, isListening: ${isListening}, isConnected: ${isConnected}, isError: ${isError}`
+    );
+  }
+
+  if (onWritable && isConnected && !isError) {
+    sst_connectedWritableSockets.add(sockfd);
+  } else {
+    sst_connectedWritableSockets.remove(sockfd);
+  }
+
+  if (isConnected && !isError) {
+    sst_connectedSockets.add(sockfd);
+  } else {
+    sst_connectedSockets.remove(sockfd);
+  }
+
+  if (!isConnected && !isListening && !isError) {
+    sst_notConnectedSockets.add(sockfd);
+  } else {
+    sst_notConnectedSockets.remove(sockfd);
+  }
+}
 interface BufferEntry {
   written: number;
   data: Uint8Array;
@@ -162,12 +234,58 @@ class Socket implements Esp32JsSocket {
   public onConnect: OnConnectCB | null = null;
   public onError: OnErrorCB | null = null;
   public onClose: OnCloseCB | null = null;
-  public onWritable: OnWritableCB | null = null;
-  public isConnected = false;
-  public isError = false;
-  public isListening = false;
+  private _onWritable: OnWritableCB | null = null;
+  private _isConnected = false;
+  public _isError = false;
+  private _isListening = false;
   public ssl: any = null;
   public flushAlways = true;
+
+  private maintainSocketStatus() {
+    maintainSocketStatus(
+      this.sockfd,
+      this.isListening,
+      this.isConnected,
+      this.isError,
+      this.onWritable
+    );
+  }
+
+  public set isConnected(isConnected: boolean) {
+    this._isConnected = isConnected;
+    this.maintainSocketStatus();
+  }
+
+  public get isConnected() {
+    return this._isConnected;
+  }
+
+  public set isListening(isListening: boolean) {
+    this._isListening = isListening;
+    this.maintainSocketStatus();
+  }
+
+  public get isListening() {
+    return this._isListening;
+  }
+
+  public set onWritable(onWritable: OnWritableCB | null) {
+    this._onWritable = onWritable;
+    this.maintainSocketStatus();
+  }
+
+  public get onWritable() {
+    return this._onWritable;
+  }
+
+  public set isError(isError: boolean) {
+    this._isError = isError;
+    this.maintainSocketStatus();
+  }
+
+  public get isError() {
+    return this._isError;
+  }
 
   public write(data: string | Uint8Array) {
     if (this.dataBuffer) {
@@ -213,7 +331,9 @@ class Socket implements Esp32JsSocket {
             console.error("error writing to socket. not initialized.");
             break;
           } else {
-            console.debug("before write to socket");
+            if (console.isDebug) {
+              console.debug("before write to socket");
+            }
             const ret = writeSocket(
               socket.sockfd,
               data,
@@ -221,10 +341,14 @@ class Socket implements Esp32JsSocket {
               written,
               socket.ssl
             );
-            console.debug("after write to socket");
+            if (console.isDebug) {
+              console.debug("after write to socket");
+            }
             if (ret == 0) {
               // eagain, return immediately and wait for futher onWritable calls
-              console.debug("eagain in onWritable, socket " + socket.sockfd);
+              if (console.isDebug) {
+                console.debug("eagain in onWritable, socket " + socket.sockfd);
+              }
               // wait for next select when socket is writable
               break;
             }
@@ -232,16 +356,20 @@ class Socket implements Esp32JsSocket {
               written += ret;
               entry.written = written;
             } else {
-              console.error("error writing to socket:" + ret);
+              console.error(
+                `error writing to socket ${socket.sockfd}, return value was ${ret}`
+              );
               break;
             }
           }
         }
         if (written >= len) {
           // remove entry because it has been written completely.
-          console.debug(
-            "// remove entry because it has been written completely."
-          );
+          if (console.isDebug) {
+            console.debug(
+              "// remove entry because it has been written completely."
+            );
+          }
           socket.writebuffer.shift();
           if (entry.cb) {
             entry.cb();
@@ -350,7 +478,7 @@ export function sockConnect(
 ): Esp32JsSocket {
   const sockfd = el_createNonBlockingSocket();
   el_connectNonBlocking(sockfd, host, parseInt(port, 10));
-  
+
   const socket = getOrCreateNewSocket();
   socket.sockfd = sockfd;
   socket.onData = onData;
@@ -444,7 +572,9 @@ export function sockListen(
           }
         }
       } else {
-        console.debug("EAGAIN received after accept...");
+        if (console.isDebug) {
+          console.debug("EAGAIN received after accept...");
+        }
       }
     };
     socket.onError = function (sockfd) {
@@ -465,7 +595,19 @@ export function sockListen(
 }
 
 function resetSocket(socket: Socket) {
+  if (console.isDebug) {
+    console.debug(`Reset Socket called on ${socket.sockfd}`);
+  }
   if (socket) {
+    // free maintained socket status
+    sst_connectedSockets.remove(socket.sockfd);
+    sst_notConnectedSockets.remove(socket.sockfd);
+    sst_connectedWritableSockets.remove(socket.sockfd);
+
+    console.debug(
+      `CS ${sst_connectedSockets.set} NC ${sst_notConnectedSockets.set} CW ${sst_connectedWritableSockets.set}`
+    );
+
     sockets.splice(sockets.indexOf(socket), 1);
     return;
   }
@@ -473,43 +615,22 @@ function resetSocket(socket: Socket) {
 }
 
 function beforeSuspend() {
-  //collect sockets
-  function notConnectedFilter(s: Socket) {
-    return !s.isConnected && !s.isListening;
+  if (console.isDebug) {
+    console.debug(`Socket FDs for select.
+  not connected =>${sst_notConnectedSockets.set}
+  connected     =>${sst_connectedSockets.set}
+  connected wri =>${sst_connectedWritableSockets.set}
+`);
   }
-  function connectedFilter(s: Socket) {
-    return s.isConnected;
-  }
-  function connectedWritableFilter(s: Socket) {
-    return s.isConnected && s.onWritable;
-  }
-  function mapToSockfd(s: Socket) {
-    return s.sockfd;
-  }
-  function validSocketsFilter(s: Socket) {
-    return s.sockfd && !s.isError;
-  }
-
-  const validSockets = sockets.filter(validSocketsFilter);
-  const notConnectedSockets = validSockets
-    .filter(notConnectedFilter)
-    .map(mapToSockfd);
-  const connectedSockets = validSockets
-    .filter(connectedFilter)
-    .map(mapToSockfd);
-  const connectedWritableSockets = validSockets
-    .filter(connectedWritableFilter)
-    .map(mapToSockfd);
 
   el_registerSocketEvents(
-    notConnectedSockets,
-    connectedSockets,
-    connectedWritableSockets
+    sst_notConnectedSockets.set,
+    sst_connectedSockets.set,
+    sst_connectedWritableSockets.set
   );
 }
 
-// eslint-disable-next-line @typescript-eslint/ban-types
-function afterSuspend(evt: Esp32JsEventloopEvent, collected: Function[]) {
+function afterSuspend(evt: Esp32JsEventloopEvent, collected: (() => void)[]) {
   if (evt.type === EL_SOCKET_EVENT_TYPE) {
     const findSocket = sockets.filter((s) => {
       return s.sockfd === evt.fd;
@@ -536,9 +657,13 @@ function afterSuspend(evt: Esp32JsEventloopEvent, collected: Function[]) {
         if (socket.isListening && socket.onAccept) {
           collected.push(socket.onAccept);
         } else {
-          console.debug("before eventloop read socket");
+          if (console.isDebug) {
+            console.debug("before eventloop read socket");
+          }
           const result = readSocket(socket.sockfd, socket.ssl);
-          console.debug("after eventloop read socket");
+          if (console.isDebug) {
+            console.debug("after eventloop read socket");
+          }
           if (
             result === null ||
             (result &&
@@ -546,9 +671,14 @@ function afterSuspend(evt: Esp32JsEventloopEvent, collected: Function[]) {
                 "[object Uint8Array]" &&
               result.length == 0)
           ) {
+            if (console.isDebug) {
+              console.debug(`Read EOF from ${socket.sockfd}. Closing...`);
+            }
             closeSocket(socket.sockfd);
           } else if (!result) {
-            console.debug("******** EAGAIN!!");
+            if (console.isDebug) {
+              console.debug("******** EAGAIN!!");
+            }
           } else {
             if (socket.onData) {
               socket.extendReadTimeout();
