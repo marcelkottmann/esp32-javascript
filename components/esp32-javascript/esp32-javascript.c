@@ -402,10 +402,6 @@ static void createConsole(duk_context *ctx)
 
 static duk_ret_t el_suspend(duk_context *ctx)
 {
-    // force garbage collection 2 times see duktape doc
-    // greatly increases perfomance with external memory
-    duk_gc(ctx, 0);
-    duk_gc(ctx, 0);
     // feed watchdog
     vTaskDelay(1);
 
@@ -416,6 +412,16 @@ static duk_ret_t el_suspend(duk_context *ctx)
     int arr_idx = duk_push_array(ctx);
     int arrsize = 0;
     TickType_t timeout = portMAX_DELAY;
+
+    // If event queue is empty its time for a manually started garbage collection
+    if (uxQueueMessagesWaiting(el_event_queue) == 0)
+    {
+        // force garbage collection 2 times see duktape doc
+        // greatly increases perfomance with external memory
+        duk_gc(ctx, 0);
+        duk_gc(ctx, 0);
+    }
+
     while (xQueueReceive(el_event_queue, &events, timeout) == pdTRUE)
     {
         timeout = 0; // set timeout to 0 to not wait in while loop if there are no more events available
