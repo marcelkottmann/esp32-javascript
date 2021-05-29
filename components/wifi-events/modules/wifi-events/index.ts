@@ -117,8 +117,7 @@ export function getIPAddress(): string | undefined {
   return wifi?.ip;
 }
 
-// eslint-disable-next-line @typescript-eslint/ban-types
-function afterSuspend(evt: Esp32JsEventloopEvent, collected: Function[]) {
+function afterSuspend(evt: Esp32JsEventloopEvent, collected: (() => void)[]) {
   if (evt.type === EL_WIFI_EVENT_TYPE) {
     collected.push(() => {
       if (wifi) {

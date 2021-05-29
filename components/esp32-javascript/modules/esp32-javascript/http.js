@@ -93,20 +93,22 @@ function httpServer(port, isSSL, cb) {
                     contentLength = parseInt(contentLengthHeader);
                 }
                 if (contentLength > 0) {
-                    console.debug("A request body is expected.");
+                    if (console.isDebug) {
+                        console.debug("A request body is expected.");
+                    }
                     if (gotten >= endOfHeaders + 4 + contentLength) {
                         var potentialRequestBody = textEncoder.encode(complete.substring(endOfHeaders + 4).toString());
                         postedData = textDecoder.decode(potentialRequestBody.subarray(0, contentLength));
-                        console.debug("Request body is complete:");
-                        console.debug(postedData);
+                        if (console.isDebug) {
+                            console.debug("Request body is complete:");
+                            console.debug(postedData);
+                        }
                     }
                     else {
                         //wait for more data to come (body of  a POST request)
-                        console.debug("Waiting for more data to come:");
-                        console.debug(contentLength);
-                        console.debug(complete.length);
-                        console.debug(gotten);
-                        console.debug(endOfHeaders);
+                        if (console.isDebug) {
+                            console.debug("Waiting for more data to come:");
+                        }
                         return;
                     }
                 }
@@ -197,7 +199,7 @@ function httpServer(port, isSSL, cb) {
                                 }
                                 if (!responseHeaders_1.has("connection")) {
                                     responseHeaders_1.set("connection", "keep-alive");
-                                    socket.setReadTimeout(20000);
+                                    socket.setReadTimeout(22222); // set to a non-standard timeout
                                 }
                                 var contentType = responseHeaders_1.get("content-type");
                                 if (typeof contentType !== "string") {
@@ -251,29 +253,39 @@ function httpServer(port, isSSL, cb) {
                     contentLength = 0;
                     headers = undefined;
                     statusLine = undefined;
-                    console.debug("gotten: " + gotten);
-                    console.debug("complete.length: " + complete.length);
                     var item_1 = { req: req_1, res: res_1 };
                     var num = active.push(item_1);
-                    console.debug("Currently active requests: " + num);
+                    if (console.isDebug) {
+                        console.debug("Currently active requests: " + num);
+                    }
                     res_1.on("end", function () {
-                        console.debug("splicing req/res form active list");
+                        if (console.isDebug) {
+                            console.debug("splicing req/res form active list");
+                        }
                         active.splice(active.indexOf(item_1), 1);
                     });
                     var previous = num - 2;
                     if (previous < 0 || active[previous].res.isEnded) {
                         // active request/response is empty, perform immediately
-                        console.debug("// active request/response is empty or entries are ended, perform immediately");
+                        if (console.isDebug) {
+                            console.debug("// active request/response is empty or entries are ended, perform immediately");
+                        }
                         setTimeout(function () {
-                            console.debug("perform immediate");
+                            if (console.isDebug) {
+                                console.debug("perform immediate");
+                            }
                             cb(req_1, res_1);
                         }, 0);
                     }
                     else {
                         // queue request/response callback after previous request/response
-                        console.debug("// queue request/response callback after previous request/response");
+                        if (console.isDebug) {
+                            console.debug("// queue request/response callback after previous request/response");
+                        }
                         active[previous].res.on("end", function () {
-                            console.debug("end of previous req/res: triggering new req/res callback");
+                            if (console.isDebug) {
+                                console.debug("end of previous req/res: triggering new req/res callback");
+                            }
                             cb(req_1, res_1);
                         });
                     }

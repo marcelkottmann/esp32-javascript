@@ -594,8 +594,8 @@ export function startConfigServer(): void {
               );
             }, 2000);
           }
-          redirect(res, "/native-ota");
         }
+        redirect(res, "/native-ota");
       } else {
         page(
           res,

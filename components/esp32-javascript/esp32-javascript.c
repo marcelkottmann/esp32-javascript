@@ -390,18 +390,31 @@ static void createConsole(duk_context *ctx)
     duk_put_prop_string(ctx, obj_idx, "log");
     duk_push_c_function(ctx, console_debug_binding, 1);
     duk_put_prop_string(ctx, obj_idx, "debug");
+    duk_push_boolean(ctx, DEBUG >= (5 - LOG_LOCAL_LEVEL));
+    duk_put_prop_string(ctx, obj_idx, "isDebug");
     duk_push_c_function(ctx, console_info_binding, 1);
     duk_put_prop_string(ctx, obj_idx, "info");
+    duk_push_boolean(ctx, INFO >= (5 - LOG_LOCAL_LEVEL));
+    duk_put_prop_string(ctx, obj_idx, "isInfo");
     duk_push_c_function(ctx, console_warn_binding, 1);
     duk_put_prop_string(ctx, obj_idx, "warn");
+    duk_push_boolean(ctx, WARN >= (5 - LOG_LOCAL_LEVEL));
+    duk_put_prop_string(ctx, obj_idx, "isWarn");
     duk_push_c_function(ctx, console_error_binding, 1);
     duk_put_prop_string(ctx, obj_idx, "error");
+    duk_push_boolean(ctx, ERROR >= (5 - LOG_LOCAL_LEVEL));
+    duk_put_prop_string(ctx, obj_idx, "isError");
 
     duk_put_global_string(ctx, "console");
 }
 
 static duk_ret_t el_suspend(duk_context *ctx)
 {
+    // force garbage collection 2 times see duktape doc
+    // greatly increases perfomance with external memory
+    duk_gc(ctx, 0);
+    duk_gc(ctx, 0);
+
     // feed watchdog
     vTaskDelay(1);
 
@@ -412,15 +425,6 @@ static duk_ret_t el_suspend(duk_context *ctx)
     int arr_idx = duk_push_array(ctx);
     int arrsize = 0;
     TickType_t timeout = portMAX_DELAY;
-
-    // If event queue is empty its time for a manually started garbage collection
-    if (uxQueueMessagesWaiting(el_event_queue) == 0)
-    {
-        // force garbage collection 2 times see duktape doc
-        // greatly increases perfomance with external memory
-        duk_gc(ctx, 0);
-        duk_gc(ctx, 0);
-    }
 
     while (xQueueReceive(el_event_queue, &events, timeout) == pdTRUE)
     {

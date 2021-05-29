@@ -12,7 +12,6 @@ var intervals = [];
 var handles = 0;
 exports.beforeSuspendHandlers = [];
 exports.afterSuspendHandlers = [];
-// eslint-disable-next-line @typescript-eslint/ban-types
 function setTimeout(fn, timeout) {
     var handle = el_createTimer(timeout);
     timers.push({
@@ -39,7 +38,6 @@ function clearInterval(handle) {
         intervals.splice(idx, 1);
     }
 }
-// eslint-disable-next-line @typescript-eslint/ban-types
 function installIntervalTimeout(handle, fn, timeout) {
     setTimeout(function () {
         if (intervals.indexOf(handle) >= 0) {
@@ -48,7 +46,6 @@ function installIntervalTimeout(handle, fn, timeout) {
         }
     }, timeout);
 }
-// eslint-disable-next-line @typescript-eslint/ban-types
 function setInterval(fn, timeout) {
     var handle = handles++;
     intervals.push(handle);
@@ -62,11 +59,12 @@ function el_select_next() {
         });
     }
     var events = el_suspend();
-    // eslint-disable-next-line @typescript-eslint/ban-types
     var collected = [];
     var _loop_1 = function (evid) {
         var evt = events[evid];
-        console.debug("HANDLE EVENT: " + JSON.stringify(evt));
+        if (console.isDebug) {
+            console.debug("== HANDLE EVENT: " + JSON.stringify(evt) + " ==");
+        }
         if (evt.type === EL_TIMER_EVENT_TYPE) {
             //TIMER EVENT
             var nextTimer = null;
@@ -77,7 +75,6 @@ function el_select_next() {
                 }
             }
             if (!nextTimer) {
-                //throw Error('UNKNOWN TIMER HANDLE!!!');
                 console.warn("UNKNOWN TIMER HANDLE:" +
                     JSON.stringify(evt) +
                     ";" +
@@ -86,25 +83,22 @@ function el_select_next() {
         }
         else if (evt.type === EL_LOG_EVENT_TYPE) {
             //LOG EVENT
-            var logevent_1 = evt;
-            collected.push(function () {
-                var logfunction = console.log;
-                switch (logevent_1.status) {
-                    case 1:
-                        logfunction = console.debug;
-                        break;
-                    case 2:
-                        logfunction = console.info;
-                        break;
-                    case 3:
-                        logfunction = console.warn;
-                        break;
-                    case 4:
-                        logfunction = console.error;
-                        break;
-                }
-                logfunction(el_readAndFreeString(logevent_1.fd));
-            });
+            var logfunction = console.log;
+            switch (evt.status) {
+                case 1:
+                    logfunction = console.debug;
+                    break;
+                case 2:
+                    logfunction = console.info;
+                    break;
+                case 3:
+                    logfunction = console.warn;
+                    break;
+                case 4:
+                    logfunction = console.error;
+                    break;
+            }
+            logfunction("LE " + evt.fd + ": " + el_readAndFreeString(evt.fd));
         }
         else {
             var eventHandled_1 = false;
@@ -126,7 +120,6 @@ function el_select_next() {
     return collected;
 }
 function start() {
-    // eslint-disable-next-line @typescript-eslint/ban-types
     var nextfuncs = [main];
     for (;;) {
         if (Array.isArray(nextfuncs)) {
