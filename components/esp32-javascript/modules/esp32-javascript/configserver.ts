@@ -76,6 +76,10 @@ let schema = {
         type: "string",
         title: "Password",
       },
+      bssid: {
+        type: "string",
+        title: "BSSID",
+      },
     },
   },
   ota: {
@@ -265,6 +269,7 @@ export function startConfigServer(): void {
           const config = parseQueryStr(req.body);
           storedConfig.wifi.ssid = config.ssid;
           storedConfig.wifi.password = config.password;
+          storedConfig.wifi.bssid = config.bssid;
           storedConfig.access.username = config.username;
           storedConfig.access.password = config.userpass;
           storedConfig.ota.url = config.url;
@@ -294,6 +299,9 @@ export function startConfigServer(): void {
         }" /></div>
         <div class="formpad"><label for="password" class="formlabel">Password</label><input type="text" name="password" class="fill input" value="${
           config.wifi?.password || ""
+        }" /></div>
+        <div class="formpad"><label for="bssid" class="formlabel">BSSID (optional)</label><input type="text" name="bssid" class="fill input" value="${
+          config.wifi?.bssid || ""
         }" /></div>
         <h3>Basic authentication</h3>
         <div class="formpad"><label for="username" class="formlabel">Username</label><input type="text" name="username" class="fill input" value="${

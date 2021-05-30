@@ -54,67 +54,6 @@ export interface Esp32JsSocket {
 
 let sslClientCtx: any;
 
-/**
- * @module socket-events
- */
-
-/**
- * Callback for connect event.
- *
- * @callback onConnectCB
- * @param {module:socket-events~Socket} socket The socket.
- * @returns {boolean} If the connection attempt should be retried.
- */
-/**
- * Callback for data event.
- *
- * @callback onDataCB
- * @param {string} data Data that was received on the socket.
- * @param {number} sockfd The socket file descriptor.
- * @param {number} length The length of the data.
- */
-/**
- * Callback for error event.
- *
- * @callback onErrorCB
- * @param {number} sockfd The socket file descriptor.
- */
-/**
- * Callback for close event.
- *
- * @callback onCloseCB
- * @param {number} sockfd The socket file descriptor.
- */
-
-/**
- * An array which holds all active sockets.
- *
- * @type module:socket-events~Socket[]
- */
-interface SocketArrayFind {
-  find(predicate: (socket: Socket) => boolean): Socket;
-}
-export const sockets: Socket[] & SocketArrayFind = [] as any;
-
-(sockets as any).pushNative = sockets.push;
-(sockets as any).push = function (item: Socket) {
-  (sockets as any).pushNative(item);
-  maintainSocketStatus(
-    item.sockfd,
-    item.isListening,
-    item.isConnected,
-    item.isError,
-    item.onWritable
-  );
-};
-(sockets as any).find = function (predicate: (socket: Socket) => boolean) {
-  for (const s of sockets) {
-    if (predicate(s)) {
-      return s;
-    }
-  }
-};
-
 class NumberSet {
   public set: number[] = [];
   public add(n: number) {
@@ -129,57 +68,93 @@ class NumberSet {
     }
   }
 }
-// maintained socket status lists
-const sst_notConnectedSockets = new NumberSet();
-const sst_connectedSockets = new NumberSet();
-const sst_connectedWritableSockets = new NumberSet();
 
-export const el_debug_sockets = {
-  sockets,
-  sst_notConnectedSockets,
-  sst_connectedSockets,
-  sst_connectedWritableSockets,
-};
+class SocketLookupMap {
+  public map: { [key: string]: Socket } = {};
+  public add(item: Socket): void {
+    this.map[item.sockfd] = item;
+  }
+  public get(sockfd: number): Socket | undefined {
+    return this.map[sockfd];
+  }
+  public remove(sockfd: number) {
+    delete this.map[sockfd];
+  }
+}
 
-function maintainSocketStatus(
-  sockfd: number,
-  isListening: boolean,
-  isConnected: boolean,
-  isError: boolean,
-  onWritable: OnWritableCB | null
-) {
-  // check if socket is still a valid actual socket
-  if (!sockets.find((s) => sockfd === s.sockfd)) {
-    if (console.isDebug) {
-      console.debug(`Invalid sockfd ${sockfd} given to maintain.`);
+class ActiveSockets {
+  private activeSockets = new SocketLookupMap();
+
+  // maintained socket status lists
+  public sst_notConnectedSockets = new NumberSet();
+  public sst_connectedSockets = new NumberSet();
+  public sst_connectedWritableSockets = new NumberSet();
+
+  maintainSocketStatus(
+    sockfd: number,
+    isListening: boolean,
+    isConnected: boolean,
+    isError: boolean,
+    onWritable: OnWritableCB | null
+  ) {
+    // check if socket is still a valid actual socket
+    if (!this.get(sockfd)) {
+      if (console.isDebug) {
+        console.debug(`Invalid sockfd ${sockfd} given to maintain.`);
+      }
+      return;
     }
-    return;
+
+    if (console.isDebug) {
+      console.debug(
+        `Maintain socket status, sockfd: ${sockfd}, isListening: ${isListening}, isConnected: ${isConnected}, isError: ${isError}`
+      );
+    }
+
+    if (onWritable && isConnected && !isError) {
+      this.sst_connectedWritableSockets.add(sockfd);
+    } else {
+      this.sst_connectedWritableSockets.remove(sockfd);
+    }
+
+    if (isConnected && !isError) {
+      this.sst_connectedSockets.add(sockfd);
+    } else {
+      this.sst_connectedSockets.remove(sockfd);
+    }
+
+    if (!isConnected && !isListening && !isError) {
+      this.sst_notConnectedSockets.add(sockfd);
+    } else {
+      this.sst_notConnectedSockets.remove(sockfd);
+    }
   }
 
-  if (console.isDebug) {
-    console.debug(
-      `Maintain socket status, sockfd: ${sockfd}, isListening: ${isListening}, isConnected: ${isConnected}, isError: ${isError}`
+  public add(item: Socket) {
+    this.activeSockets.add(item);
+    this.maintainSocketStatus(
+      item.sockfd,
+      item.isListening,
+      item.isConnected,
+      item.isError,
+      item.onWritable
     );
   }
 
-  if (onWritable && isConnected && !isError) {
-    sst_connectedWritableSockets.add(sockfd);
-  } else {
-    sst_connectedWritableSockets.remove(sockfd);
+  public remove(sockfd: number) {
+    this.sst_connectedSockets.remove(sockfd);
+    this.sst_notConnectedSockets.remove(sockfd);
+    this.sst_connectedWritableSockets.remove(sockfd);
+
+    this.activeSockets.remove(sockfd);
   }
 
-  if (isConnected && !isError) {
-    sst_connectedSockets.add(sockfd);
-  } else {
-    sst_connectedSockets.remove(sockfd);
-  }
-
-  if (!isConnected && !isListening && !isError) {
-    sst_notConnectedSockets.add(sockfd);
-  } else {
-    sst_notConnectedSockets.remove(sockfd);
+  public get(sockfd: number): Socket | undefined {
+    return this.activeSockets.get(sockfd);
   }
 }
+export const sockets = new ActiveSockets();
+
 interface BufferEntry {
   written: number;
   data: Uint8Array;
@@ -242,7 +217,7 @@ class Socket implements Esp32JsSocket {
   public flushAlways = true;
 
   private maintainSocketStatus() {
-    maintainSocketStatus(
+    sockets.maintainSocketStatus(
       this.sockfd,
       this.isListening,
       this.isConnected,
@@ -421,15 +396,11 @@ function performOnClose(socket: Esp32JsSocket) {
  */
 
 export function closeSocket(socketOrSockfd: Esp32JsSocket | number): void {
-  let socket: Socket | null = null;
+  let socket: Socket | undefined;
   if (typeof socketOrSockfd === "number") {
-    socket = sockets.find(function (s) {
-      return s.sockfd === socketOrSockfd;
-    });
+    socket = sockets.get(socketOrSockfd);
   } else if (typeof socketOrSockfd === "object") {
-    socket = sockets.find(function (s) {
-      return s.sockfd === socketOrSockfd.sockfd;
-    });
+    socket = sockets.get(socketOrSockfd.sockfd);
   }
 
   if (!socket) {
@@ -511,9 +482,7 @@ export function sockConnect(
     };
   }
 
-  if (sockets.indexOf(socket) < 0) {
-    sockets.push(socket);
-  }
+  sockets.add(socket);
   return socket;
 }
 
@@ -559,9 +528,7 @@ export function sockListen(
         newSocket.isListening = false;
         newSocket.ssl = ssl;
 
-        if (sockets.indexOf(newSocket) < 0) {
-          sockets.push(newSocket);
-        }
+        sockets.add(newSocket);
         if (onAccept) {
           onAccept(newSocket);
         }
@@ -587,9 +554,7 @@ export function sockListen(
     socket.isError = false;
     socket.isListening = true;
 
-    if (sockets.indexOf(socket) < 0) {
-      sockets.push(socket);
-    }
+    sockets.add(socket);
     return socket;
   }
 }
@@ -599,16 +564,7 @@ function resetSocket(socket: Socket) {
     console.debug(`Reset Socket called on ${socket.sockfd}`);
   }
   if (socket) {
-    // free maintained socket status
-    sst_connectedSockets.remove(socket.sockfd);
-    sst_notConnectedSockets.remove(socket.sockfd);
-    sst_connectedWritableSockets.remove(socket.sockfd);
-
-    console.debug(
-      `CS ${sst_connectedSockets.set} NC ${sst_notConnectedSockets.set} CW ${sst_connectedWritableSockets.set}`
-    );
-
-    sockets.splice(sockets.indexOf(socket), 1);
+    sockets.remove(socket.sockfd);
     return;
   }
   throw Error("invalid sockfd");
@@ -617,25 +573,22 @@ function resetSocket(socket: Socket) {
 function beforeSuspend() {
   if (console.isDebug) {
     console.debug(`Socket FDs for select.
-  not connected =>${sst_notConnectedSockets.set}
-  connected     =>${sst_connectedSockets.set}
-  connected wri =>${sst_connectedWritableSockets.set}
+  not connected =>${sockets.sst_notConnectedSockets.set}
+  connected     =>${sockets.sst_connectedSockets.set}
+  connected wri =>${sockets.sst_connectedWritableSockets.set}
 `);
   }
 
   el_registerSocketEvents(
-    sst_notConnectedSockets.set,
-    sst_connectedSockets.set,
-    sst_connectedWritableSockets.set
+    sockets.sst_notConnectedSockets.set,
+    sockets.sst_connectedSockets.set,
+    sockets.sst_connectedWritableSockets.set
   );
 }
 
 function afterSuspend(evt: Esp32JsEventloopEvent, collected: (() => void)[]) {
   if (evt.type === EL_SOCKET_EVENT_TYPE) {
-    const findSocket = sockets.filter((s) => {
-      return s.sockfd === evt.fd;
-    });
-    const socket = findSocket[0];
+    const socket = sockets.get(evt.fd);
     if (socket) {
       if (evt.status === 0) {
         //writable

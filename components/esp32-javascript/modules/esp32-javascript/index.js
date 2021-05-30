@@ -21,33 +21,37 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-Object.defineProperty(exports, "__esModule", { value: true });
-console.info("Load global.js (NEW)...");
-require("./global.js");
-console.info("Loading file logging buffer (NEW)...");
-require("./filelogging");
-console.info("Importing http (NEW)...");
-var http = require("./http");
-console.info("Importing boot (NEW)...");
-var boot = require("./boot");
-console.info("Importing eventloop (NEW)...");
-var eventloop = require("esp32-js-eventloop");
-console.info("Importing config (NEW)...");
-var configManager = require("./config");
-console.info("Loading promise.js and exposing globals (NEW)...");
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-global.Promise = require("./promise.js").Promise;
-console.info("Loading config (NEW)...");
-configManager.reloadConfig();
-console.info("Loading http.js and exposing globals (NEW)...");
-global.XMLHttpRequest = http.XMLHttpRequest;
-console.info("Loading fetch.js and exposing globals (NEW)...");
-require("./fetch.js");
-console.info("Loading boot.js and exposing main (NEW)...");
-global.main = boot.main;
-console.info("Loading socket-events (NEW)...");
-require("socket-events");
-console.info("Loading wifi-events (NEW)...");
-require("wifi-events");
-console.info("Loading eventloop.js and starting eventloop (NEW)...");
-eventloop.start();
+/* eslint-disable @typescript-eslint/no-var-requires */
+try {
+    console.info("Load global.js (NEW)...");
+    require("./global.js");
+    console.info("Loading file logging buffer (NEW)...");
+    require("./filelogging");
+    console.info("Importing http (NEW)...");
+    var http = require("./http");
+    console.info("Importing boot (NEW)...");
+    var boot = require("./boot");
+    console.info("Importing eventloop (NEW)...");
+    var eventloop = require("esp32-js-eventloop");
+    console.info("Importing config (NEW)...");
+    var configManager = require("./config");
+    console.info("Loading promise.js and exposing globals (NEW)...");
+    global.Promise = require("./promise.js").Promise;
+    console.info("Loading config (NEW)...");
+    configManager.reloadConfig();
+    console.info("Loading http.js and exposing globals (NEW)...");
+    global.XMLHttpRequest = http.XMLHttpRequest;
+    console.info("Loading fetch.js and exposing globals (NEW)...");
+    require("./fetch.js");
+    console.info("Loading boot.js and exposing main (NEW)...");
+    global.main = boot.main;
+    console.info("Loading socket-events (NEW)...");
+    require("socket-events");
+    console.info("Loading wifi-events (NEW)...");
+    require("wifi-events");
+    console.info("Loading eventloop.js and starting eventloop (NEW)...");
+    eventloop.start();
+}
+catch (error) {
+    console.error(error.stack || error);
+}

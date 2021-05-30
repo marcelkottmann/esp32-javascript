@@ -30,6 +30,7 @@ export interface Esp32JsConfig {
   wifi?: {
     ssid?: string;
     password?: string;
+    bssid?: string;
   };
   ota?: {
     url?: string;

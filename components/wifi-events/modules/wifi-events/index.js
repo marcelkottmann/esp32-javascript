@@ -1,5 +1,5 @@
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getIPAddress = exports.getBssid = exports.createSoftAp = exports.connectWifi = void 0;
+exports.getIPAddress = exports.convertBssidToArray = exports.convertBssidToString = exports.getBssid = exports.createSoftAp = exports.connectWifi = void 0;
 /*
 MIT License
 
@@ -38,10 +38,11 @@ function resetWifiStatus(callback) {
  * @param ssid The ssid of the wifi network.
  * @param password The password of the wifi network.
  * @param {wifiStatusCallback} callback A cb which gets the connect status updates.
+ * @param bssid Optional bssid to pin to a specific AP.
  */
-function connectWifi(ssid, password, callback) {
+function connectWifi(ssid, password, callback, bssid) {
     resetWifiStatus(callback);
-    el_connectWifi(ssid, password);
+    el_connectWifi(ssid, password, bssid ? convertBssidToArray(bssid) : undefined);
 }
 exports.connectWifi = connectWifi;
 /**
@@ -61,13 +62,35 @@ exports.createSoftAp = createSoftAp;
  * @returns The bssid.
  */
 function getBssid() {
-    return getWifiConfig()
-        .bssid.map(function (n) {
-        return n.toString(16);
-    })
-        .join(":");
+    return convertBssidToString(getWifiConfig().bssid);
 }
 exports.getBssid = getBssid;
+/**
+ * Converts a 6 number array into a string representation of a BSSID.
+ * @returns The bssid as string representation.
+ */
+function convertBssidToString(bssid) {
+    if (bssid.length == 6) {
+        return bssid
+            .map(function (n) {
+            var str = n.toString(16).toUpperCase();
+            return str.length == 2 ? str : "0" + str;
+        })
+            .join(":");
+    }
+}
+exports.convertBssidToString = convertBssidToString;
+/**
+ * Converts a bssid string representation in a 6 number array.
+ * @returns The bssid as 6 number array.
+ */
+function convertBssidToArray(bssid) {
+    var bssidArray = bssid.split(":").map(function (s) { return parseInt(s, 16); });
+    if (bssidArray.length == 6) {
+        return bssidArray;
+    }
+}
+exports.convertBssidToArray = convertBssidToArray;
 /**
  * Convert 32 bit number to ip address string.
  * @returns The ip address as string representation.

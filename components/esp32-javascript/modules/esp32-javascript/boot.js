@@ -207,7 +207,7 @@ function connectToWifi() {
         else if (evt.status === 2) {
             console.debug("WIFI: CONNECTING...");
         }
-    });
+    }, config_1.config.wifi.bssid);
 }
 function main() {
     var _a, _b;

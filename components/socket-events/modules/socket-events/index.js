@@ -1,5 +1,5 @@
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sockListen = exports.sockConnect = exports.closeSocket = exports.el_debug_sockets = exports.sockets = void 0;
+exports.sockListen = exports.sockConnect = exports.closeSocket = exports.sockets = void 0;
 /*
 MIT License
 
@@ -25,20 +25,6 @@ SOFTWARE.
 */
 var esp32_js_eventloop_1 = require("esp32-js-eventloop");
 var sslClientCtx;
-exports.sockets = [];
-exports.sockets.pushNative = exports.sockets.push;
-exports.sockets.push = function (item) {
-    exports.sockets.pushNative(item);
-    maintainSocketStatus(item.sockfd, item.isListening, item.isConnected, item.isError, item.onWritable);
-};
-exports.sockets.find = function (predicate) {
-    for (var _i = 0, sockets_1 = exports.sockets; _i < sockets_1.length; _i++) {
-        var s = sockets_1[_i];
-        if (predicate(s)) {
-            return s;
-        }
-    }
-};
 var NumberSet = /** @class */ (function () {
     function NumberSet() {
         this.set = [];
@@ -56,46 +42,75 @@ var NumberSet = /** @class */ (function () {
     };
     return NumberSet;
 }());
-// maintained socket status lists
-var sst_notConnectedSockets = new NumberSet();
-var sst_connectedSockets = new NumberSet();
-var sst_connectedWritableSockets = new NumberSet();
-exports.el_debug_sockets = {
-    sockets: exports.sockets,
-    sst_notConnectedSockets: sst_notConnectedSockets,
-    sst_connectedSockets: sst_connectedSockets,
-    sst_connectedWritableSockets: sst_connectedWritableSockets,
-};
-function maintainSocketStatus(sockfd, isListening, isConnected, isError, onWritable) {
-    // check if socket is still a valid actual socket
-    if (!exports.sockets.find(function (s) { return sockfd === s.sockfd; })) {
-        if (console.isDebug) {
-            console.debug("Invalid sockfd " + sockfd + " given to maintain.");
+var SocketLookupMap = /** @class */ (function () {
+    function SocketLookupMap() {
+        this.map = {};
+    }
+    SocketLookupMap.prototype.add = function (item) {
+        this.map[item.sockfd] = item;
+    };
+    SocketLookupMap.prototype.get = function (sockfd) {
+        return this.map[sockfd];
+    };
+    SocketLookupMap.prototype.remove = function (sockfd) {
+        delete this.map[sockfd];
+    };
+    return SocketLookupMap;
+}());
+var ActiveSockets = /** @class */ (function () {
+    function ActiveSockets() {
+        this.activeSockets = new SocketLookupMap();
+        // maintained socket status lists
+        this.sst_notConnectedSockets = new NumberSet();
+        this.sst_connectedSockets = new NumberSet();
+        this.sst_connectedWritableSockets = new NumberSet();
+    }
+    ActiveSockets.prototype.maintainSocketStatus = function (sockfd, isListening, isConnected, isError, onWritable) {
+        // check if socket is still a valid actual socket
+        if (!this.get(sockfd)) {
+            if (console.isDebug) {
+                console.debug("Invalid sockfd " + sockfd + " given to maintain.");
+            }
+            return;
         }
-        return;
-    }
-    if (console.isDebug) {
-        console.debug("Maintain socket status, sockfd: " + sockfd + ", isListening: " + isListening + ", isConnected: " + isConnected + ", isError: " + isError);
-    }
-    if (onWritable && isConnected && !isError) {
-        sst_connectedWritableSockets.add(sockfd);
-    }
-    else {
-        sst_connectedWritableSockets.remove(sockfd);
-    }
-    if (isConnected && !isError) {
-        sst_connectedSockets.add(sockfd);
-    }
-    else {
-        sst_connectedSockets.remove(sockfd);
-    }
-    if (!isConnected && !isListening && !isError) {
-        sst_notConnectedSockets.add(sockfd);
-    }
-    else {
-        sst_notConnectedSockets.remove(sockfd);
-    }
-}
+        if (console.isDebug) {
+            console.debug("Maintain socket status, sockfd: " + sockfd + ", isListening: " + isListening + ", isConnected: " + isConnected + ", isError: " + isError);
+        }
+        if (onWritable && isConnected && !isError) {
+            this.sst_connectedWritableSockets.add(sockfd);
+        }
+        else {
+            this.sst_connectedWritableSockets.remove(sockfd);
+        }
+        if (isConnected && !isError) {
+            this.sst_connectedSockets.add(sockfd);
+        }
+        else {
+            this.sst_connectedSockets.remove(sockfd);
+        }
+        if (!isConnected && !isListening && !isError) {
+            this.sst_notConnectedSockets.add(sockfd);
+        }
+        else {
+            this.sst_notConnectedSockets.remove(sockfd);
+        }
+    };
+    ActiveSockets.prototype.add = function (item) {
+        this.activeSockets.add(item);
+        this.maintainSocketStatus(item.sockfd, item.isListening, item.isConnected, item.isError, item.onWritable);
+    };
+    ActiveSockets.prototype.remove = function (sockfd) {
+        this.sst_connectedSockets.remove(sockfd);
+        this.sst_notConnectedSockets.remove(sockfd);
+        this.sst_connectedWritableSockets.remove(sockfd);
+        this.activeSockets.remove(sockfd);
+    };
+    ActiveSockets.prototype.get = function (sockfd) {
+        return this.activeSockets.get(sockfd);
+    };
+    return ActiveSockets;
+}());
+exports.sockets = new ActiveSockets();
 /**
  * @class
  */
@@ -149,7 +164,7 @@ var Socket = /** @class */ (function () {
         }
     };
     Socket.prototype.maintainSocketStatus = function () {
-        maintainSocketStatus(this.sockfd, this.isListening, this.isConnected, this.isError, this.onWritable);
+        exports.sockets.maintainSocketStatus(this.sockfd, this.isListening, this.isConnected, this.isError, this.onWritable);
     };
     Object.defineProperty(Socket.prototype, "isConnected", {
         get: function () {
@@ -314,16 +329,12 @@ function performOnClose(socket) {
  * @param {(module:socket-events~Socket|number)}
  */
 function closeSocket(socketOrSockfd) {
-    var socket = null;
+    var socket;
     if (typeof socketOrSockfd === "number") {
-        socket = exports.sockets.find(function (s) {
-            return s.sockfd === socketOrSockfd;
-        });
+        socket = exports.sockets.get(socketOrSockfd);
     }
     else if (typeof socketOrSockfd === "object") {
-        socket = exports.sockets.find(function (s) {
-            return s.sockfd === socketOrSockfd.sockfd;
-        });
+        socket = exports.sockets.get(socketOrSockfd.sockfd);
     }
     if (!socket) {
         console.debug("Socket not found for closing! Maybe already closed, doing nothing.");
@@ -391,9 +402,7 @@ function sockConnect(ssl, host, port, onConnect, onData, onError, onClose) {
             }
         };
     }
-    if (exports.sockets.indexOf(socket) < 0) {
-        exports.sockets.push(socket);
-    }
+    exports.sockets.add(socket);
     return socket;
 }
 exports.sockConnect = sockConnect;
@@ -431,9 +440,7 @@ function sockListen(port, onAccept, onError, onClose, isSSL) {
                 newSocket.isError = false;
                 newSocket.isListening = false;
                 newSocket.ssl = ssl;
-                if (exports.sockets.indexOf(newSocket) < 0) {
-                    exports.sockets.push(newSocket);
-                }
+                exports.sockets.add(newSocket);
                 if (onAccept) {
                     onAccept(newSocket);
                 }
@@ -459,9 +466,7 @@ function sockListen(port, onAccept, onError, onClose, isSSL) {
         socket.isConnected = true;
         socket.isError = false;
         socket.isListening = true;
-        if (exports.sockets.indexOf(socket) < 0) {
-            exports.sockets.push(socket);
-        }
+        exports.sockets.add(socket);
         return socket;
     }
 }
@@ -471,28 +476,20 @@ function resetSocket(socket) {
         console.debug("Reset Socket called on " + socket.sockfd);
     }
     if (socket) {
-        // free maintained socket status
-        sst_connectedSockets.remove(socket.sockfd);
-        sst_notConnectedSockets.remove(socket.sockfd);
-        sst_connectedWritableSockets.remove(socket.sockfd);
-        console.debug("CS " + sst_connectedSockets.set + " NC " + sst_notConnectedSockets.set + " CW " + sst_connectedWritableSockets.set);
-        exports.sockets.splice(exports.sockets.indexOf(socket), 1);
+        exports.sockets.remove(socket.sockfd);
         return;
     }
     throw Error("invalid sockfd");
 }
 function beforeSuspend() {
     if (console.isDebug) {
-        console.debug("Socket FDs for select.\n  not connected =>" + sst_notConnectedSockets.set + "\n  connected     =>" + sst_connectedSockets.set + "\n  connected wri =>" + sst_connectedWritableSockets.set + "\n");
+        console.debug("Socket FDs for select.\n  not connected =>" + exports.sockets.sst_notConnectedSockets.set + "\n  connected     =>" + exports.sockets.sst_connectedSockets.set + "\n  connected wri =>" + exports.sockets.sst_connectedWritableSockets.set + "\n");
     }
-    el_registerSocketEvents(sst_notConnectedSockets.set, sst_connectedSockets.set, sst_connectedWritableSockets.set);
+    el_registerSocketEvents(exports.sockets.sst_notConnectedSockets.set, exports.sockets.sst_connectedSockets.set, exports.sockets.sst_connectedWritableSockets.set);
 }
 function afterSuspend(evt, collected) {
     if (evt.type === EL_SOCKET_EVENT_TYPE) {
-        var findSocket = exports.sockets.filter(function (s) {
-            return s.sockfd === evt.fd;
-        });
-        var socket_1 = findSocket[0];
+        var socket_1 = exports.sockets.get(evt.fd);
         if (socket_1) {
             if (evt.status === 0) {
                 //writable

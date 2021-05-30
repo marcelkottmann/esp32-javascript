@@ -53,14 +53,20 @@ function resetWifiStatus(
  * @param ssid The ssid of the wifi network.
  * @param password The password of the wifi network.
  * @param {wifiStatusCallback} callback A cb which gets the connect status updates.
+ * @param bssid Optional bssid to pin to a specific AP.
  */
 export function connectWifi(
   ssid: string,
   password: string,
-  callback: (event: Esp32JsWifiEvent, ip: string | undefined) => void
+  callback: (event: Esp32JsWifiEvent, ip: string | undefined) => void,
+  bssid?: string
 ): void {
   resetWifiStatus(callback);
-  el_connectWifi(ssid, password);
+  el_connectWifi(
+    ssid,
+    password,
+    bssid ? convertBssidToArray(bssid) : undefined
+  );
 }
 
 /**
@@ -83,12 +89,38 @@ export function createSoftAp(
  * Get the bssid of the current connected wifi AP as formatted as hex string.
  * @returns The bssid.
  */
-export function getBssid(): string {
-  return getWifiConfig()
-    .bssid.map((n) => {
-      return n.toString(16);
-    })
-    .join(":");
+export function getBssid(): string | undefined {
+  return convertBssidToString(getWifiConfig().bssid);
+}
+
+/**
+ * Converts a 6 number array into a string representation of a BSSID.
+ * @returns The bssid as string representation.
+ */
+export function convertBssidToString(
+  bssid: [number, number, number, number, number, number]
+): string | undefined {
+  if (bssid.length == 6) {
+    return bssid
+      .map((n) => {
+        const str = n.toString(16).toUpperCase();
+        return str.length == 2 ? str : "0" + str;
+      })
+      .join(":");
+  }
+}
+
+/**
+ * Converts a bssid string representation in a 6 number array.
+ * @returns The bssid as 6 number array.
+ */
+export function convertBssidToArray(
+  bssid: string
+): [number, number, number, number, number, number] | undefined {
+  const bssidArray = bssid.split(":").map((s) => parseInt(s, 16));
+  if (bssidArray.length == 6) {
+    return bssidArray as [number, number, number, number, number, number];
+  }
 }
 
 /**

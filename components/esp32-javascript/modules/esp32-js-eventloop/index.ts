@@ -145,7 +145,7 @@ function el_select_next() {
           logfunction = console.error;
           break;
       }
-      logfunction(`LE ${evt.fd}: ${el_readAndFreeString(evt.fd)}`);
+      logfunction(el_readAndFreeString(evt.fd));
     } else {
       let eventHandled = false;
       if (afterSuspendHandlers) {

@@ -26,7 +26,7 @@ SOFTWARE.
 var stringbuffer_1 = require("./stringbuffer");
 exports.FILE_LOGGING_DIRECTORY = "/data/logs";
 exports.LOG_FILE_SIZE_LIMIT = 10240;
-exports.LOG_FILE_NUM_LIMIT = 10;
+exports.LOG_FILE_NUM_LIMIT = 8;
 var TDIWEF = "TDIWEF";
 var NUMBER_PREFIX = "00000000";
 var logFileNumber = -1;
@@ -54,10 +54,12 @@ function cleanupOldLogs() {
     }
 }
 global.el_flushLogBuffer = function () {
-    var swap = global.logBuffer;
-    global.logBuffer = new stringbuffer_1.StringBuffer();
     var logFile = exports.FILE_LOGGING_DIRECTORY + "/logs-" + getLogFileNumber() + ".txt";
-    appendFile(logFile, swap.toString());
+    var ret = appendFile(logFile, global.logBuffer.toString());
+    if (ret < 0) {
+        console.error("Could not flush log file. Space exceeded?");
+    }
+    global.logBuffer = new stringbuffer_1.StringBuffer();
     if (fileSize(logFile) > exports.LOG_FILE_SIZE_LIMIT) {
         logFileNumber++;
     }
