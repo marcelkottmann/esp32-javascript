@@ -34,7 +34,7 @@ function reloadConfig() {
     }
     catch (error) {
         exports.config = firmware_config_1.default;
-        console.error("An error ocurred while accessing config. Maybe it does not exist.");
+        console.error("Using default config. Seems like you never changed the config.");
     }
 }
 exports.reloadConfig = reloadConfig;

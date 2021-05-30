@@ -103,7 +103,7 @@ char *readFile(const char *path)
 	FILE *f = fopen(path, "r");
 	if (f == NULL)
 	{
-		jslog(ERROR, "Failed to open file for reading");
+		jslog(ERROR, "Failed to open file '%s' for reading.", path);
 		return NULL;
 	}
 
@@ -132,7 +132,7 @@ int writeFile(const char *path, const char *content)
 	FILE *f = fopen(path, "w");
 	if (f == NULL)
 	{
-		jslog(ERROR, "Failed to open file '%s'for writing, errno %i", path, errno);
+		jslog(ERROR, "Failed to open file '%s' for writing, errno %i", path, errno);
 		return -1;
 	}
 	int result = fputs(content, f);
@@ -278,14 +278,16 @@ void registerBindings(duk_context *ctx)
 	duk_put_global_string(ctx, "fileSize");
 	duk_push_c_function(ctx, el_listDir, 1);
 	duk_put_global_string(ctx, "listDir");
-	// duk_push_c_function(ctx, el_mkdir, 1);
-	// duk_put_global_string(ctx, "mkdir");
 }
 
 void initSpiffs(duk_context *ctx)
 {
-	esp_partition_t *partition = esp_ota_get_boot_partition();
-	const char *modulesLabel = strcmp(partition->label, "ota_1") == 0 ? "modules_1" : "modules";
+	const char *modulesLabel = "modules";
+	if (isNativeOtaSupported())
+	{
+		esp_partition_t *partition = esp_ota_get_boot_partition();
+		modulesLabel = partition != NULL && strcmp(partition->label, "ota_1") == 0 ? "modules_1" : "modules";
+	}
 	initFilesystem(modulesLabel, "/modules");
 
 	initFilesystem("data", "/data");

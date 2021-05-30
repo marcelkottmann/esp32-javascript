@@ -94,6 +94,7 @@ declare function listDir(path: string): string[];
 declare function mkdir(path: string): void;
 
 // ota
+declare function el_is_native_ota_supported(): boolean;
 declare function el_ota_begin(): number;
 declare function el_ota_write(handle: number, data: Uint8Array): number;
 declare function el_ota_end(handle: number): number;

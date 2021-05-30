@@ -67,6 +67,7 @@ extern "C"
     void loadJS(duk_context *ctx, const char *name, char *start, char *end);
 
     int esp32_javascript_init();
+    bool isNativeOtaSupported();
 
 #ifdef __cplusplus
 }

@@ -822,6 +822,24 @@ duk_ret_t el_partition_write(duk_context *ctx)
     }
 }
 
+bool isNativeOtaSupported()
+{
+    if (esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_OTA, "otadata") == NULL)
+    {
+        return false;
+    }
+    else
+    {
+        return true;
+    }
+}
+
+duk_ret_t el_is_native_ota_supported(duk_context *ctx)
+{
+    duk_push_boolean(ctx, isNativeOtaSupported());
+    return 1;
+}
+
 duk_ret_t el_readAndFreeString(duk_context *ctx)
 {
     char *str = duk_to_int(ctx, 0);
@@ -919,20 +937,26 @@ void duktape_task(void *ignore)
     duk_push_c_function(ctx, atob, 1 /*nargs*/);
     duk_put_global_string(ctx, "atob");
 
-    duk_push_c_function(ctx, el_ota_begin, 0 /*nargs*/);
-    duk_put_global_string(ctx, "el_ota_begin");
+    if (isNativeOtaSupported())
+    {
+        duk_push_c_function(ctx, el_ota_begin, 0 /*nargs*/);
+        duk_put_global_string(ctx, "el_ota_begin");
 
-    duk_push_c_function(ctx, el_ota_write, 2 /*nargs*/);
-    duk_put_global_string(ctx, "el_ota_write");
+        duk_push_c_function(ctx, el_ota_write, 2 /*nargs*/);
+        duk_put_global_string(ctx, "el_ota_write");
 
-    duk_push_c_function(ctx, el_ota_end, 1 /*nargs*/);
-    duk_put_global_string(ctx, "el_ota_end");
+        duk_push_c_function(ctx, el_ota_end, 1 /*nargs*/);
+        duk_put_global_string(ctx, "el_ota_end");
 
-    duk_push_c_function(ctx, el_ota_switch_boot_partition, 0 /*nargs*/);
-    duk_put_global_string(ctx, "el_ota_switch_boot_partition");
+        duk_push_c_function(ctx, el_ota_switch_boot_partition, 0 /*nargs*/);
+        duk_put_global_string(ctx, "el_ota_switch_boot_partition");
 
-    duk_push_c_function(ctx, el_ota_find_next_modules_partition, 0 /*nargs*/);
-    duk_put_global_string(ctx, "el_ota_find_next_modules_partition");
+        duk_push_c_function(ctx, el_ota_find_next_modules_partition, 0 /*nargs*/);
+        duk_put_global_string(ctx, "el_ota_find_next_modules_partition");
+    }
+
+    duk_push_c_function(ctx, el_is_native_ota_supported, 0 /*nargs*/);
+    duk_put_global_string(ctx, "el_is_native_ota_supported");
 
     duk_push_c_function(ctx, el_partition_erase, 1 /*nargs*/);
     duk_put_global_string(ctx, "el_partition_erase");
