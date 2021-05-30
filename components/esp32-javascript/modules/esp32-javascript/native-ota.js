@@ -100,6 +100,10 @@ function upgradeModules(partition, modulesImageUrl, submitSuccess, submitError) 
     return client;
 }
 exports.upgrade = function (appImageUrl, modulesImageUrl, onError, onFinish) {
+    if (!el_is_native_ota_supported()) {
+        onError && onError("Native OTA is not supported.");
+        return;
+    }
     console.log("Start native firmware upgrade:");
     console.log("App image: " + appImageUrl);
     console.log("Modules image: " + modulesImageUrl);

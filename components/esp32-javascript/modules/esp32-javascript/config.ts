@@ -49,7 +49,7 @@ export function reloadConfig(): void {
   } catch (error) {
     config = firmwareConfig;
     console.error(
-      "An error ocurred while accessing config. Maybe it does not exist."
+      "Using default config. Seems like you never changed the config."
     );
   }
 }

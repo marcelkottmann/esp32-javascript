@@ -341,18 +341,22 @@ export function startConfigServer(): void {
           </form>
         </div>
         
-        <h2>Native OTA Upgrade</h2>
+        ${
+          el_is_native_ota_supported()
+            ? `<h2>Native OTA Upgrade</h2>
         <form action="/native-ota" method="post" class="formpad">
           <div class="formpad"><label for="appbin" class="formlabel">URL to app binary</label><input type="text" name="appbin" class="fill input" value="" /></div>
           <div class="formpad"><label for="modulesbin" class="formlabel">URL to modules binary</label><input type="text" name="modulesbin" class="fill input" value="" /></div>
           <div class="formpad"><input type="submit" value="Upgrade" class="formpad input" ${
             upgradeStatus.status === "inprogress" ? "disabled" : ""
           }/> ${
-          upgradeStatus.status !== "idle"
-            ? '<a href="/native-ota">Upgrade status</a>'
+                upgradeStatus.status !== "idle"
+                  ? '<a href="/native-ota">Upgrade status</a>'
+                  : ""
+              }</div>
+        </form>`
             : ""
-        }</div>
-        </form>
+        }
 
         <h2>Request restart</h2>
         <form action="/restart" method="post"><div class="formpad"><input type="submit" value="Restart" class="formpad input"/></div></form>
