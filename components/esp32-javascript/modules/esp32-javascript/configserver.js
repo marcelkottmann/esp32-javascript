@@ -78,6 +78,10 @@ var schema = {
                 type: "string",
                 title: "Password",
             },
+            bssid: {
+                type: "string",
+                title: "BSSID",
+            },
         },
     },
     ota: {
@@ -170,7 +174,7 @@ function startConfigServer() {
             ":" +
             configManager.config.access.password);
     http_1.httpServer(80, false, function (req, res) {
-        var _a, _b, _c, _d, _e;
+        var _a, _b, _c, _d, _e, _f;
         if (req.headers.get("authorization") !== authString &&
             exports.baExceptionPathes.indexOf(req.path) < 0) {
             console.debug("401 response");
@@ -196,6 +200,7 @@ function startConfigServer() {
                     var config_1 = http_1.parseQueryStr(req.body);
                     storedConfig.wifi.ssid = config_1.ssid;
                     storedConfig.wifi.password = config_1.password;
+                    storedConfig.wifi.bssid = config_1.bssid;
                     storedConfig.access.username = config_1.username;
                     storedConfig.access.password = config_1.userpass;
                     storedConfig.ota.url = config_1.url;
@@ -211,7 +216,7 @@ function startConfigServer() {
             var config = configManager.config;
             page(res, "Setup", "" + (successMessage
                 ? "<div class=\"formpad green\">" + successMessage + "</div>"
-                : "") + (errorMessage ? "<div class=\"formpad red\">" + errorMessage + "</div>" : "") + "<h2>Configuration</h2><h3>Wifi</h3><form action=\"/setup\" method=\"post\">\n        <div class=\"formpad\"><label for=\"ssid\" class=\"formlabel\">SSID</label><input type=\"text\" name=\"ssid\" class=\"fill input\" value=\"" + (((_a = config.wifi) === null || _a === void 0 ? void 0 : _a.ssid) || "") + "\" /></div>\n        <div class=\"formpad\"><label for=\"password\" class=\"formlabel\">Password</label><input type=\"text\" name=\"password\" class=\"fill input\" value=\"" + (((_b = config.wifi) === null || _b === void 0 ? void 0 : _b.password) || "") + "\" /></div>\n        <h3>Basic authentication</h3>\n        <div class=\"formpad\"><label for=\"username\" class=\"formlabel\">Username</label><input type=\"text\" name=\"username\" class=\"fill input\" value=\"" + config.access.username + "\" /></div>\n        <div class=\"formpad\"><label for=\"userpass\" class=\"formlabel\">Password</label><input type=\"text\" name=\"userpass\" class=\"fill input\" value=\"" + config.access.password + "\" /></div>\n        <h3>JavaScript OTA</h3><div class=\"formpad\"><label for=\"url\" class=\"formlabel\">JS file url</label><input type=\"text\" name=\"url\" class=\"fill input\" value=\"" + (((_c = config.ota) === null || _c === void 0 ? void 0 : _c.url) || "") + "\" /></div>\n        <div class=\"formpad\"><label for=\"offline\"><input type=\"checkbox\" name=\"offline\" value=\"true\" " + (((_d = config.ota) === null || _d === void 0 ? void 0 : _d.offline) ? "checked" : "") + "/> Offline Mode</label></div>\n        <label for=\"script\" class=\"formpad\">Offline Script</label><div class=\"formpad\"><textarea name=\"script\" class=\"full input txt\">" + (((_e = config.ota) === null || _e === void 0 ? void 0 : _e.script) || "") + "</textarea></div>\n        <div class=\"formpad\"><input type=\"submit\" value=\"Save\" class=\"formpad input\"/></div></form>\n        <h2>Logs</h2>\n        <div class=\"formpad\">\n          <p>\n            Showing last " + filelogging_1.LOG_FILE_NUM_LIMIT + " log files, with each having maximum of " + filelogging_1.LOG_FILE_SIZE_LIMIT / 1024 + " kB data.<br/>\n          </p>\n          " + getLogFileList()
+                : "") + (errorMessage ? "<div class=\"formpad red\">" + errorMessage + "</div>" : "") + "<h2>Configuration</h2><h3>Wifi</h3><form action=\"/setup\" method=\"post\">\n        <div class=\"formpad\"><label for=\"ssid\" class=\"formlabel\">SSID</label><input type=\"text\" name=\"ssid\" class=\"fill input\" value=\"" + (((_a = config.wifi) === null || _a === void 0 ? void 0 : _a.ssid) || "") + "\" /></div>\n        <div class=\"formpad\"><label for=\"password\" class=\"formlabel\">Password</label><input type=\"text\" name=\"password\" class=\"fill input\" value=\"" + (((_b = config.wifi) === null || _b === void 0 ? void 0 : _b.password) || "") + "\" /></div>\n        <div class=\"formpad\"><label for=\"bssid\" class=\"formlabel\">BSSID (optional)</label><input type=\"text\" name=\"bssid\" class=\"fill input\" value=\"" + (((_c = config.wifi) === null || _c === void 0 ? void 0 : _c.bssid) || "") + "\" /></div>\n        <h3>Basic authentication</h3>\n        <div class=\"formpad\"><label for=\"username\" class=\"formlabel\">Username</label><input type=\"text\" name=\"username\" class=\"fill input\" value=\"" + config.access.username + "\" /></div>\n        <div class=\"formpad\"><label for=\"userpass\" class=\"formlabel\">Password</label><input type=\"text\" name=\"userpass\" class=\"fill input\" value=\"" + config.access.password + "\" /></div>\n        <h3>JavaScript OTA</h3><div class=\"formpad\"><label for=\"url\" class=\"formlabel\">JS file url</label><input type=\"text\" name=\"url\" class=\"fill input\" value=\"" + (((_d = config.ota) === null || _d === void 0 ? void 0 : _d.url) || "") + "\" /></div>\n        <div class=\"formpad\"><label for=\"offline\"><input type=\"checkbox\" name=\"offline\" value=\"true\" " + (((_e = config.ota) === null || _e === void 0 ? void 0 : _e.offline) ? "checked" : "") + "/> Offline Mode</label></div>\n        <label for=\"script\" class=\"formpad\">Offline Script</label><div class=\"formpad\"><textarea name=\"script\" class=\"full input txt\">" + (((_f = config.ota) === null || _f === void 0 ? void 0 : _f.script) || "") + "</textarea></div>\n        <div class=\"formpad\"><input type=\"submit\" value=\"Save\" class=\"formpad input\"/></div></form>\n        <h2>Logs</h2>\n        <div class=\"formpad\">\n          <p>\n            Showing last " + filelogging_1.LOG_FILE_NUM_LIMIT + " log files, with each having maximum of " + filelogging_1.LOG_FILE_SIZE_LIMIT / 1024 + " kB data.<br/>\n          </p>\n          " + getLogFileList()
                 .map(function (e) {
                 return e.filename + " (" + (e.size === undefined ? "?" : Math.floor(e.size / 1024)) + " kB) <form action=\"/viewlog\" method=\"post\" class=\"inline-form\"><button class=\"input\" type=\"submit\" name=\"file\" value=\"" + filelogging_1.FILE_LOGGING_DIRECTORY + "/" + e.filename + "\">View</button></form> <form action=\"/deletelog\" method=\"post\" class=\"inline-form\"><button class=\"input\" type=\"submit\" name=\"file\" value=\"" + filelogging_1.FILE_LOGGING_DIRECTORY + "/" + e.filename + "\">Delete</button></form><br />";
             })

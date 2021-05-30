@@ -21,46 +21,50 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
+/* eslint-disable @typescript-eslint/no-var-requires */
 
-console.info("Load global.js (NEW)...");
-require("./global.js");
+try {
+  console.info("Load global.js (NEW)...");
+  require("./global.js");
 
-console.info("Loading file logging buffer (NEW)...");
-require("./filelogging");
+  console.info("Loading file logging buffer (NEW)...");
+  require("./filelogging");
 
-console.info("Importing http (NEW)...");
-import http = require("./http");
+  console.info("Importing http (NEW)...");
+  const http = require("./http");
 
-console.info("Importing boot (NEW)...");
-import boot = require("./boot");
+  console.info("Importing boot (NEW)...");
+  const boot = require("./boot");
 
-console.info("Importing eventloop (NEW)...");
-import eventloop = require("esp32-js-eventloop");
+  console.info("Importing eventloop (NEW)...");
+  const eventloop = require("esp32-js-eventloop");
 
-console.info("Importing config (NEW)...");
-import configManager = require("./config");
+  console.info("Importing config (NEW)...");
+  const configManager = require("./config");
 
-console.info("Loading promise.js and exposing globals (NEW)...");
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-global.Promise = require("./promise.js").Promise;
+  console.info("Loading promise.js and exposing globals (NEW)...");
+  global.Promise = require("./promise.js").Promise;
 
-console.info("Loading config (NEW)...");
-configManager.reloadConfig();
+  console.info("Loading config (NEW)...");
+  configManager.reloadConfig();
 
-console.info("Loading http.js and exposing globals (NEW)...");
-global.XMLHttpRequest = http.XMLHttpRequest;
+  console.info("Loading http.js and exposing globals (NEW)...");
+  global.XMLHttpRequest = http.XMLHttpRequest;
 
-console.info("Loading fetch.js and exposing globals (NEW)...");
-require("./fetch.js");
+  console.info("Loading fetch.js and exposing globals (NEW)...");
+  require("./fetch.js");
 
-console.info("Loading boot.js and exposing main (NEW)...");
-global.main = boot.main;
+  console.info("Loading boot.js and exposing main (NEW)...");
+  global.main = boot.main;
 
-console.info("Loading socket-events (NEW)...");
-require("socket-events");
+  console.info("Loading socket-events (NEW)...");
+  require("socket-events");
 
-console.info("Loading wifi-events (NEW)...");
-require("wifi-events");
+  console.info("Loading wifi-events (NEW)...");
+  require("wifi-events");
 
-console.info("Loading eventloop.js and starting eventloop (NEW)...");
-eventloop.start();
+  console.info("Loading eventloop.js and starting eventloop (NEW)...");
+  eventloop.start();
+} catch (error) {
+  console.error(error.stack || error);
+}

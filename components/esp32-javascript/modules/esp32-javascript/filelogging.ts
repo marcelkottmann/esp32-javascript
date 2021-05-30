@@ -25,7 +25,7 @@ import { StringBuffer } from "./stringbuffer";
 
 export const FILE_LOGGING_DIRECTORY = "/data/logs";
 export const LOG_FILE_SIZE_LIMIT = 10240;
-export const LOG_FILE_NUM_LIMIT = 10;
+export const LOG_FILE_NUM_LIMIT = 8;
 
 const TDIWEF = "TDIWEF";
 const NUMBER_PREFIX = "00000000";
@@ -57,10 +57,13 @@ function cleanupOldLogs() {
 }
 
 global.el_flushLogBuffer = function (): void {
-  const swap = global.logBuffer;
-  global.logBuffer = new StringBuffer();
   const logFile = `${FILE_LOGGING_DIRECTORY}/logs-${getLogFileNumber()}.txt`;
-  appendFile(logFile, swap.toString());
+  const ret = appendFile(logFile, global.logBuffer.toString());
+  if (ret < 0) {
+    console.error("Could not flush log file. Space exceeded?");
+  }
+
+  global.logBuffer = new StringBuffer();
   if (fileSize(logFile) > LOG_FILE_SIZE_LIMIT) {
     logFileNumber++;
   }

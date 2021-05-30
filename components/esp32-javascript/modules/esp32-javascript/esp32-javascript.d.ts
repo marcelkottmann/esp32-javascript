@@ -36,13 +36,17 @@ declare function el_suspend(): Esp32JsEventloopEvent[];
 declare function main(): void;
 
 interface Esp32JsWifiConfig {
-  bssid: number[];
+  bssid: [number, number, number, number, number, number];
 }
 declare function getWifiConfig(): Esp32JsWifiConfig;
 declare const EL_WIFI_EVENT_TYPE: number;
 declare const EL_TIMER_EVENT_TYPE: number;
 declare const EL_LOG_EVENT_TYPE: number;
-declare function el_connectWifi(ssid: string, password: string): void;
+declare function el_connectWifi(
+  ssid: string,
+  password: string,
+  bssid?: [number, number, number, number, number, number]
+): void;
 declare function el_createSoftAp(ssid: string, password: string): void;
 
 declare function writeSocket(
