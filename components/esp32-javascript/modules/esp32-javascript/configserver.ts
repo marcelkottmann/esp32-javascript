@@ -163,7 +163,6 @@ function page(
       }
       .formlabel {
         display: inline-block;
-        width: 130px;
       }
       .formpad {
         padding: 8px;
@@ -180,6 +179,9 @@ function page(
       .blink {
         animation: blinkanimation 1s linear infinite;
       }
+      .nowrap {
+        white-space: nowrap;
+      }
       @keyframes blinkanimation {
         50% {
           opacity: 0;
@@ -187,6 +189,13 @@ function page(
       }
       </style>
       ${additionalHeadTags ? additionalHeadTags : ""}
+      <script>
+        function showpassword(label)
+        {
+          var inputId=label.parentElement.getAttribute("for");
+          document.getElementById(inputId).setAttribute("type","text");
+        }
+      </script>
       </head>
       <body><div><div><div><h1>${headline}</h1>`);
   if (Array.isArray(text)) {
@@ -294,23 +303,23 @@ export function startConfigServer(): void {
         }${
           errorMessage ? `<div class="formpad red">${errorMessage}</div>` : ""
         }<h2>Configuration</h2><h3>Wifi</h3><form action="/setup" method="post">
-        <div class="formpad"><label for="ssid" class="formlabel">SSID</label><input type="text" name="ssid" class="fill input" value="${
+        <div class="formpad"><label for="ssid" class="formlabel">SSID</label><br /><input type="text" name="ssid" class="full input" value="${
           config.wifi?.ssid || ""
         }" /></div>
-        <div class="formpad"><label for="password" class="formlabel">Password</label><input type="text" name="password" class="fill input" value="${
+        <div class="formpad"><label for="password" class="formlabel">Password (<a href="javascript:void(0)" onclick="showpassword(this)">Show</a>)</label><br /><input type="password" name="password" id="password" class="full input" value="${
           config.wifi?.password || ""
         }" /></div>
-        <div class="formpad"><label for="bssid" class="formlabel">BSSID (optional)</label><input type="text" name="bssid" class="fill input" value="${
+        <div class="formpad"><label for="bssid" class="formlabel">BSSID (optional)</label></br /><input type="text" name="bssid" class="full input" value="${
           config.wifi?.bssid || ""
         }" /></div>
         <h3>Basic authentication</h3>
-        <div class="formpad"><label for="username" class="formlabel">Username</label><input type="text" name="username" class="fill input" value="${
+        <div class="formpad"><label for="username" class="formlabel">Username</label></br /><input type="text" name="username" class="full input" value="${
           config.access.username
         }" /></div>
-        <div class="formpad"><label for="userpass" class="formlabel">Password</label><input type="text" name="userpass" class="fill input" value="${
+        <div class="formpad"><label for="userpass" class="formlabel">Password (<a href="javascript:void(0)" onclick="showpassword(this)">Show</a>)</label></br /><input type="password" name="userpass" id="userpass" class="full input" value="${
           config.access.password
         }" /></div>
-        <h3>JavaScript OTA</h3><div class="formpad"><label for="url" class="formlabel">JS file url</label><input type="text" name="url" class="fill input" value="${
+        <h3>JavaScript OTA</h3><div class="formpad"><label for="url" class="formlabel">JS file url</label></br /><input type="text" name="url" class="full input" value="${
           config.ota?.url || ""
         }" /></div>
         <div class="formpad"><label for="offline"><input type="checkbox" name="offline" value="true" ${
@@ -329,13 +338,13 @@ export function startConfigServer(): void {
           </p>
           ${getLogFileList()
             .map((e) => {
-              return `${e.filename} (${
+              return `<div>${e.filename} (${
                 e.size === undefined ? "?" : Math.floor(e.size / 1024)
-              } kB) <form action="/viewlog" method="post" class="inline-form"><button class="input" type="submit" name="file" value="${FILE_LOGGING_DIRECTORY}/${
+              } kB) <span class="nowrap"><form action="/viewlog" method="post" class="inline-form"><button class="input" type="submit" name="file" value="${FILE_LOGGING_DIRECTORY}/${
                 e.filename
-              }">View</button></form> <form action="/deletelog" method="post" class="inline-form"><button class="input" type="submit" name="file" value="${FILE_LOGGING_DIRECTORY}/${
+              }">View</button></form>&nbsp;<form action="/deletelog" method="post" class="inline-form"><button class="input" type="submit" name="file" value="${FILE_LOGGING_DIRECTORY}/${
                 e.filename
-              }">Delete</button></form><br />`;
+              }">Delete</button></form></span></div>`;
             })
             .join("")}
           </form>
@@ -344,9 +353,9 @@ export function startConfigServer(): void {
         ${
           el_is_native_ota_supported()
             ? `<h2>Native OTA Upgrade</h2>
-        <form action="/native-ota" method="post" class="formpad">
-          <div class="formpad"><label for="appbin" class="formlabel">URL to app binary</label><input type="text" name="appbin" class="fill input" value="" /></div>
-          <div class="formpad"><label for="modulesbin" class="formlabel">URL to modules binary</label><input type="text" name="modulesbin" class="fill input" value="" /></div>
+        <form action="/native-ota" method="post">
+          <div class="formpad"><label for="appbin" class="formlabel">URL to app binary</label><br /><input type="text" name="appbin" class="full input" value="" /></div>
+          <div class="formpad"><label for="modulesbin" class="formlabel">URL to modules binary</label><br /><input type="text" name="modulesbin" class="full input" value="" /></div>
           <div class="formpad"><input type="submit" value="Upgrade" class="formpad input" ${
             upgradeStatus.status === "inprogress" ? "disabled" : ""
           }/> ${

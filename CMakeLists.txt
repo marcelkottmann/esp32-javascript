@@ -10,7 +10,7 @@ set(ENV{BOARD_VARIANT} "../esp32-javascript/include/variants/my")
 # set ESP32_JS_PROJECT_NAME to define your project component name. 
 # Place your component below ./components directory. Set to ""
 # if you don't have a project component yet.
-set(ENV{ESP32_JS_PROJECT_NAME} "esp32-home")
+set(ENV{ESP32_JS_PROJECT_NAME} "")
 #################################################
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
