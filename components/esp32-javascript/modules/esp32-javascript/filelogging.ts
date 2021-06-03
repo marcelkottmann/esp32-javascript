@@ -57,13 +57,19 @@ function cleanupOldLogs() {
 }
 
 global.el_flushLogBuffer = function (): void {
+  const swap = global.logBuffer; // swap to prevent endless loop when error occurs in this method
+  global.logBuffer = new StringBuffer();
+
   const logFile = `${FILE_LOGGING_DIRECTORY}/logs-${getLogFileNumber()}.txt`;
-  const ret = appendFile(logFile, global.logBuffer.toString());
-  if (ret < 0) {
-    console.error("Could not flush log file. Space exceeded?");
+  try {
+    const ret = appendFile(logFile, swap.toString());
+    if (ret < 0) {
+      console.error("Could not flush log file. Space exceeded?");
+    }
+  } catch (error) {
+    console.error("Could not open log file. Space exceeded?");
   }
 
-  global.logBuffer = new StringBuffer();
   if (fileSize(logFile) > LOG_FILE_SIZE_LIMIT) {
     logFileNumber++;
   }

@@ -54,12 +54,18 @@ function cleanupOldLogs() {
     }
 }
 global.el_flushLogBuffer = function () {
-    var logFile = exports.FILE_LOGGING_DIRECTORY + "/logs-" + getLogFileNumber() + ".txt";
-    var ret = appendFile(logFile, global.logBuffer.toString());
-    if (ret < 0) {
-        console.error("Could not flush log file. Space exceeded?");
-    }
+    var swap = global.logBuffer; // swap to prevent endless loop when error occurs in this method
     global.logBuffer = new stringbuffer_1.StringBuffer();
+    var logFile = exports.FILE_LOGGING_DIRECTORY + "/logs-" + getLogFileNumber() + ".txt";
+    try {
+        var ret = appendFile(logFile, swap.toString());
+        if (ret < 0) {
+            console.error("Could not flush log file. Space exceeded?");
+        }
+    }
+    catch (error) {
+        console.error("Could not open log file. Space exceeded?");
+    }
     if (fileSize(logFile) > exports.LOG_FILE_SIZE_LIMIT) {
         logFileNumber++;
     }
