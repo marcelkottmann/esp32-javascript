@@ -1,12 +1,14 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.start = exports.afterSuspendHandlers = exports.beforeSuspendHandlers = void 0;
-errorhandler =
-    typeof errorhandler === "undefined"
-        ? function (error) {
-            console.error("Uncaught error:");
-            console.error(error.stack || error);
-        }
-        : errorhandler;
+errorhandler = function () {
+    // empty default implementation
+};
+function internalErrorHandler(error) {
+    console.error("Uncaught error:");
+    console.error(error.stack || error);
+    global.el_flushLogBuffer();
+    errorhandler(error);
+}
 var timers = [];
 var intervals = [];
 var handles = 0;
@@ -129,7 +131,7 @@ function start() {
                         nf();
                     }
                     catch (error) {
-                        errorhandler(error);
+                        internalErrorHandler(error);
                     }
                 }
             });

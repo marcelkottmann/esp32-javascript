@@ -125,7 +125,13 @@ void jslog(log_level_t level, const char *msg, ...)
     }
     else
     {
-        char *message = malloc(strlen(my_string) + 1);
+        char *message = spiram_malloc(strlen(my_string) + 1); // gets freed in el_readAndFreeString
+        if (message == NULL)
+        {
+            ESP_LOGE(tag, "No memory to log message. Aborting...");
+            abort();
+        }
+
         strcpy(message, my_string);
 
         js_event_t event;
@@ -189,7 +195,10 @@ void IRAM_ATTR el_fire_events(js_eventlist_t *events)
     {
         if (events->events_len > 0)
         {
-            ESP_LOGD(tag, "Send %d events to queue...", events->events_len);
+            // el_fire_events is called from ISR and logging leads to overflowing stack (sometimes)
+            // e.g. in timer routines, because timer task has limited stack size. Discovered in
+            // backtrace of ELF 00d57bf2ccbe7755
+            // ESP_LOGD(tag, "Send %d events to queue...", events->events_len);
             int ret = xQueueSendFromISR(el_event_queue, events, NULL);
             if (ret != pdTRUE)
             {
@@ -223,7 +232,7 @@ void IRAM_ATTR vTimerCallback(TimerHandle_t xTimer)
     js_event_t event;
     js_eventlist_t events;
 
-    xTimerDelete(xTimer, portMAX_DELAY);
+    xTimerDelete(xTimer, 0);
 
     el_create_event(&event, EL_TIMER_EVENT_TYPE, (int)xTimer, 0);
     events.events_len = 0;
@@ -236,6 +245,12 @@ int createTimer(int timer_period_us)
     int interval = timer_period_us / portTICK_PERIOD_MS;
 
     TimerHandle_t tmr = xTimerCreate("", interval <= 0 ? 1 : interval, pdFALSE, NULL, vTimerCallback);
+
+    if (tmr == NULL)
+    {
+        jslog(ERROR, "Could not create timer.");
+        abort();
+    }
 
     if (interval <= 0)
     {
@@ -424,15 +439,7 @@ static duk_ret_t el_suspend(duk_context *ctx)
     // force garbage collection 2 times see duktape doc
     // greatly increases perfomance with external memory
     duk_gc(ctx, 0);
-    if (uxQueueMessagesWaiting(el_event_queue) == 0)
-    {
-        // if no event is waiting also compact heap
-        duk_gc(ctx, DUK_GC_COMPACT);
-    }
-    else
-    {
-        duk_gc(ctx, 0);
-    }
+    duk_gc(ctx, 0);
 
     while (xQueueReceive(el_event_queue, &events, timeout) == pdTRUE)
     {
@@ -844,7 +851,7 @@ duk_ret_t el_readAndFreeString(duk_context *ctx)
 {
     char *str = duk_to_int(ctx, 0);
     duk_push_string(ctx, str);
-    free(str);
+    spiram_free(str);
     return 1;
 }
 

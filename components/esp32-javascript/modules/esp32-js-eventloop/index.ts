@@ -33,13 +33,18 @@ type Esp32JsEventHandler = (
   collected: (() => void)[]
 ) => boolean;
 
-errorhandler =
-  typeof errorhandler === "undefined"
-    ? function (error) {
-        console.error("Uncaught error:");
-        console.error(error.stack || error);
-      }
-    : errorhandler;
+errorhandler = function () {
+  // empty default implementation
+};
+
+function internalErrorHandler(error: Error) {
+  console.error("Uncaught error:");
+  console.error(error.stack || error);
+
+  global.el_flushLogBuffer();
+
+  errorhandler(error);
+}
 
 const timers: Esp32JsTimer[] = [];
 const intervals: number[] = [];
@@ -175,7 +180,7 @@ export function start(): void {
           try {
             nf();
           } catch (error) {
-            errorhandler(error);
+            internalErrorHandler(error);
           }
         }
       });

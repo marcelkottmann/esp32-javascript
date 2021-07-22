@@ -71,6 +71,8 @@ extern const uint8_t cacert_pem_end[] asm("_binary_cacert_pem_end");
 extern const uint8_t prvtkey_pem_start[] asm("_binary_prvtkey_pem_start");
 extern const uint8_t prvtkey_pem_end[] asm("_binary_prvtkey_pem_end");
 
+static const char *tag = "esp32-javascript";
+
 int createSocketPair()
 {
     struct sockaddr_in server;
@@ -321,6 +323,25 @@ void select_task_it()
     needsUnblock = false;
 }
 
+static void triggerNextSelectIteration()
+{
+    jslog(DEBUG, "Trying to trigger the next select iteration...");
+    if (selectClientSocket >= 0)
+    {
+        //interrupt select through self-socket
+        jslog(DEBUG, "Sending . to self-socket.");
+        needsUnblock = true;
+        if (sendto(selectClientSocket, ".", 1, 0, (struct sockaddr *)&target, sizeof(target)) < 0)
+        {
+            jslog(ERROR, "Self-socket sending was NOT successful: %d", errno);
+        }
+        else
+        {
+            jslog(DEBUG, "Self-socket sending was successful.");
+        }
+    }
+}
+
 static duk_ret_t el_registerSocketEvents(duk_context *ctx)
 {
     int c_len, nc_len, cw_len;
@@ -446,21 +467,7 @@ static duk_ret_t el_registerSocketEvents(duk_context *ctx)
 
     if (changes)
     {
-        jslog(DEBUG, "Trying to trigger the next select iteration...");
-        if (selectClientSocket >= 0)
-        {
-            //interrupt select through self-socket
-            jslog(DEBUG, "Sending . to self-socket.");
-            needsUnblock = true;
-            if (sendto(selectClientSocket, ".", 1, 0, (struct sockaddr *)&target, sizeof(target)) < 0)
-            {
-                jslog(ERROR, "Self-socket sending was NOT successful: %d", errno);
-            }
-            else
-            {
-                jslog(DEBUG, "Self-socket sending was successful.");
-            }
-        }
+        triggerNextSelectIteration();
     }
 
     //trigger next select loop
@@ -600,6 +607,11 @@ static duk_ret_t connectSSL(duk_context *ctx)
 static duk_ret_t el_closeSocket(duk_context *ctx)
 {
     int socketfd = duk_to_int(ctx, 0);
+
+    // prevent bad file descripter error on running select, caused
+    // by closing socket
+    triggerNextSelectIteration();
+
     closeSocket(socketfd);
     return 0;
 }
