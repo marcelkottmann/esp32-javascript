@@ -395,10 +395,11 @@ errorCB, finishCB, dataCB, headCB) {
             }
             closeSocket(sockfd);
         }
-    }, function () {
+    }, function (sockfd) {
         if (errorCB) {
             errorCB("Could not load " + (ssl ? "https" : "http") + "://" + host + ":" + port + path);
         }
+        closeSocket(sockfd);
     }, function () {
         if (finishCB) {
             finishCB();

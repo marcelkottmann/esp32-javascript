@@ -33,7 +33,9 @@ SOFTWARE.
 static EventGroupHandle_t wifi_event_group;
 static const int CONNECTED_BIT = BIT0;
 static const int SCANNING_BIT = BIT1;
-static uint8_t *staticBssid = NULL;
+static volatile uint8_t *staticBssid = NULL;
+
+static const char *tag = "esp32-javascript";
 
 void startScan()
 {
@@ -45,7 +47,7 @@ void startScan()
 	int ret = esp_wifi_scan_start(&scanConf, false);
 	if (ret > 0)
 	{
-		jslog(WARN, "SCAN RETURNED %d", ret);
+		ESP_LOGW(tag, "SCAN RETURNED %d", ret);
 	}
 	else
 	{
@@ -74,7 +76,7 @@ static IRAM_ATTR esp_err_t event_handler(void *ctx, system_event_t *sysevent)
 	js_event_t event2;
 	wifi_mode_t mode;
 
-	jslog(DEBUG, "WIFI EVENT %d", sysevent->event_id);
+	ESP_LOGD(tag, "WIFI EVENT %d", sysevent->event_id);
 	switch (sysevent->event_id)
 	{
 	case SYSTEM_EVENT_SCAN_DONE:
@@ -82,15 +84,15 @@ static IRAM_ATTR esp_err_t event_handler(void *ctx, system_event_t *sysevent)
 		wifi_config_t wifi_config;
 		ESP_ERROR_CHECK(esp_wifi_get_config(WIFI_IF_STA, &wifi_config));
 
-		jslog(DEBUG, "Search for SSID %s ", wifi_config.sta.ssid);
+		ESP_LOGD(tag, "Search for SSID %s ", wifi_config.sta.ssid);
 		if (staticBssid != NULL)
 		{
-			jslog(DEBUG, "AND bssid=%02x:%02x:%02x:%02x:%02x:%02x", staticBssid[0], staticBssid[1], staticBssid[2], staticBssid[3], staticBssid[4], staticBssid[5]);
+			ESP_LOGD(tag, "AND bssid=%02x:%02x:%02x:%02x:%02x:%02x", staticBssid[0], staticBssid[1], staticBssid[2], staticBssid[3], staticBssid[4], staticBssid[5]);
 		}
 
 		uint16_t apCount = 0;
 		esp_wifi_scan_get_ap_num(&apCount);
-		jslog(DEBUG, "Number of access points found: %d", sysevent->event_info.scan_done.number);
+		ESP_LOGD(tag, "Number of access points found: %d", sysevent->event_info.scan_done.number);
 		uint8_t *selectedBssid = NULL;
 		int8_t rssi = -127;
 		wifi_ap_record_t *list = NULL;
@@ -105,16 +107,16 @@ static IRAM_ATTR esp_err_t event_handler(void *ctx, system_event_t *sysevent)
 				bool ssidMatch = strcmp((const char *)list[i].ssid, (const char *)wifi_config.sta.ssid) == 0;
 				bool bssidMatch = (staticBssid == NULL) || bssidEquals(staticBssid, list[i].bssid);
 
-				jslog(DEBUG, "ssidmatch=%s, bssidmatch=%s", ssidMatch ? "true" : "false", bssidMatch ? "true" : "false");
-				jslog(DEBUG, "SSID %s , bssid=%02x:%02x:%02x:%02x:%02x:%02x, rssi=%d,", list[i].ssid,
-					  list[i].bssid[0], list[i].bssid[1], list[i].bssid[2], list[i].bssid[3], list[i].bssid[4], list[i].bssid[5], list[i].rssi);
+				ESP_LOGD(tag, "ssidmatch=%s, bssidmatch=%s", ssidMatch ? "true" : "false", bssidMatch ? "true" : "false");
+				ESP_LOGD(tag, "SSID %s , bssid=%02x:%02x:%02x:%02x:%02x:%02x, rssi=%d,", list[i].ssid,
+						 list[i].bssid[0], list[i].bssid[1], list[i].bssid[2], list[i].bssid[3], list[i].bssid[4], list[i].bssid[5], list[i].rssi);
 				if (ssidMatch && bssidMatch)
 				{
 					if (list[i].rssi > rssi)
 					{
 						selectedBssid = list[i].bssid;
 						rssi = list[i].rssi;
-						jslog(DEBUG, "==> SELECTED!");
+						ESP_LOGD(tag, "==> SELECTED!");
 					}
 				}
 			}
@@ -123,15 +125,15 @@ static IRAM_ATTR esp_err_t event_handler(void *ctx, system_event_t *sysevent)
 		xEventGroupClearBits(wifi_event_group, SCANNING_BIT);
 		if (selectedBssid != NULL)
 		{
-			jslog(INFO, "==> SSID %s found, bssid=%02x:%02x:%02x:%02x:%02x:%02x, rssi=%d,", wifi_config.sta.ssid,
-				  selectedBssid[0], selectedBssid[1], selectedBssid[2], selectedBssid[3], selectedBssid[4], selectedBssid[5], rssi);
+			ESP_LOGI(tag, "==> SSID %s found, bssid=%02x:%02x:%02x:%02x:%02x:%02x, rssi=%d,", wifi_config.sta.ssid,
+					 selectedBssid[0], selectedBssid[1], selectedBssid[2], selectedBssid[3], selectedBssid[4], selectedBssid[5], rssi);
 			memcpy(wifi_config.sta.bssid, selectedBssid, 6 * sizeof(uint8_t));
 			ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
 			esp_wifi_connect();
 		}
 		else
 		{
-			jslog(DEBUG, "SSID not found %s", wifi_config.sta.ssid);
+			ESP_LOGD(tag, "SSID not found %s", wifi_config.sta.ssid);
 
 			xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);
 			el_create_event(&event, EL_WIFI_EVENT_TYPE, EL_WIFI_STATUS_DISCONNECTED, 0);
@@ -142,7 +144,8 @@ static IRAM_ATTR esp_err_t event_handler(void *ctx, system_event_t *sysevent)
 
 		if (list != NULL)
 		{
-			free(list);
+			spiram_free(list);
+			list = NULL;
 		}
 		break;
 	}
@@ -181,7 +184,7 @@ static IRAM_ATTR esp_err_t event_handler(void *ctx, system_event_t *sysevent)
 		el_add_event(&events, &event);
 		break;
 	default:
-		jslog(ERROR, "UNKNOWN WIFI EVENT %d", sysevent->event_id);
+		ESP_LOGE(tag, "UNKNOWN WIFI EVENT %d", sysevent->event_id);
 		break;
 	}
 
@@ -299,10 +302,6 @@ static duk_ret_t setupWifi(duk_context *ctx, bool softap)
 		wifi_config.sta.bssid_set = true;
 
 		ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-		jslog(INFO, "Setting WiFi configuration SSID %s and PASS ****. BSSID was provided: %s", wifi_config.sta.ssid, staticBssid != NULL ? "true" : "false");
-
-		ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
-		ESP_ERROR_CHECK(esp_wifi_start());
 
 		if (staticBssid != NULL)
 		{
@@ -313,6 +312,10 @@ static duk_ret_t setupWifi(duk_context *ctx, bool softap)
 		{
 			staticBssid = bssid;
 		}
+		jslog(INFO, "Setting WiFi configuration SSID %s and PASS ****. BSSID was provided: %s", wifi_config.sta.ssid, staticBssid != NULL ? "true" : "false");
+
+		ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
+		ESP_ERROR_CHECK(esp_wifi_start());
 
 		startScan();
 	}

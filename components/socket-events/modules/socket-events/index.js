@@ -352,6 +352,7 @@ function closeSocket(socketOrSockfd) {
     }
     performOnClose(socket);
     resetSocket(socket);
+    socket.sockfd = -1;
 }
 exports.closeSocket = closeSocket;
 /**
@@ -369,7 +370,13 @@ exports.closeSocket = closeSocket;
  */
 function sockConnect(ssl, host, port, onConnect, onData, onError, onClose) {
     var sockfd = el_createNonBlockingSocket();
-    el_connectNonBlocking(sockfd, host, parseInt(port, 10));
+    var connectError;
+    try {
+        el_connectNonBlocking(sockfd, host, parseInt(port, 10));
+    }
+    catch (error) {
+        connectError = error;
+    }
     var socket = getOrCreateNewSocket();
     socket.sockfd = sockfd;
     socket.onData = onData;
@@ -403,6 +410,11 @@ function sockConnect(ssl, host, port, onConnect, onData, onError, onClose) {
         };
     }
     exports.sockets.add(socket);
+    //if connect error occured call the callback
+    if (connectError && socket.onError) {
+        console.debug("Error connecting " + host + ":" + port + " : " + connectError);
+        socket.onError(sockfd);
+    }
     return socket;
 }
 exports.sockConnect = sockConnect;

@@ -423,6 +423,7 @@ export function closeSocket(socketOrSockfd: Esp32JsSocket | number): void {
   }
   performOnClose(socket);
   resetSocket(socket);
+  socket.sockfd = -1;
 }
 
 /**
@@ -448,7 +449,13 @@ export function sockConnect(
   onClose: () => void
 ): Esp32JsSocket {
   const sockfd = el_createNonBlockingSocket();
-  el_connectNonBlocking(sockfd, host, parseInt(port, 10));
+
+  let connectError;
+  try {
+    el_connectNonBlocking(sockfd, host, parseInt(port, 10));
+  } catch (error) {
+    connectError = error;
+  }
 
   const socket = getOrCreateNewSocket();
   socket.sockfd = sockfd;
@@ -483,6 +490,13 @@ export function sockConnect(
   }
 
   sockets.add(socket);
+
+  //if connect error occured call the callback
+  if (connectError && socket.onError) {
+    console.debug(`Error connecting ${host}:${port} : ${connectError}`);
+    socket.onError(sockfd);
+  }
+
   return socket;
 }
 
