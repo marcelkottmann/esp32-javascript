@@ -122,6 +122,7 @@ function el_select_next() {
       for (let timerIdx = 0; timerIdx < timers.length; timerIdx++) {
         if (timers[timerIdx].handle === evt.status) {
           nextTimer = timers.splice(timerIdx, 1)[0];
+          el_removeTimer(nextTimer.handle);
           collected.push(nextTimer.fn);
         }
       }

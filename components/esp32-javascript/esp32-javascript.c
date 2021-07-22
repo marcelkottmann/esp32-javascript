@@ -232,8 +232,6 @@ void IRAM_ATTR vTimerCallback(TimerHandle_t xTimer)
     js_event_t event;
     js_eventlist_t events;
 
-    xTimerDelete(xTimer, 0);
-
     el_create_event(&event, EL_TIMER_EVENT_TYPE, (int)xTimer, 0);
     events.events_len = 0;
     el_add_event(&events, &event);
