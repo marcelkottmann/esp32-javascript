@@ -295,31 +295,19 @@ module.exports=(function() {
 
 	}
 
-	var registry = (function() {
-		
-		var records = [];
-
+	var registry = (function () {
 		function add(promise, enhancedPromise) {
-			records.push({
-				promise: promise,
-				enhancedPromise: enhancedPromise
-			});
+			promise.__enhancedPromise = enhancedPromise;
 		}
 
 		function getEnhanced(promise) {
-			for(var i = 0; i < records.length; i++) {
-				var record = records[i];
-				if(record.promise === promise) {
-					return record.enhancedPromise;
-				}
-			}
+			return promise.__enhancedPromise;
 		}
 
 		return {
 			add: add,
-			getEnhanced: getEnhanced
-		} 
-
+			getEnhanced: getEnhanced,
+		};
 	})();
 
 	function Promise(executor) {

@@ -532,8 +532,8 @@ static duk_ret_t el_ledcWrite(duk_context *ctx)
 
 static duk_ret_t info(duk_context *ctx)
 {
-    size_t internal = heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
-    size_t external = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
+    size_t internal = heap_caps_get_free_size(MALLOC_CAP_8BIT | MALLOC_CAP_INTERNAL);
+    size_t external = heap_caps_get_free_size(MALLOC_CAP_8BIT | MALLOC_CAP_SPIRAM);
 
     jslog(INFO, "INTERNAL MEMORY HEAP INFO FREE: %d", internal);
     jslog(INFO, "EXTERNAL MEMORY HEAP INFO FREE: %d", external);
@@ -631,7 +631,7 @@ IRAM_ATTR void *duk_spiram_malloc(void *udata, size_t size)
 {
     if (spiramAvailable)
     {
-        return heap_caps_malloc(size, MALLOC_CAP_SPIRAM);
+        return heap_caps_malloc(size, MALLOC_CAP_8BIT | MALLOC_CAP_SPIRAM);
     }
     else
     {
@@ -647,7 +647,7 @@ IRAM_ATTR void *duk_spiram_realloc(void *udata, void *ptr, size_t size)
 {
     if (spiramAvailable)
     {
-        return heap_caps_realloc(ptr, size, MALLOC_CAP_SPIRAM);
+        return heap_caps_realloc(ptr, size, MALLOC_CAP_8BIT | MALLOC_CAP_SPIRAM);
     }
     else
     {
@@ -677,7 +677,7 @@ IRAM_ATTR void spiram_free(void *ptr)
 
 bool spiramAvail()
 {
-    void *ptr = heap_caps_malloc(1, MALLOC_CAP_SPIRAM);
+    void *ptr = heap_caps_malloc(1, MALLOC_CAP_8BIT | MALLOC_CAP_SPIRAM);
     if (ptr != NULL)
     {
         heap_caps_free(ptr);
