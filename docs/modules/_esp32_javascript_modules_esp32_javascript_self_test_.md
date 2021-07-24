@@ -15,7 +15,7 @@
 
 ▸ **run**(): *void*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/self-test.ts:9](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/self-test.ts#L9)*
+*Defined in [esp32-javascript/modules/esp32-javascript/self-test.ts:32](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/self-test.ts#L32)*
 
 **Returns:** *void*
 
@@ -25,7 +25,7 @@ ___
 
 ▸ **setPinValue**(`pin`: number, `val`: number): *void*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/self-test.ts:3](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/self-test.ts#L3)*
+*Defined in [esp32-javascript/modules/esp32-javascript/self-test.ts:26](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/self-test.ts#L26)*
 
 **Parameters:**
 

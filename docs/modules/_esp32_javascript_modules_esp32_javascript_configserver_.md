@@ -8,11 +8,14 @@
 
 * [baExceptionPathes](_esp32_javascript_modules_esp32_javascript_configserver_.md#const-baexceptionpathes)
 * [configManager](_esp32_javascript_modules_esp32_javascript_configserver_.md#configmanager)
+* [errorMessage](_esp32_javascript_modules_esp32_javascript_configserver_.md#let-errormessage)
 * [requestHandler](_esp32_javascript_modules_esp32_javascript_configserver_.md#const-requesthandler)
+* [successMessage](_esp32_javascript_modules_esp32_javascript_configserver_.md#let-successmessage)
 
 ### Functions
 
 * [addSchema](_esp32_javascript_modules_esp32_javascript_configserver_.md#addschema)
+* [getLogFileList](_esp32_javascript_modules_esp32_javascript_configserver_.md#getlogfilelist)
 * [page](_esp32_javascript_modules_esp32_javascript_configserver_.md#page)
 * [redirect](_esp32_javascript_modules_esp32_javascript_configserver_.md#redirect)
 * [startConfigServer](_esp32_javascript_modules_esp32_javascript_configserver_.md#startconfigserver)
@@ -20,6 +23,7 @@
 ### Object literals
 
 * [schema](_esp32_javascript_modules_esp32_javascript_configserver_.md#let-schema)
+* [upgradeStatus](_esp32_javascript_modules_esp32_javascript_configserver_.md#const-upgradestatus)
 
 ## Variables
 
@@ -27,7 +31,7 @@
 
 • **baExceptionPathes**: *string[]* = []
 
-*Defined in [esp32-javascript/modules/esp32-javascript/configserver.ts:87](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/configserver.ts#L87)*
+*Defined in [esp32-javascript/modules/esp32-javascript/configserver.ts:120](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/configserver.ts#L120)*
 
 ___
 
@@ -35,7 +39,15 @@ ___
 
 • **configManager**: *["esp32-javascript/modules/esp32-javascript/config"](_esp32_javascript_modules_esp32_javascript_config_.md)*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/configserver.ts:1](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/configserver.ts#L1)*
+*Defined in [esp32-javascript/modules/esp32-javascript/configserver.ts:24](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/configserver.ts#L24)*
+
+___
+
+### `Let` errorMessage
+
+• **errorMessage**: *string* = ""
+
+*Defined in [esp32-javascript/modules/esp32-javascript/configserver.ts:239](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/configserver.ts#L239)*
 
 ___
 
@@ -43,7 +55,15 @@ ___
 
 • **requestHandler**: *function[]* = []
 
-*Defined in [esp32-javascript/modules/esp32-javascript/configserver.ts:83](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/configserver.ts#L83)*
+*Defined in [esp32-javascript/modules/esp32-javascript/configserver.ts:116](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/configserver.ts#L116)*
+
+___
+
+### `Let` successMessage
+
+• **successMessage**: *string* = ""
+
+*Defined in [esp32-javascript/modules/esp32-javascript/configserver.ts:238](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/configserver.ts#L238)*
 
 ## Functions
 
@@ -51,7 +71,7 @@ ___
 
 ▸ **addSchema**(`additional`: any): *void*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/configserver.ts:79](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/configserver.ts#L79)*
+*Defined in [esp32-javascript/modules/esp32-javascript/configserver.ts:112](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/configserver.ts#L112)*
 
 **Parameters:**
 
@@ -63,11 +83,21 @@ Name | Type |
 
 ___
 
+###  getLogFileList
+
+▸ **getLogFileList**(): *object[]*
+
+*Defined in [esp32-javascript/modules/esp32-javascript/configserver.ts:209](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/configserver.ts#L209)*
+
+**Returns:** *object[]*
+
+___
+
 ###  page
 
-▸ **page**(`res`: [Esp32JsResponse](../interfaces/_esp32_javascript_modules_esp32_javascript_http_.esp32jsresponse.md), `headline`: string, `text`: string | string[], `cb?`: undefined | function): *void*
+▸ **page**(`res`: [Esp32JsResponse](../interfaces/_esp32_javascript_modules_esp32_javascript_http_.esp32jsresponse.md), `headline`: string, `text`: string | string[], `cb?`: undefined | function, `additionalHeadTags?`: undefined | string): *void*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/configserver.ts:96](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/configserver.ts#L96)*
+*Defined in [esp32-javascript/modules/esp32-javascript/configserver.ts:129](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/configserver.ts#L129)*
 
 **Parameters:**
 
@@ -77,6 +107,7 @@ Name | Type |
 `headline` | string |
 `text` | string &#124; string[] |
 `cb?` | undefined &#124; function |
+`additionalHeadTags?` | undefined &#124; string |
 
 **Returns:** *void*
 
@@ -86,7 +117,7 @@ ___
 
 ▸ **redirect**(`res`: [Esp32JsResponse](../interfaces/_esp32_javascript_modules_esp32_javascript_http_.esp32jsresponse.md), `location`: string): *void*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/configserver.ts:89](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/configserver.ts#L89)*
+*Defined in [esp32-javascript/modules/esp32-javascript/configserver.ts:122](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/configserver.ts#L122)*
 
 **Parameters:**
 
@@ -103,7 +134,7 @@ ___
 
 ▸ **startConfigServer**(): *void*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/configserver.ts:155](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/configserver.ts#L155)*
+*Defined in [esp32-javascript/modules/esp32-javascript/configserver.ts:240](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/configserver.ts#L240)*
 
 **Returns:** *void*
 
@@ -113,11 +144,11 @@ ___
 
 ### ▪ **schema**: *object*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/configserver.ts:11](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/configserver.ts#L11)*
+*Defined in [esp32-javascript/modules/esp32-javascript/configserver.ts:40](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/configserver.ts#L40)*
 
 ▪ **access**: *object*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/configserver.ts:12](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/configserver.ts#L12)*
+*Defined in [esp32-javascript/modules/esp32-javascript/configserver.ts:41](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/configserver.ts#L41)*
 
 * **additionalProperties**: *boolean* = false
 
@@ -149,7 +180,7 @@ ___
 
 ▪ **ota**: *object*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/configserver.ts:52](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/configserver.ts#L52)*
+*Defined in [esp32-javascript/modules/esp32-javascript/configserver.ts:85](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/configserver.ts#L85)*
 
 * **additionalProperties**: *boolean* = false
 
@@ -189,7 +220,7 @@ ___
 
 ▪ **wifi**: *object*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/configserver.ts:32](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/configserver.ts#L32)*
+*Defined in [esp32-javascript/modules/esp32-javascript/configserver.ts:61](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/configserver.ts#L61)*
 
 * **additionalProperties**: *boolean* = false
 
@@ -207,6 +238,12 @@ ___
 
 * **properties**: *object*
 
+  * **bssid**: *object*
+
+    * **title**: *string* = "BSSID"
+
+    * **type**: *string* = "string"
+
   * **password**: *object*
 
     * **title**: *string* = "Password"
@@ -218,3 +255,23 @@ ___
     * **title**: *string* = "SSID"
 
     * **type**: *string* = "string"
+
+___
+
+### `Const` upgradeStatus
+
+### ▪ **upgradeStatus**: *object*
+
+*Defined in [esp32-javascript/modules/esp32-javascript/configserver.ts:230](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/configserver.ts#L230)*
+
+###  message
+
+• **message**: *string* = ""
+
+*Defined in [esp32-javascript/modules/esp32-javascript/configserver.ts:235](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/configserver.ts#L235)*
+
+###  status
+
+• **status**: *"idle"* = "idle"
+
+*Defined in [esp32-javascript/modules/esp32-javascript/configserver.ts:234](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/configserver.ts#L234)*

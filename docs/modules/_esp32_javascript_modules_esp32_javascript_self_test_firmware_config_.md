@@ -14,11 +14,11 @@
 
 ### ▪ **firmwareConfig**: *object*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/self-test-firmware-config.ts:3](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/self-test-firmware-config.ts#L3)*
+*Defined in [esp32-javascript/modules/esp32-javascript/self-test-firmware-config.ts:26](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/self-test-firmware-config.ts#L26)*
 
 ▪ **access**: *object*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/self-test-firmware-config.ts:4](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/self-test-firmware-config.ts#L4)*
+*Defined in [esp32-javascript/modules/esp32-javascript/self-test-firmware-config.ts:27](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/self-test-firmware-config.ts#L27)*
 
 * **password**: *string* = "esp32"
 
@@ -26,7 +26,7 @@
 
 ▪ **ota**: *object*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/self-test-firmware-config.ts:12](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/self-test-firmware-config.ts#L12)*
+*Defined in [esp32-javascript/modules/esp32-javascript/self-test-firmware-config.ts:35](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/self-test-firmware-config.ts#L35)*
 
 * **offline**: *true* = true
 
@@ -34,7 +34,7 @@
 
 ▪ **wifi**: *object*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/self-test-firmware-config.ts:8](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/self-test-firmware-config.ts#L8)*
+*Defined in [esp32-javascript/modules/esp32-javascript/self-test-firmware-config.ts:31](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/self-test-firmware-config.ts#L31)*
 
 * **password**: *string* = "e2epassword"
 

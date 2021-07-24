@@ -7,12 +7,15 @@
 ### Modules
 
 * ["esp32-javascript/modules/esp32-javascript/boot"](modules/_esp32_javascript_modules_esp32_javascript_boot_.md)
+* ["esp32-javascript/modules/esp32-javascript/chunked"](modules/_esp32_javascript_modules_esp32_javascript_chunked_.md)
 * ["esp32-javascript/modules/esp32-javascript/config"](modules/_esp32_javascript_modules_esp32_javascript_config_.md)
 * ["esp32-javascript/modules/esp32-javascript/configserver"](modules/_esp32_javascript_modules_esp32_javascript_configserver_.md)
+* ["esp32-javascript/modules/esp32-javascript/filelogging"](modules/_esp32_javascript_modules_esp32_javascript_filelogging_.md)
 * ["esp32-javascript/modules/esp32-javascript/firmware-config"](modules/_esp32_javascript_modules_esp32_javascript_firmware_config_.md)
 * ["esp32-javascript/modules/esp32-javascript/global"](modules/_esp32_javascript_modules_esp32_javascript_global_.md)
 * ["esp32-javascript/modules/esp32-javascript/http"](modules/_esp32_javascript_modules_esp32_javascript_http_.md)
 * ["esp32-javascript/modules/esp32-javascript/index"](modules/_esp32_javascript_modules_esp32_javascript_index_.md)
+* ["esp32-javascript/modules/esp32-javascript/native-ota"](modules/_esp32_javascript_modules_esp32_javascript_native_ota_.md)
 * ["esp32-javascript/modules/esp32-javascript/self-test"](modules/_esp32_javascript_modules_esp32_javascript_self_test_.md)
 * ["esp32-javascript/modules/esp32-javascript/self-test-firmware-config"](modules/_esp32_javascript_modules_esp32_javascript_self_test_firmware_config_.md)
 * ["esp32-javascript/modules/esp32-javascript/stringbuffer"](modules/_esp32_javascript_modules_esp32_javascript_stringbuffer_.md)

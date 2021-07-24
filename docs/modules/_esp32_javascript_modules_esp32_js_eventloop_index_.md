@@ -26,6 +26,7 @@
 * [clearTimeout](_esp32_javascript_modules_esp32_js_eventloop_index_.md#cleartimeout)
 * [el_select_next](_esp32_javascript_modules_esp32_js_eventloop_index_.md#el_select_next)
 * [installIntervalTimeout](_esp32_javascript_modules_esp32_js_eventloop_index_.md#installintervaltimeout)
+* [internalErrorHandler](_esp32_javascript_modules_esp32_js_eventloop_index_.md#internalerrorhandler)
 * [setInterval](_esp32_javascript_modules_esp32_js_eventloop_index_.md#setinterval)
 * [setTimeout](_esp32_javascript_modules_esp32_js_eventloop_index_.md#settimeout)
 * [start](_esp32_javascript_modules_esp32_js_eventloop_index_.md#start)
@@ -36,18 +37,18 @@
 
 Ƭ **Esp32JsEventHandler**: *function*
 
-*Defined in [esp32-javascript/modules/esp32-js-eventloop/index.ts:9](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-js-eventloop/index.ts#L9)*
+*Defined in [esp32-javascript/modules/esp32-js-eventloop/index.ts:31](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-js-eventloop/index.ts#L31)*
 
 #### Type declaration:
 
-▸ (`event`: Esp32JsEventloopEvent, `collected`: Function[]): *boolean*
+▸ (`event`: Esp32JsEventloopEvent, `collected`: function[]): *boolean*
 
 **Parameters:**
 
 Name | Type |
 ------ | ------ |
 `event` | Esp32JsEventloopEvent |
-`collected` | Function[] |
+`collected` | function[] |
 
 ## Variables
 
@@ -55,7 +56,7 @@ Name | Type |
 
 • **afterSuspendHandlers**: *[Esp32JsEventHandler](_esp32_javascript_modules_esp32_js_eventloop_index_.md#esp32jseventhandler)[]* = []
 
-*Defined in [esp32-javascript/modules/esp32-js-eventloop/index.ts:27](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-js-eventloop/index.ts#L27)*
+*Defined in [esp32-javascript/modules/esp32-js-eventloop/index.ts:53](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-js-eventloop/index.ts#L53)*
 
 ___
 
@@ -63,7 +64,7 @@ ___
 
 • **beforeSuspendHandlers**: *function[]* = []
 
-*Defined in [esp32-javascript/modules/esp32-js-eventloop/index.ts:26](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-js-eventloop/index.ts#L26)*
+*Defined in [esp32-javascript/modules/esp32-js-eventloop/index.ts:52](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-js-eventloop/index.ts#L52)*
 
 ___
 
@@ -71,7 +72,7 @@ ___
 
 • **handles**: *number* = 0
 
-*Defined in [esp32-javascript/modules/esp32-js-eventloop/index.ts:25](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-js-eventloop/index.ts#L25)*
+*Defined in [esp32-javascript/modules/esp32-js-eventloop/index.ts:51](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-js-eventloop/index.ts#L51)*
 
 ___
 
@@ -79,7 +80,7 @@ ___
 
 • **intervals**: *number[]* = []
 
-*Defined in [esp32-javascript/modules/esp32-js-eventloop/index.ts:24](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-js-eventloop/index.ts#L24)*
+*Defined in [esp32-javascript/modules/esp32-js-eventloop/index.ts:50](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-js-eventloop/index.ts#L50)*
 
 ___
 
@@ -87,7 +88,7 @@ ___
 
 • **timers**: *[Esp32JsTimer](../interfaces/_esp32_javascript_modules_esp32_js_eventloop_index_.esp32jstimer.md)[]* = []
 
-*Defined in [esp32-javascript/modules/esp32-js-eventloop/index.ts:23](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-js-eventloop/index.ts#L23)*
+*Defined in [esp32-javascript/modules/esp32-js-eventloop/index.ts:49](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-js-eventloop/index.ts#L49)*
 
 ## Functions
 
@@ -95,7 +96,7 @@ ___
 
 ▸ **clearInterval**(`handle`: number): *void*
 
-*Defined in [esp32-javascript/modules/esp32-js-eventloop/index.ts:52](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-js-eventloop/index.ts#L52)*
+*Defined in [esp32-javascript/modules/esp32-js-eventloop/index.ts:77](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-js-eventloop/index.ts#L77)*
 
 **Parameters:**
 
@@ -111,7 +112,7 @@ ___
 
 ▸ **clearTimeout**(`handle`: number): *void*
 
-*Defined in [esp32-javascript/modules/esp32-js-eventloop/index.ts:41](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-js-eventloop/index.ts#L41)*
+*Defined in [esp32-javascript/modules/esp32-js-eventloop/index.ts:66](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-js-eventloop/index.ts#L66)*
 
 **Parameters:**
 
@@ -125,27 +126,45 @@ ___
 
 ###  el_select_next
 
-▸ **el_select_next**(): *Function[]*
+▸ **el_select_next**(): *function[]*
 
-*Defined in [esp32-javascript/modules/esp32-js-eventloop/index.ts:77](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-js-eventloop/index.ts#L77)*
+*Defined in [esp32-javascript/modules/esp32-js-eventloop/index.ts:104](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-js-eventloop/index.ts#L104)*
 
-**Returns:** *Function[]*
+**Returns:** *function[]*
 
 ___
 
 ###  installIntervalTimeout
 
-▸ **installIntervalTimeout**(`handle`: number, `fn`: Function, `timeout`: number): *void*
+▸ **installIntervalTimeout**(`handle`: number, `fn`: function, `timeout`: number): *void*
 
-*Defined in [esp32-javascript/modules/esp32-js-eventloop/index.ts:60](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-js-eventloop/index.ts#L60)*
+*Defined in [esp32-javascript/modules/esp32-js-eventloop/index.ts:84](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-js-eventloop/index.ts#L84)*
+
+**Parameters:**
+
+▪ **handle**: *number*
+
+▪ **fn**: *function*
+
+▸ (): *void*
+
+▪ **timeout**: *number*
+
+**Returns:** *void*
+
+___
+
+###  internalErrorHandler
+
+▸ **internalErrorHandler**(`error`: Error): *void*
+
+*Defined in [esp32-javascript/modules/esp32-js-eventloop/index.ts:40](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-js-eventloop/index.ts#L40)*
 
 **Parameters:**
 
 Name | Type |
 ------ | ------ |
-`handle` | number |
-`fn` | Function |
-`timeout` | number |
+`error` | Error |
 
 **Returns:** *void*
 
@@ -153,16 +172,17 @@ ___
 
 ###  setInterval
 
-▸ **setInterval**(`fn`: Function, `timeout`: number): *number*
+▸ **setInterval**(`fn`: function, `timeout`: number): *number*
 
-*Defined in [esp32-javascript/modules/esp32-js-eventloop/index.ts:70](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-js-eventloop/index.ts#L70)*
+*Defined in [esp32-javascript/modules/esp32-js-eventloop/index.ts:97](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-js-eventloop/index.ts#L97)*
 
 **Parameters:**
 
-Name | Type |
------- | ------ |
-`fn` | Function |
-`timeout` | number |
+▪ **fn**: *function*
+
+▸ (): *void*
+
+▪ **timeout**: *number*
 
 **Returns:** *number*
 
@@ -170,16 +190,17 @@ ___
 
 ###  setTimeout
 
-▸ **setTimeout**(`fn`: Function, `timeout`: number): *number*
+▸ **setTimeout**(`fn`: function, `timeout`: number): *number*
 
-*Defined in [esp32-javascript/modules/esp32-js-eventloop/index.ts:30](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-js-eventloop/index.ts#L30)*
+*Defined in [esp32-javascript/modules/esp32-js-eventloop/index.ts:55](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-js-eventloop/index.ts#L55)*
 
 **Parameters:**
 
-Name | Type |
------- | ------ |
-`fn` | Function |
-`timeout` | number |
+▪ **fn**: *function*
+
+▸ (): *void*
+
+▪ **timeout**: *number*
 
 **Returns:** *number*
 
@@ -189,6 +210,6 @@ ___
 
 ▸ **start**(): *void*
 
-*Defined in [esp32-javascript/modules/esp32-js-eventloop/index.ts:129](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-js-eventloop/index.ts#L129)*
+*Defined in [esp32-javascript/modules/esp32-js-eventloop/index.ts:175](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-js-eventloop/index.ts#L175)*
 
 **Returns:** *void*

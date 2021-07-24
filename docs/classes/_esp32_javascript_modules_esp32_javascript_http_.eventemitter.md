@@ -23,7 +23,7 @@
 
 • **listener**: *object*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:49](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/http.ts#L49)*
+*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:76](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/http.ts#L76)*
 
 #### Type declaration:
 
@@ -35,7 +35,7 @@
 
 ▸ **emit**(`event`: string): *void*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:53](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/http.ts#L53)*
+*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:80](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/http.ts#L80)*
 
 **Parameters:**
 
@@ -51,7 +51,7 @@ ___
 
 ▸ **on**(`event`: string, `cb`: function): *void*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:50](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/http.ts#L50)*
+*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:77](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/http.ts#L77)*
 
 **Parameters:**
 

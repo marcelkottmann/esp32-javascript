@@ -27,7 +27,7 @@
 
 • **end**: *function*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:16](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/http.ts#L16)*
+*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:43](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/http.ts#L43)*
 
 #### Type declaration:
 
@@ -45,7 +45,7 @@ ___
 
 • **flush**: *function*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:13](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/http.ts#L13)*
+*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:40](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/http.ts#L40)*
 
 #### Type declaration:
 
@@ -57,7 +57,7 @@ ___
 
 • **headers**: *Headers*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:21](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/http.ts#L21)*
+*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:48](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/http.ts#L48)*
 
 ___
 
@@ -65,7 +65,7 @@ ___
 
 • **headersWritten**: *boolean*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:20](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/http.ts#L20)*
+*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:47](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/http.ts#L47)*
 
 ___
 
@@ -73,7 +73,7 @@ ___
 
 • **isEnded**: *boolean*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:18](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/http.ts#L18)*
+*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:45](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/http.ts#L45)*
 
 ___
 
@@ -81,7 +81,7 @@ ___
 
 • **on**: *function*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:12](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/http.ts#L12)*
+*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:39](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/http.ts#L39)*
 
 #### Type declaration:
 
@@ -101,7 +101,7 @@ ___
 
 • **setStatus**: *function*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:14](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/http.ts#L14)*
+*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:41](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/http.ts#L41)*
 
 #### Type declaration:
 
@@ -120,7 +120,7 @@ ___
 
 • **status**: *object*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:17](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/http.ts#L17)*
+*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:44](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/http.ts#L44)*
 
 #### Type declaration:
 
@@ -134,7 +134,7 @@ ___
 
 • **statusWritten**: *boolean*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:19](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/http.ts#L19)*
+*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:46](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/http.ts#L46)*
 
 ___
 
@@ -142,7 +142,7 @@ ___
 
 • **write**: *function*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:15](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/http.ts#L15)*
+*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:42](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/http.ts#L42)*
 
 #### Type declaration:
 
