@@ -20,7 +20,7 @@
 
 • **access**: *object*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/config.ts:3](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/config.ts#L3)*
+*Defined in [esp32-javascript/modules/esp32-javascript/config.ts:26](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/config.ts#L26)*
 
 #### Type declaration:
 
@@ -34,7 +34,7 @@ ___
 
 • **ota**? : *undefined | object*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/config.ts:11](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/config.ts#L11)*
+*Defined in [esp32-javascript/modules/esp32-javascript/config.ts:35](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/config.ts#L35)*
 
 ___
 
@@ -42,4 +42,4 @@ ___
 
 • **wifi**? : *undefined | object*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/config.ts:7](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/config.ts#L7)*
+*Defined in [esp32-javascript/modules/esp32-javascript/config.ts:30](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/config.ts#L30)*

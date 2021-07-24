@@ -33,7 +33,7 @@
 
 \+ **new StringBuffer**(`s?`: undefined | string): *[StringBuffer](_esp32_javascript_modules_esp32_javascript_stringbuffer_.stringbuffer.md)*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/stringbuffer.ts:3](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/stringbuffer.ts#L3)*
+*Defined in [esp32-javascript/modules/esp32-javascript/stringbuffer.ts:26](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/stringbuffer.ts#L26)*
 
 **Parameters:**
 
@@ -47,9 +47,9 @@ Name | Type |
 
 ### `Private` content
 
-• **content**: *string | [StringBuffer](_esp32_javascript_modules_esp32_javascript_stringbuffer_.stringbuffer.md)‹›[]*
+• **content**: *(string | [StringBuffer](_esp32_javascript_modules_esp32_javascript_stringbuffer_.stringbuffer.md)‹›)[]*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/stringbuffer.ts:2](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/stringbuffer.ts#L2)*
+*Defined in [esp32-javascript/modules/esp32-javascript/stringbuffer.ts:25](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/stringbuffer.ts#L25)*
 
 ___
 
@@ -57,21 +57,21 @@ ___
 
 • **length**: *number*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/stringbuffer.ts:3](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/stringbuffer.ts#L3)*
+*Defined in [esp32-javascript/modules/esp32-javascript/stringbuffer.ts:26](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/stringbuffer.ts#L26)*
 
 ## Methods
 
 ###  append
 
-▸ **append**(...`s`: string | [StringBuffer](_esp32_javascript_modules_esp32_javascript_stringbuffer_.stringbuffer.md)‹›[]): *[StringBuffer](_esp32_javascript_modules_esp32_javascript_stringbuffer_.stringbuffer.md)*
+▸ **append**(...`s`: (string | [StringBuffer](_esp32_javascript_modules_esp32_javascript_stringbuffer_.stringbuffer.md)‹›)[]): *[StringBuffer](_esp32_javascript_modules_esp32_javascript_stringbuffer_.stringbuffer.md)*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/stringbuffer.ts:35](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/stringbuffer.ts#L35)*
+*Defined in [esp32-javascript/modules/esp32-javascript/stringbuffer.ts:58](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/stringbuffer.ts#L58)*
 
 **Parameters:**
 
 Name | Type |
 ------ | ------ |
-`...s` | string &#124; [StringBuffer](_esp32_javascript_modules_esp32_javascript_stringbuffer_.stringbuffer.md)‹›[] |
+`...s` | (string &#124; [StringBuffer](_esp32_javascript_modules_esp32_javascript_stringbuffer_.stringbuffer.md)‹›)[] |
 
 **Returns:** *[StringBuffer](_esp32_javascript_modules_esp32_javascript_stringbuffer_.stringbuffer.md)*
 
@@ -81,7 +81,7 @@ ___
 
 ▸ **indexOf**(`searchString`: string, `position?`: undefined | number): *number*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/stringbuffer.ts:14](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/stringbuffer.ts#L14)*
+*Defined in [esp32-javascript/modules/esp32-javascript/stringbuffer.ts:37](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/stringbuffer.ts#L37)*
 
 **Parameters:**
 
@@ -98,7 +98,7 @@ ___
 
 ▸ **substr**(`s`: number, `l`: number): *[StringBuffer](_esp32_javascript_modules_esp32_javascript_stringbuffer_.stringbuffer.md)*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/stringbuffer.ts:98](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/stringbuffer.ts#L98)*
+*Defined in [esp32-javascript/modules/esp32-javascript/stringbuffer.ts:121](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/stringbuffer.ts#L121)*
 
 **Parameters:**
 
@@ -115,7 +115,7 @@ ___
 
 ▸ **substring**(`s`: number, `e?`: undefined | number): *[StringBuffer](_esp32_javascript_modules_esp32_javascript_stringbuffer_.stringbuffer.md)*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/stringbuffer.ts:43](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/stringbuffer.ts#L43)*
+*Defined in [esp32-javascript/modules/esp32-javascript/stringbuffer.ts:66](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/stringbuffer.ts#L66)*
 
 **Parameters:**
 
@@ -132,7 +132,7 @@ ___
 
 ▸ **toLowerCase**(): *string*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/stringbuffer.ts:18](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/stringbuffer.ts#L18)*
+*Defined in [esp32-javascript/modules/esp32-javascript/stringbuffer.ts:41](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/stringbuffer.ts#L41)*
 
 **Returns:** *string*
 
@@ -142,7 +142,7 @@ ___
 
 ▸ **toString**(): *string*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/stringbuffer.ts:26](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/stringbuffer.ts#L26)*
+*Defined in [esp32-javascript/modules/esp32-javascript/stringbuffer.ts:49](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/stringbuffer.ts#L49)*
 
 **Returns:** *string*
 
@@ -152,6 +152,6 @@ ___
 
 ▸ **toUpperCase**(): *string*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/stringbuffer.ts:22](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/stringbuffer.ts#L22)*
+*Defined in [esp32-javascript/modules/esp32-javascript/stringbuffer.ts:45](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/stringbuffer.ts#L45)*
 
 **Returns:** *string*

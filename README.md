@@ -18,7 +18,7 @@ Because of the limited memory on ESP32-WROOM modules, the full functionality is 
 
 ### Prerequisites
 
-Install [esp-idf 4.2](https://docs.espressif.com/projects/esp-idf/en/release-v4.2/esp32/get-started/index.html) on your system.
+Install [esp-idf 4.2.2](https://docs.espressif.com/projects/esp-idf/en/release-v4.2/esp32/get-started/index.html) on your system.
 
 ### First install
 
@@ -63,12 +63,20 @@ If this is your first install, your onboard LED should blink now. Blinking signa
 
 On the Setup page you can configure your WLAN settings and an URL to download your JS main script from.
 
-Please note that the script, does not need to have a main function, because its evaluated entirely.
+![Setup page screenshot](setup.png)
+### Examples
+
+Please note that the Javascript OTA script, does not need to have a main function, because its evaluated entirely.
 That means, to print out "Hello World", you only have to include one line in your script on the webserver:
 
 ```js
 console.log("Hello world!");
 ```
+
+You can test this example by configuring this URL as "Javascript OTA":
+https://raw.githubusercontent.com/marcelkottmann/esp32-javascript/master/examples/example.js
+
+Please see also the other example in  [./examples](./examples)
 
 ### C/C++bindings
 
@@ -127,10 +135,11 @@ You can erase the persistent flash memory, which will be equivalent to a factory
 
 | Version                                                           |       Compatible       |
 | ----------------------------------------------------------------- | :--------------------: |
-| [4.2](https://github.com/espressif/esp-idf/releases/tag/v4.2)     | :heavy_check_mark:[^1] |
-| [4.2.1](https://github.com/espressif/esp-idf/releases/tag/v4.2.1) | :heavy_check_mark:[^1] |
+| [4.2](https://github.com/espressif/esp-idf/releases/tag/v4.2)     | ☑️<sup>1</sup> |
+| [4.2.1](https://github.com/espressif/esp-idf/releases/tag/v4.2.1) | ☑️<sup>1</sup> |
+| [4.2.2](https://github.com/espressif/esp-idf/releases/tag/v4.2.2) | ✅ Recommended |
 
-[^1]: SSL client connections currently not working properly for ESP32-S2 devices due to esp-idf bug in 4.2.x:
+<sup>1</sup> SSL client connections currently not working properly for ESP32-S2 devices due to esp-idf bug in 4.2.x:
 https://github.com/espressif/esp-idf/pull/6998 , but can be fixed manually (see changes in PR).
 
 ## API

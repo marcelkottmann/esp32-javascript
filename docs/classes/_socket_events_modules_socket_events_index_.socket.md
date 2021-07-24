@@ -14,19 +14,19 @@
 
 ### Properties
 
+* [_isConnected](_socket_events_modules_socket_events_index_.socket.md#private-_isconnected)
+* [_isError](_socket_events_modules_socket_events_index_.socket.md#_iserror)
+* [_isListening](_socket_events_modules_socket_events_index_.socket.md#private-_islistening)
+* [_onWritable](_socket_events_modules_socket_events_index_.socket.md#private-_onwritable)
 * [dataBuffer](_socket_events_modules_socket_events_index_.socket.md#private-databuffer)
 * [dataBufferSize](_socket_events_modules_socket_events_index_.socket.md#private-databuffersize)
 * [defaultBufferSize](_socket_events_modules_socket_events_index_.socket.md#private-defaultbuffersize)
 * [flushAlways](_socket_events_modules_socket_events_index_.socket.md#flushalways)
-* [isConnected](_socket_events_modules_socket_events_index_.socket.md#isconnected)
-* [isError](_socket_events_modules_socket_events_index_.socket.md#iserror)
-* [isListening](_socket_events_modules_socket_events_index_.socket.md#islistening)
 * [onAccept](_socket_events_modules_socket_events_index_.socket.md#onaccept)
 * [onClose](_socket_events_modules_socket_events_index_.socket.md#onclose)
 * [onConnect](_socket_events_modules_socket_events_index_.socket.md#onconnect)
 * [onData](_socket_events_modules_socket_events_index_.socket.md#ondata)
 * [onError](_socket_events_modules_socket_events_index_.socket.md#onerror)
-* [onWritable](_socket_events_modules_socket_events_index_.socket.md#onwritable)
 * [readTimeout](_socket_events_modules_socket_events_index_.socket.md#private-readtimeout)
 * [readTimeoutHandle](_socket_events_modules_socket_events_index_.socket.md#private-readtimeouthandle)
 * [sockfd](_socket_events_modules_socket_events_index_.socket.md#sockfd)
@@ -34,21 +34,61 @@
 * [textEncoder](_socket_events_modules_socket_events_index_.socket.md#private-textencoder)
 * [writebuffer](_socket_events_modules_socket_events_index_.socket.md#writebuffer)
 
+### Accessors
+
+* [isConnected](_socket_events_modules_socket_events_index_.socket.md#isconnected)
+* [isError](_socket_events_modules_socket_events_index_.socket.md#iserror)
+* [isListening](_socket_events_modules_socket_events_index_.socket.md#islistening)
+* [onWritable](_socket_events_modules_socket_events_index_.socket.md#onwritable)
+
 ### Methods
 
 * [clearReadTimeoutTimer](_socket_events_modules_socket_events_index_.socket.md#clearreadtimeouttimer)
 * [extendReadTimeout](_socket_events_modules_socket_events_index_.socket.md#extendreadtimeout)
 * [flush](_socket_events_modules_socket_events_index_.socket.md#flush)
+* [maintainSocketStatus](_socket_events_modules_socket_events_index_.socket.md#private-maintainsocketstatus)
 * [setReadTimeout](_socket_events_modules_socket_events_index_.socket.md#setreadtimeout)
 * [write](_socket_events_modules_socket_events_index_.socket.md#write)
 
 ## Properties
 
+### `Private` _isConnected
+
+• **_isConnected**: *boolean* = false
+
+*Defined in [socket-events/modules/socket-events/index.ts:213](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/socket-events/modules/socket-events/index.ts#L213)*
+
+___
+
+###  _isError
+
+• **_isError**: *boolean* = false
+
+*Defined in [socket-events/modules/socket-events/index.ts:214](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/socket-events/modules/socket-events/index.ts#L214)*
+
+___
+
+### `Private` _isListening
+
+• **_isListening**: *boolean* = false
+
+*Defined in [socket-events/modules/socket-events/index.ts:215](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/socket-events/modules/socket-events/index.ts#L215)*
+
+___
+
+### `Private` _onWritable
+
+• **_onWritable**: *[OnWritableCB](../modules/_socket_events_modules_socket_events_index_.md#onwritablecb) | null* = null
+
+*Defined in [socket-events/modules/socket-events/index.ts:212](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/socket-events/modules/socket-events/index.ts#L212)*
+
+___
+
 ### `Private` dataBuffer
 
 • **dataBuffer**: *Uint8Array‹›* = new Uint8Array(this.defaultBufferSize)
 
-*Defined in [socket-events/modules/socket-events/index.ts:95](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/socket-events/modules/socket-events/index.ts#L95)*
+*Defined in [socket-events/modules/socket-events/index.ts:169](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/socket-events/modules/socket-events/index.ts#L169)*
 
 ___
 
@@ -56,7 +96,7 @@ ___
 
 • **dataBufferSize**: *number* = 0
 
-*Defined in [socket-events/modules/socket-events/index.ts:96](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/socket-events/modules/socket-events/index.ts#L96)*
+*Defined in [socket-events/modules/socket-events/index.ts:170](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/socket-events/modules/socket-events/index.ts#L170)*
 
 ___
 
@@ -64,7 +104,7 @@ ___
 
 • **defaultBufferSize**: *number* = 3 * 1024
 
-*Defined in [socket-events/modules/socket-events/index.ts:94](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/socket-events/modules/socket-events/index.ts#L94)*
+*Defined in [socket-events/modules/socket-events/index.ts:168](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/socket-events/modules/socket-events/index.ts#L168)*
 
 ___
 
@@ -72,31 +112,7 @@ ___
 
 • **flushAlways**: *boolean* = true
 
-*Defined in [socket-events/modules/socket-events/index.ts:143](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/socket-events/modules/socket-events/index.ts#L143)*
-
-___
-
-###  isConnected
-
-• **isConnected**: *boolean* = false
-
-*Defined in [socket-events/modules/socket-events/index.ts:139](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/socket-events/modules/socket-events/index.ts#L139)*
-
-___
-
-###  isError
-
-• **isError**: *boolean* = false
-
-*Defined in [socket-events/modules/socket-events/index.ts:140](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/socket-events/modules/socket-events/index.ts#L140)*
-
-___
-
-###  isListening
-
-• **isListening**: *boolean* = false
-
-*Defined in [socket-events/modules/socket-events/index.ts:141](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/socket-events/modules/socket-events/index.ts#L141)*
+*Defined in [socket-events/modules/socket-events/index.ts:217](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/socket-events/modules/socket-events/index.ts#L217)*
 
 ___
 
@@ -106,7 +122,7 @@ ___
 
 *Implementation of [Esp32JsSocket](../interfaces/_socket_events_modules_socket_events_index_.esp32jssocket.md).[onAccept](../interfaces/_socket_events_modules_socket_events_index_.esp32jssocket.md#onaccept)*
 
-*Defined in [socket-events/modules/socket-events/index.ts:133](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/socket-events/modules/socket-events/index.ts#L133)*
+*Defined in [socket-events/modules/socket-events/index.ts:207](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/socket-events/modules/socket-events/index.ts#L207)*
 
 The onData callback.
 
@@ -118,7 +134,7 @@ ___
 
 *Implementation of [Esp32JsSocket](../interfaces/_socket_events_modules_socket_events_index_.esp32jssocket.md).[onClose](../interfaces/_socket_events_modules_socket_events_index_.esp32jssocket.md#onclose)*
 
-*Defined in [socket-events/modules/socket-events/index.ts:137](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/socket-events/modules/socket-events/index.ts#L137)*
+*Defined in [socket-events/modules/socket-events/index.ts:211](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/socket-events/modules/socket-events/index.ts#L211)*
 
 ___
 
@@ -128,7 +144,7 @@ ___
 
 *Implementation of [Esp32JsSocket](../interfaces/_socket_events_modules_socket_events_index_.esp32jssocket.md).[onConnect](../interfaces/_socket_events_modules_socket_events_index_.esp32jssocket.md#onconnect)*
 
-*Defined in [socket-events/modules/socket-events/index.ts:135](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/socket-events/modules/socket-events/index.ts#L135)*
+*Defined in [socket-events/modules/socket-events/index.ts:209](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/socket-events/modules/socket-events/index.ts#L209)*
 
 ___
 
@@ -138,7 +154,7 @@ ___
 
 *Implementation of [Esp32JsSocket](../interfaces/_socket_events_modules_socket_events_index_.esp32jssocket.md).[onData](../interfaces/_socket_events_modules_socket_events_index_.esp32jssocket.md#ondata)*
 
-*Defined in [socket-events/modules/socket-events/index.ts:134](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/socket-events/modules/socket-events/index.ts#L134)*
+*Defined in [socket-events/modules/socket-events/index.ts:208](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/socket-events/modules/socket-events/index.ts#L208)*
 
 ___
 
@@ -148,17 +164,7 @@ ___
 
 *Implementation of [Esp32JsSocket](../interfaces/_socket_events_modules_socket_events_index_.esp32jssocket.md).[onError](../interfaces/_socket_events_modules_socket_events_index_.esp32jssocket.md#onerror)*
 
-*Defined in [socket-events/modules/socket-events/index.ts:136](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/socket-events/modules/socket-events/index.ts#L136)*
-
-___
-
-###  onWritable
-
-• **onWritable**: *[OnWritableCB](../modules/_socket_events_modules_socket_events_index_.md#onwritablecb) | null* = null
-
-*Implementation of [Esp32JsSocket](../interfaces/_socket_events_modules_socket_events_index_.esp32jssocket.md).[onWritable](../interfaces/_socket_events_modules_socket_events_index_.esp32jssocket.md#onwritable)*
-
-*Defined in [socket-events/modules/socket-events/index.ts:138](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/socket-events/modules/socket-events/index.ts#L138)*
+*Defined in [socket-events/modules/socket-events/index.ts:210](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/socket-events/modules/socket-events/index.ts#L210)*
 
 ___
 
@@ -166,7 +172,7 @@ ___
 
 • **readTimeout**: *number* = -1
 
-*Defined in [socket-events/modules/socket-events/index.ts:99](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/socket-events/modules/socket-events/index.ts#L99)*
+*Defined in [socket-events/modules/socket-events/index.ts:173](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/socket-events/modules/socket-events/index.ts#L173)*
 
 ___
 
@@ -174,7 +180,7 @@ ___
 
 • **readTimeoutHandle**: *number* = -1
 
-*Defined in [socket-events/modules/socket-events/index.ts:100](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/socket-events/modules/socket-events/index.ts#L100)*
+*Defined in [socket-events/modules/socket-events/index.ts:174](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/socket-events/modules/socket-events/index.ts#L174)*
 
 ___
 
@@ -184,7 +190,7 @@ ___
 
 *Implementation of [Esp32JsSocket](../interfaces/_socket_events_modules_socket_events_index_.esp32jssocket.md).[sockfd](../interfaces/_socket_events_modules_socket_events_index_.esp32jssocket.md#sockfd)*
 
-*Defined in [socket-events/modules/socket-events/index.ts:127](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/socket-events/modules/socket-events/index.ts#L127)*
+*Defined in [socket-events/modules/socket-events/index.ts:201](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/socket-events/modules/socket-events/index.ts#L201)*
 
 The socket file descriptor.
 
@@ -196,7 +202,7 @@ ___
 
 *Implementation of [Esp32JsSocket](../interfaces/_socket_events_modules_socket_events_index_.esp32jssocket.md).[ssl](../interfaces/_socket_events_modules_socket_events_index_.esp32jssocket.md#ssl)*
 
-*Defined in [socket-events/modules/socket-events/index.ts:142](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/socket-events/modules/socket-events/index.ts#L142)*
+*Defined in [socket-events/modules/socket-events/index.ts:216](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/socket-events/modules/socket-events/index.ts#L216)*
 
 ___
 
@@ -204,7 +210,7 @@ ___
 
 • **textEncoder**: *TextEncoder* = new TextEncoder()
 
-*Defined in [socket-events/modules/socket-events/index.ts:97](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/socket-events/modules/socket-events/index.ts#L97)*
+*Defined in [socket-events/modules/socket-events/index.ts:171](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/socket-events/modules/socket-events/index.ts#L171)*
 
 ___
 
@@ -214,7 +220,95 @@ ___
 
 *Implementation of [Esp32JsSocket](../interfaces/_socket_events_modules_socket_events_index_.esp32jssocket.md).[writebuffer](../interfaces/_socket_events_modules_socket_events_index_.esp32jssocket.md#writebuffer)*
 
-*Defined in [socket-events/modules/socket-events/index.ts:98](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/socket-events/modules/socket-events/index.ts#L98)*
+*Defined in [socket-events/modules/socket-events/index.ts:172](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/socket-events/modules/socket-events/index.ts#L172)*
+
+## Accessors
+
+###  isConnected
+
+• **get isConnected**(): *boolean*
+
+*Defined in [socket-events/modules/socket-events/index.ts:234](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/socket-events/modules/socket-events/index.ts#L234)*
+
+**Returns:** *boolean*
+
+• **set isConnected**(`isConnected`: boolean): *void*
+
+*Defined in [socket-events/modules/socket-events/index.ts:229](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/socket-events/modules/socket-events/index.ts#L229)*
+
+**Parameters:**
+
+Name | Type |
+------ | ------ |
+`isConnected` | boolean |
+
+**Returns:** *void*
+
+___
+
+###  isError
+
+• **get isError**(): *boolean*
+
+*Defined in [socket-events/modules/socket-events/index.ts:261](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/socket-events/modules/socket-events/index.ts#L261)*
+
+**Returns:** *boolean*
+
+• **set isError**(`isError`: boolean): *void*
+
+*Defined in [socket-events/modules/socket-events/index.ts:256](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/socket-events/modules/socket-events/index.ts#L256)*
+
+**Parameters:**
+
+Name | Type |
+------ | ------ |
+`isError` | boolean |
+
+**Returns:** *void*
+
+___
+
+###  isListening
+
+• **get isListening**(): *boolean*
+
+*Defined in [socket-events/modules/socket-events/index.ts:243](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/socket-events/modules/socket-events/index.ts#L243)*
+
+**Returns:** *boolean*
+
+• **set isListening**(`isListening`: boolean): *void*
+
+*Defined in [socket-events/modules/socket-events/index.ts:238](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/socket-events/modules/socket-events/index.ts#L238)*
+
+**Parameters:**
+
+Name | Type |
+------ | ------ |
+`isListening` | boolean |
+
+**Returns:** *void*
+
+___
+
+###  onWritable
+
+• **get onWritable**(): *null | function*
+
+*Defined in [socket-events/modules/socket-events/index.ts:252](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/socket-events/modules/socket-events/index.ts#L252)*
+
+**Returns:** *null | function*
+
+• **set onWritable**(`onWritable`: [OnWritableCB](../modules/_socket_events_modules_socket_events_index_.md#onwritablecb) | null): *void*
+
+*Defined in [socket-events/modules/socket-events/index.ts:247](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/socket-events/modules/socket-events/index.ts#L247)*
+
+**Parameters:**
+
+Name | Type |
+------ | ------ |
+`onWritable` | [OnWritableCB](../modules/_socket_events_modules_socket_events_index_.md#onwritablecb) &#124; null |
+
+**Returns:** *void*
 
 ## Methods
 
@@ -222,7 +316,7 @@ ___
 
 ▸ **clearReadTimeoutTimer**(): *void*
 
-*Defined in [socket-events/modules/socket-events/index.ts:107](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/socket-events/modules/socket-events/index.ts#L107)*
+*Defined in [socket-events/modules/socket-events/index.ts:181](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/socket-events/modules/socket-events/index.ts#L181)*
 
 **Returns:** *void*
 
@@ -232,7 +326,7 @@ ___
 
 ▸ **extendReadTimeout**(): *void*
 
-*Defined in [socket-events/modules/socket-events/index.ts:113](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/socket-events/modules/socket-events/index.ts#L113)*
+*Defined in [socket-events/modules/socket-events/index.ts:187](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/socket-events/modules/socket-events/index.ts#L187)*
 
 **Returns:** *void*
 
@@ -242,7 +336,7 @@ ___
 
 ▸ **flush**(`cb?`: undefined | function): *void*
 
-*Defined in [socket-events/modules/socket-events/index.ts:174](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/socket-events/modules/socket-events/index.ts#L174)*
+*Defined in [socket-events/modules/socket-events/index.ts:294](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/socket-events/modules/socket-events/index.ts#L294)*
 
 **Parameters:**
 
@@ -254,13 +348,23 @@ Name | Type |
 
 ___
 
+### `Private` maintainSocketStatus
+
+▸ **maintainSocketStatus**(): *void*
+
+*Defined in [socket-events/modules/socket-events/index.ts:219](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/socket-events/modules/socket-events/index.ts#L219)*
+
+**Returns:** *void*
+
+___
+
 ###  setReadTimeout
 
 ▸ **setReadTimeout**(`readTimeout`: number): *void*
 
 *Implementation of [Esp32JsSocket](../interfaces/_socket_events_modules_socket_events_index_.esp32jssocket.md)*
 
-*Defined in [socket-events/modules/socket-events/index.ts:102](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/socket-events/modules/socket-events/index.ts#L102)*
+*Defined in [socket-events/modules/socket-events/index.ts:176](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/socket-events/modules/socket-events/index.ts#L176)*
 
 **Parameters:**
 
@@ -278,7 +382,7 @@ ___
 
 *Implementation of [Esp32JsSocket](../interfaces/_socket_events_modules_socket_events_index_.esp32jssocket.md)*
 
-*Defined in [socket-events/modules/socket-events/index.ts:145](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/socket-events/modules/socket-events/index.ts#L145)*
+*Defined in [socket-events/modules/socket-events/index.ts:265](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/socket-events/modules/socket-events/index.ts#L265)*
 
 **Parameters:**
 

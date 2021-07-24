@@ -19,7 +19,7 @@
 
 • **ip**: *string | undefined*
 
-*Defined in [wifi-events/modules/wifi-events/index.ts:12](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/wifi-events/modules/wifi-events/index.ts#L12)*
+*Defined in [wifi-events/modules/wifi-events/index.ts:35](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/wifi-events/modules/wifi-events/index.ts#L35)*
 
 ___
 
@@ -27,7 +27,7 @@ ___
 
 • **status**: *function*
 
-*Defined in [wifi-events/modules/wifi-events/index.ts:11](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/wifi-events/modules/wifi-events/index.ts#L11)*
+*Defined in [wifi-events/modules/wifi-events/index.ts:34](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/wifi-events/modules/wifi-events/index.ts#L34)*
 
 #### Type declaration:
 

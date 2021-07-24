@@ -30,7 +30,7 @@
 
 • **bootTime**: *Date* = new Date()
 
-*Defined in [esp32-javascript/modules/esp32-javascript/boot.ts:30](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/boot.ts#L30)*
+*Defined in [esp32-javascript/modules/esp32-javascript/boot.ts:53](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/boot.ts#L53)*
 
 ___
 
@@ -38,7 +38,7 @@ ___
 
 • **configServer**: *["esp32-javascript/modules/esp32-javascript/configserver"](_esp32_javascript_modules_esp32_javascript_configserver_.md)*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/boot.ts:2](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/boot.ts#L2)*
+*Defined in [esp32-javascript/modules/esp32-javascript/boot.ts:25](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/boot.ts#L25)*
 
 ___
 
@@ -46,7 +46,7 @@ ___
 
 • **configServerStarted**: *boolean* = false
 
-*Defined in [esp32-javascript/modules/esp32-javascript/boot.ts:17](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/boot.ts#L17)*
+*Defined in [esp32-javascript/modules/esp32-javascript/boot.ts:40](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/boot.ts#L40)*
 
 ___
 
@@ -54,7 +54,7 @@ ___
 
 • **programLoaded**: *boolean* = false
 
-*Defined in [esp32-javascript/modules/esp32-javascript/boot.ts:18](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/boot.ts#L18)*
+*Defined in [esp32-javascript/modules/esp32-javascript/boot.ts:41](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/boot.ts#L41)*
 
 ___
 
@@ -62,7 +62,7 @@ ___
 
 • **wifi**: *["wifi-events/modules/wifi-events/index"](_wifi_events_modules_wifi_events_index_.md)*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/boot.ts:1](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/boot.ts#L1)*
+*Defined in [esp32-javascript/modules/esp32-javascript/boot.ts:24](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/boot.ts#L24)*
 
 ## Functions
 
@@ -70,7 +70,7 @@ ___
 
 ▸ **blink**(): *undefined | number*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/boot.ts:20](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/boot.ts#L20)*
+*Defined in [esp32-javascript/modules/esp32-javascript/boot.ts:43](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/boot.ts#L43)*
 
 **Returns:** *undefined | number*
 
@@ -80,7 +80,7 @@ ___
 
 ▸ **connectToWifi**(): *void*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/boot.ts:115](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/boot.ts#L115)*
+*Defined in [esp32-javascript/modules/esp32-javascript/boot.ts:138](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/boot.ts#L138)*
 
 **Returns:** *void*
 
@@ -90,7 +90,7 @@ ___
 
 ▸ **evalScript**(`content`: string, `headers?`: Headers): *void*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/boot.ts:98](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/boot.ts#L98)*
+*Defined in [esp32-javascript/modules/esp32-javascript/boot.ts:121](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/boot.ts#L121)*
 
 **Parameters:**
 
@@ -107,7 +107,7 @@ ___
 
 ▸ **getBootTime**(): *Date*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/boot.ts:36](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/boot.ts#L36)*
+*Defined in [esp32-javascript/modules/esp32-javascript/boot.ts:59](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/boot.ts#L59)*
 
 **Returns:** *Date*
 
@@ -117,7 +117,7 @@ ___
 
 ▸ **loadOfflineScript**(): *void*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/boot.ts:106](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/boot.ts#L106)*
+*Defined in [esp32-javascript/modules/esp32-javascript/boot.ts:129](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/boot.ts#L129)*
 
 **Returns:** *void*
 
@@ -127,7 +127,7 @@ ___
 
 ▸ **main**(): *void*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/boot.ts:199](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/boot.ts#L199)*
+*Defined in [esp32-javascript/modules/esp32-javascript/boot.ts:229](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/boot.ts#L229)*
 
 **Returns:** *void*
 
@@ -137,7 +137,7 @@ ___
 
 ▸ **parseDate**(`d`: string): *Date*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/boot.ts:69](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/boot.ts#L69)*
+*Defined in [esp32-javascript/modules/esp32-javascript/boot.ts:92](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/boot.ts#L92)*
 
 **Parameters:**
 
@@ -153,7 +153,7 @@ ___
 
 ▸ **setBootTime**(`date`: Date): *void*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/boot.ts:32](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/boot.ts#L32)*
+*Defined in [esp32-javascript/modules/esp32-javascript/boot.ts:55](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/boot.ts#L55)*
 
 **Parameters:**
 
@@ -169,6 +169,6 @@ ___
 
 ▸ **startSoftApMode**(): *void*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/boot.ts:40](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/boot.ts#L40)*
+*Defined in [esp32-javascript/modules/esp32-javascript/boot.ts:63](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/boot.ts#L63)*
 
 **Returns:** *void*

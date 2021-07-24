@@ -15,10 +15,10 @@
 * [onload](_esp32_javascript_modules_esp32_javascript_http_.xmlhttprequest.md#optional-onload)
 * [reponseHeaders](_esp32_javascript_modules_esp32_javascript_http_.xmlhttprequest.md#private-optional-reponseheaders)
 * [requestHeaders](_esp32_javascript_modules_esp32_javascript_http_.xmlhttprequest.md#private-optional-requestheaders)
-* [responseText](_esp32_javascript_modules_esp32_javascript_http_.xmlhttprequest.md#private-optional-responsetext)
-* [responseURL](_esp32_javascript_modules_esp32_javascript_http_.xmlhttprequest.md#private-optional-responseurl)
-* [status](_esp32_javascript_modules_esp32_javascript_http_.xmlhttprequest.md#private-optional-status)
-* [statusText](_esp32_javascript_modules_esp32_javascript_http_.xmlhttprequest.md#private-optional-statustext)
+* [responseText](_esp32_javascript_modules_esp32_javascript_http_.xmlhttprequest.md#optional-responsetext)
+* [responseURL](_esp32_javascript_modules_esp32_javascript_http_.xmlhttprequest.md#optional-responseurl)
+* [status](_esp32_javascript_modules_esp32_javascript_http_.xmlhttprequest.md#optional-status)
+* [statusText](_esp32_javascript_modules_esp32_javascript_http_.xmlhttprequest.md#optional-statustext)
 * [url](_esp32_javascript_modules_esp32_javascript_http_.xmlhttprequest.md#private-optional-url)
 
 ### Methods
@@ -34,7 +34,7 @@
 
 • **method**: *string* = "GET"
 
-*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:484](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/http.ts#L484)*
+*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:567](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/http.ts#L567)*
 
 ___
 
@@ -42,7 +42,7 @@ ___
 
 • **onerror**? : *undefined | function*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:492](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/http.ts#L492)*
+*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:575](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/http.ts#L575)*
 
 ___
 
@@ -50,7 +50,7 @@ ___
 
 • **onload**? : *undefined | function*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:493](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/http.ts#L493)*
+*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:576](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/http.ts#L576)*
 
 ___
 
@@ -58,7 +58,7 @@ ___
 
 • **reponseHeaders**? : *undefined | string*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:485](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/http.ts#L485)*
+*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:568](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/http.ts#L568)*
 
 ___
 
@@ -66,39 +66,39 @@ ___
 
 • **requestHeaders**? : *[StringBuffer](_esp32_javascript_modules_esp32_javascript_stringbuffer_.stringbuffer.md)*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:486](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/http.ts#L486)*
+*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:569](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/http.ts#L569)*
 
 ___
 
-### `Private` `Optional` responseText
+### `Optional` responseText
 
 • **responseText**? : *undefined | string*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:490](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/http.ts#L490)*
+*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:573](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/http.ts#L573)*
 
 ___
 
-### `Private` `Optional` responseURL
+### `Optional` responseURL
 
 • **responseURL**? : *undefined | string*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:489](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/http.ts#L489)*
+*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:572](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/http.ts#L572)*
 
 ___
 
-### `Private` `Optional` status
+### `Optional` status
 
 • **status**? : *undefined | number*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:487](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/http.ts#L487)*
+*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:570](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/http.ts#L570)*
 
 ___
 
-### `Private` `Optional` statusText
+### `Optional` statusText
 
 • **statusText**? : *undefined | string*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:488](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/http.ts#L488)*
+*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:571](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/http.ts#L571)*
 
 ___
 
@@ -106,7 +106,7 @@ ___
 
 • **url**? : *[AnchorElement](../interfaces/_esp32_javascript_urlparse_.anchorelement.md)*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:483](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/http.ts#L483)*
+*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:566](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/http.ts#L566)*
 
 ## Methods
 
@@ -114,7 +114,7 @@ ___
 
 ▸ **getAllResponseHeaders**(): *string | undefined*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:538](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/http.ts#L538)*
+*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:643](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/http.ts#L643)*
 
 **Returns:** *string | undefined*
 
@@ -124,7 +124,7 @@ ___
 
 ▸ **open**(`method`: string, `url`: string): *void*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:542](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/http.ts#L542)*
+*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:647](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/http.ts#L647)*
 
 **Parameters:**
 
@@ -141,7 +141,7 @@ ___
 
 ▸ **send**(`body`: string): *void*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:495](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/http.ts#L495)*
+*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:578](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/http.ts#L578)*
 
 **Parameters:**
 
@@ -157,7 +157,7 @@ ___
 
 ▸ **setRequestHeader**(`name`: string, `value`: string): *void*
 
-*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:569](https://github.com/marcelkottmann/esp32-javascript/blob/801e1cb/components/esp32-javascript/modules/esp32-javascript/http.ts#L569)*
+*Defined in [esp32-javascript/modules/esp32-javascript/http.ts:662](https://github.com/marcelkottmann/esp32-javascript/blob/22ffb3d/components/esp32-javascript/modules/esp32-javascript/http.ts#L662)*
 
 **Parameters:**
 
