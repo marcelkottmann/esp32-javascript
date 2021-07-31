@@ -61,8 +61,8 @@ int connectedWritableSockets_len = 0;
 int *connectedWritableSockets = NULL;
 int selectClientSocket = -1;
 int selectServerSocket = -1;
-SemaphoreHandle_t xSemaphore;
-bool needsUnblock = false;
+volatile SemaphoreHandle_t xSemaphore;
+volatile bool needsUnblock = false;
 struct sockaddr_in target;
 
 extern const uint8_t cacert_pem_start[] asm("_binary_cacert_pem_start");
@@ -313,7 +313,14 @@ void select_task_it()
         }
         else
         {
-            jslog(ERROR, "select returns ERROR: %d", errno);
+            if (errno == 9)
+            {
+                jslog(DEBUG, "select returns EBADF: Most likely due to socket read timeout during select.");
+            }
+            else
+            {
+                jslog(ERROR, "select returns ERROR: %d", errno);
+            }
         }
     }
     //wait for next loop
@@ -330,7 +337,6 @@ static void triggerNextSelectIteration()
     {
         //interrupt select through self-socket
         jslog(DEBUG, "Sending . to self-socket.");
-        needsUnblock = true;
         if (sendto(selectClientSocket, ".", 1, 0, (struct sockaddr *)&target, sizeof(target)) < 0)
         {
             jslog(ERROR, "Self-socket sending was NOT successful: %d", errno);
@@ -607,10 +613,6 @@ static duk_ret_t connectSSL(duk_context *ctx)
 static duk_ret_t el_closeSocket(duk_context *ctx)
 {
     int socketfd = duk_to_int(ctx, 0);
-
-    // prevent bad file descripter error on running select, caused
-    // by closing socket
-    triggerNextSelectIteration();
 
     closeSocket(socketfd);
     return 0;
