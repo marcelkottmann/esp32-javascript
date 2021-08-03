@@ -99,7 +99,7 @@ function upgradeModules(partition, modulesImageUrl, submitSuccess, submitError) 
     }, assertStatusCode(200, modulesImageUrl));
     return client;
 }
-exports.upgrade = function (appImageUrl, modulesImageUrl, onError, onFinish) {
+var upgrade = function (appImageUrl, modulesImageUrl, onError, onFinish) {
     if (!el_is_native_ota_supported()) {
         onError && onError("Native OTA is not supported.");
         return;
@@ -142,3 +142,4 @@ exports.upgrade = function (appImageUrl, modulesImageUrl, onError, onFinish) {
         upgradeModules(partition, modulesImageUrl, submitSuccess, submitError),
     ];
 };
+exports.upgrade = upgrade;

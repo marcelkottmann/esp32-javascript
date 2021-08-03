@@ -15,9 +15,10 @@
       "*": [
         "esp32-javascript/modules/*",
         "wifi-events/modules/*",
-        "socket-events/modules/*"
+        "socket-events/modules/*",
       ]
     },
+    "noEmitOnError": true,
     "esModuleInterop": true /* Enables emit interoperability between CommonJS and ES Modules via creation of namespace objects for all imports. Implies 'allowSyntheticDefaultImports'. */,
     "forceConsistentCasingInFileNames": true /* Disallow inconsistently-cased references to the same file. */
   },

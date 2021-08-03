@@ -255,6 +255,8 @@ export function startConfigServer(): void {
       res.setStatus(401);
       res.headers.set("WWW-Authenticate", 'Basic realm="Enter credentials"');
       res.end("401 Unauthorized");
+    } else if (req.path === "/health") {
+      res.end(JSON.stringify({ status: "ok" }));
     } else if (req.path === "/restart" && req.method === "POST") {
       page(
         res,
