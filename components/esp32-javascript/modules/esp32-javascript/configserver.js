@@ -182,6 +182,9 @@ function startConfigServer() {
             res.headers.set("WWW-Authenticate", 'Basic realm="Enter credentials"');
             res.end("401 Unauthorized");
         }
+        else if (req.path === "/health") {
+            res.end(JSON.stringify({ status: "ok" }));
+        }
         else if (req.path === "/restart" && req.method === "POST") {
             page(res, "Restart", '<div class="formpad green">Restarting... please wait. <a href="/">Home</a></div>', function () {
                 setTimeout(restart, 1000);

@@ -142,6 +142,25 @@ You can erase the persistent flash memory, which will be equivalent to a factory
 <sup>1</sup> SSL client connections currently not working properly for ESP32-S2 devices due to esp-idf bug in 4.2.x:
 https://github.com/espressif/esp-idf/pull/6998 , but can be fixed manually (see changes in PR).
 
+## REPL
+
+The [examples](examples/) directory contains a [repl](examples/repl.js) that can be used as JS OTA Url: 
+https://raw.githubusercontent.com/marcelkottmann/esp32-javascript/http-streaming/examples/repl.js
+
+The repl can be used with netcat directly or with a combination of rlwrap and netcat to have a history-support:
+`rlwrap netcat [IP-ADDRESS] 1234`
+
+Enter username and password separated with colon(`:`) to authenticate, e.g. `esp32:esp32` + Enter
+
+```bash
+~/esp/esp32-javascript> rlwrap netcat 192.168.188.24 1234
+> esp32:esp32
+====> authorized.
+> console.log('Hello world.')
+LOG|Hello world.
+====> undefined
+>
+```
 ## API
 
 [API documentation](docs/README.md)
