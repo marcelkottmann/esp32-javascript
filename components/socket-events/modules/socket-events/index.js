@@ -158,7 +158,9 @@ var Socket = /** @class */ (function () {
         this.clearReadTimeoutTimer();
         if (this.readTimeout > 0) {
             this.readTimeoutHandle = setTimeout(function () {
-                console.debug("Close socket because of read timeout.");
+                if (console.isDebug) {
+                    console.debug("Close socket because of read timeout.");
+                }
                 closeSocket(_this);
             }, this.readTimeout);
         }

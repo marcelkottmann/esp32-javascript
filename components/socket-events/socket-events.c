@@ -238,9 +238,7 @@ void select_task_it()
         if (dataAvailable > 0)
         {
             char msg[dataAvailable];
-            struct sockaddr_in remaddr;
-            socklen_t addrlen = sizeof(remaddr);
-            if (recvfrom(selectServerSocket, msg, dataAvailable, 0, (struct sockaddr *)&remaddr, &addrlen) < 0)
+            if (recv(selectServerSocket, msg, dataAvailable, 0) < 0)
             {
                 jslog(ERROR, "READ self-socket FAILED: %d", errno);
             }

@@ -24,4 +24,5 @@ SOFTWARE.
 
 /* eslint-disable no-var */
 declare var global: any;
+// make `global` available for compatibility reasons. For new features use globalThis instead.
 (globalThis as any).global = globalThis;

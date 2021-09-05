@@ -175,17 +175,15 @@ function el_select_next() {
 export function start(): void {
   let nextfuncs: (() => void)[] = [main];
   for (;;) {
-    if (Array.isArray(nextfuncs)) {
-      nextfuncs.forEach(function (nf) {
-        if (typeof nf === "function") {
-          try {
-            nf();
-          } catch (error) {
-            internalErrorHandler(error);
-          }
+    nextfuncs.forEach(function (nf) {
+      if (typeof nf === "function") {
+        try {
+          nf();
+        } catch (error) {
+          internalErrorHandler(error);
         }
-      });
-    }
+      }
+    });
     nextfuncs = el_select_next();
   }
 }
