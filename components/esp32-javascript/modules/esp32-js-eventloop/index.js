@@ -125,18 +125,16 @@ function el_select_next() {
 function start() {
     var nextfuncs = [main];
     for (;;) {
-        if (Array.isArray(nextfuncs)) {
-            nextfuncs.forEach(function (nf) {
-                if (typeof nf === "function") {
-                    try {
-                        nf();
-                    }
-                    catch (error) {
-                        internalErrorHandler(error);
-                    }
+        nextfuncs.forEach(function (nf) {
+            if (typeof nf === "function") {
+                try {
+                    nf();
                 }
-            });
-        }
+                catch (error) {
+                    internalErrorHandler(error);
+                }
+            }
+        });
         nextfuncs = el_select_next();
     }
 }

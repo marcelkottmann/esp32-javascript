@@ -12,8 +12,8 @@
  * After that you can type every JS expression, which then gets
  * evaluated in esp32-javascript and the result is printed.
  *
- * This is only considered as demo. If you want to use it in production 
- * please change the ssl flag to true, otherwise credentials 
+ * This is only considered as demo. If you want to use it in production
+ * please change the ssl flag to true, otherwise credentials
  * are visible for "persons in the middle".
  */
 var configManager = require("esp32-javascript/config");
@@ -78,7 +78,7 @@ require("socket-events").sockListen(
                   logOutput.push("ERROR|" + msg + "\n");
                 },
               };
-              _ = eval(data);
+              _ = eval.call(globalThis, data);
             } finally {
               console = _console;
             }

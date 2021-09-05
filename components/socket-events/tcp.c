@@ -37,13 +37,37 @@ SOFTWARE.
 #include "esp32-js-log.h"
 #include "esp32-javascript.h"
 
-#define BUFSIZE 1024
 #define LISTEN_BACKLOG 50
+
+int setNonBlocking(int sockfd)
+{
+    int opt = 1;
+    int ret = lwip_ioctl(sockfd, FIONBIO, &opt);
+
+    if (ret >= 0)
+    {
+        struct timeval tv;
+        tv.tv_sec = 0;
+        tv.tv_usec = 1;
+
+        if (lwip_setsockopt(sockfd,
+                            SOL_SOCKET,
+                            SO_RCVTIMEO,
+                            &tv,
+                            sizeof(struct timeval)) < 0)
+        {
+            jslog(ERROR, "Cannot set timeout opt.");
+            return -1;
+        }
+    }
+
+    return ret;
+}
 
 int createNonBlockingSocket(int domain, int type, int protocol, bool nonblocking)
 {
     int sockfd;
-    int opt;
+
     int ret;
 
     /* socket: create the socket */
@@ -56,8 +80,7 @@ int createNonBlockingSocket(int domain, int type, int protocol, bool nonblocking
 
     if (nonblocking)
     {
-        opt = 1;
-        ret = lwip_ioctl(sockfd, FIONBIO, &opt);
+        int ret = setNonBlocking(sockfd);
         if (ret < 0)
         {
             jslog(ERROR, "Cannot set non-blocking opt.");
@@ -78,7 +101,7 @@ int connectNonBlocking(int sockfd, const char *hostname, int portno)
     server = gethostbyname(hostname);
     if (server == NULL)
     {
-        jslog(ERROR, "ERROR, no such host as %s", hostname);
+        jslog(ERROR, "ERROR, no such host %s", hostname);
         return -1;
     }
 
@@ -107,8 +130,7 @@ int acceptIncoming(int sockfd)
         int one = 1;
         setsockopt(cfd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
 
-        int opt = 1;
-        int ret = lwip_ioctl(cfd, FIONBIO, &opt);
+        int ret = setNonBlocking(sockfd);
         if (ret < 0)
         {
             jslog(ERROR, "ERROR while accepting and setting non blocking: %d", errno);
@@ -183,34 +205,16 @@ int writeSocket(int sockfd, const char *msg, int len, SSL *ssl)
 
 int readSocket(int sockfd, char *msg, int len)
 {
-    struct sockaddr_in remaddr;
-    socklen_t addrlen = sizeof(remaddr);
-
     int result = 0;
 
-    int opt = 1;
-    int ret = lwip_ioctl(sockfd, FIONBIO, &opt);
+    int ret = setNonBlocking(sockfd);
     if (ret < 0)
     {
         jslog(ERROR, "Cannot set non-blocking opt.");
         return -1;
     }
 
-    struct timeval tv;
-    tv.tv_sec = 1;
-    tv.tv_usec = 0;
-
-    if (lwip_setsockopt(sockfd,
-                        SOL_SOCKET,
-                        SO_RCVTIMEO,
-                        &tv,
-                        sizeof(struct timeval)) < 0)
-    {
-        jslog(ERROR, "Cannot set timeout opt.");
-        return -1;
-    }
-
-    result = recvfrom(sockfd, msg, len, MSG_DONTWAIT, (struct sockaddr *)&remaddr, &addrlen);
+    result = recv(sockfd, msg, len, MSG_DONTWAIT);
     return result;
 }
 
