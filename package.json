@@ -24,7 +24,7 @@
     "babel-plugin-transform-remove-console": "^6.9.4",
     "babel-preset-minify": "^0.5.1",
     "cp2": "file:scripts/cp2",
-    "eslint": "^7.26.0",
+    "eslint": "^10.5.0",
     "eslint-plugin-inclusive-language": "^1.2.1",
     "typedoc": "^0.17.8",
     "typedoc-plugin-markdown": "^2.4.2",
