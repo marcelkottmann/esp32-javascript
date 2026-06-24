@@ -18,7 +18,7 @@
   "homepage": "https://github.com/marcelkottmann/esp32-javascript#readme",
   "devDependencies": {
     "@babel/cli": "^7.14.3",
-    "@babel/core": "^7.14.3",
+    "@babel/core": "^7.29.6",
     "@typescript-eslint/eslint-plugin": "^3.10.1",
     "@typescript-eslint/parser": "^3.10.1",
     "babel-plugin-transform-remove-console": "^6.9.4",
