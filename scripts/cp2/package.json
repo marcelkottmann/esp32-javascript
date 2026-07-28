@@ -10,7 +10,7 @@
   "author": "Marcel Kottmann",
   "license": "MIT",
   "dependencies": {
-    "glob": "^7.1.6",
+    "glob": "^13.0.6",
     "meow": "^7.0.1"
   }
 }
